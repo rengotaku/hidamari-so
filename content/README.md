@@ -11,6 +11,11 @@
 | `storylets/*.json` | 出来事。1 ファイルに配列で複数件を書いても、オブジェクト 1 件だけを書いてもよい |
 | `town.json` | 町並みの変化（空き地 → 囲い → マンションなど）。下の「町並みの変化を足す」 |
 
+## 整形（prettier）
+
+`archetypes.json` / `traits.json` / `town.json` は prettier の整形対象（`make format` で整形、`make format-check` で確認。1 行 160 文字まで）。
+`storylets/*.json` と `decor.json` は対象外。全件が 1 要素 1 行に展開されて差分が膨らむため。
+
 ## 出来事を 1 件足す手順
 
 1. `content/storylets/` の好きなファイル（新しいファイルでもよい）に、下の形で 1 件足す。
