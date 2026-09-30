@@ -116,7 +116,14 @@ describe("追加: 住人を押すとプロフィールが言葉だけで出る",
   });
 
   it("空室を押すとプロフィールは出ない", () => {
-    seedSave();
+    // 大家が空室に入居者を入れるので、3 番目の部屋を空けた保存を用意する
+    const s = seedSave();
+    const gone = s.res.find((r) => r.room === 2);
+    if (gone) {
+      s.res = s.res.filter((r) => r !== gone);
+      s.rooms[2] = null;
+    }
+    saveGame(localStorage, s, 1, NOW);
     render(<GameScreen seed={1} storage={localStorage} now={() => NOW} />);
     clickRoom(screen.getByRole("img"), 1);
     expect(screen.queryByRole("region", { name: "住人のプロフィール" })).not.toBeNull();

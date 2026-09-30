@@ -1,4 +1,5 @@
 import { defaultContent, type Content } from "@/content";
+import { isBuyoutPending, isEnded } from "./buyout";
 import type { Ctx } from "./context";
 import type { Rng } from "./random";
 import type { GameState } from "./types";
@@ -26,6 +27,8 @@ export function step(
   options: StepOptions = {}
 ): GameState {
   if (!Number.isFinite(minutes) || minutes <= 0) return state;
+  // 売却して結末を迎えたあとは、もう何も進まない
+  if (isEnded(state)) return state;
   const s = structuredClone(state);
   const c: Ctx = {
     s,
@@ -38,6 +41,8 @@ export function step(
     const dt = Math.min(MAX_SUBSTEP, left);
     update(c, dt);
     left -= dt;
+    // 記念日の買収提案が立ったら、その瞬間で止める（返事の前に状態を進めない）
+    if (isBuyoutPending(s)) break;
   }
   return s;
 }

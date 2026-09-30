@@ -1,0 +1,115 @@
+[
+  {
+    "id": "buyout-offer",
+    "kind": "daily",
+    "trigger": "book",
+    "once": true,
+    "logKind": "move",
+    "texts": ["築五十年の記念日。ひだまり荘の前に黒い車が止まり、背広の男が名刺を置いていった。土地ごと買い取りたいという話だ"]
+  },
+  {
+    "id": "buyout-voice",
+    "kind": "relation",
+    "trigger": "book",
+    "once": true,
+    "roles": { "a": {} },
+    "texts": [
+      "{a}さん「ここがなくなったら、私はどこへ行けばいいんでしょう」",
+      "{a}さん「家賃、上げてもいいですから。残してくれませんか」",
+      "{a}さん「正直、どっちでもいい。でも郵便受けの名前は、もう書き直したくない」"
+    ],
+    "effects": [{ "type": "say", "role": "a", "text": "……" }]
+  },
+  {
+    "id": "buyout-sold",
+    "kind": "daily",
+    "trigger": "book",
+    "once": true,
+    "logKind": "move",
+    "texts": ["大家は名刺の番号に電話をかけた。ひだまり荘は来月、更地になる。最後の夜、誰も荷造りをしなかった"]
+  },
+  {
+    "id": "buyout-declined",
+    "kind": "daily",
+    "trigger": "book",
+    "once": true,
+    "texts": ["大家は名刺をちゃぶ台の下に押し込んだ。ひだまり荘は、明日も続く"]
+  },
+  {
+    "id": "rent-late-excuse",
+    "kind": "daily",
+    "trigger": "rent-late",
+    "cooldownDays": 2,
+    "chance": 0.7,
+    "roles": { "a": {} },
+    "texts": [
+      "{a}さんが家賃を待ってほしいと言ってきた。「来週には必ず」。先週も同じ言葉を聞いた",
+      "{a}さん、家賃の集金日に居留守。郵便受けから洗濯物が見えていた",
+      "{a}さんが家賃を半分だけ持ってきた。残りは「気持ち」だそうだ"
+    ],
+    "effects": [
+      { "type": "say", "role": "a", "text": "来週には、必ず…" },
+      { "type": "adjust", "role": "a", "stat": "mood", "delta": -3 }
+    ]
+  },
+  {
+    "id": "facility-cat-dish",
+    "kind": "daily",
+    "trigger": "day-start",
+    "once": true,
+    "chance": 0.6,
+    "when": { "days": { "min": 5 } },
+    "texts": ["玄関の脇に猫のエサ皿が置かれた。誰が置いたかは、誰も言わない"],
+    "effects": [{ "type": "purse", "delta": -400 }]
+  },
+  {
+    "id": "facility-board",
+    "kind": "daily",
+    "trigger": "day-start",
+    "once": true,
+    "chance": 0.6,
+    "when": { "days": { "min": 10 } },
+    "texts": ["共用の廊下に掲示板がついた。最初の貼り紙は「ゴミは曜日を守ること」。曜日は書かれていない"],
+    "effects": [{ "type": "purse", "delta": -3000 }]
+  },
+  {
+    "id": "facility-washer",
+    "kind": "daily",
+    "trigger": "day-start",
+    "once": true,
+    "chance": 0.6,
+    "when": { "days": { "min": 18 } },
+    "texts": ["共用の洗濯機が入った。投入口の横に、もう「調子が悪い」の紙が貼ってある"],
+    "effects": [{ "type": "purse", "delta": -25000 }]
+  },
+  {
+    "id": "facility-lamp",
+    "kind": "daily",
+    "trigger": "day-start",
+    "once": true,
+    "chance": 0.6,
+    "when": { "days": { "min": 26 } },
+    "texts": ["階段の電球が新しくなった。明るくなって、足元の汚れがよく見えるようになった"],
+    "effects": [{ "type": "purse", "delta": -6000 }]
+  },
+  {
+    "id": "facility-bicycle-shed",
+    "kind": "daily",
+    "trigger": "day-start",
+    "once": true,
+    "chance": 0.6,
+    "when": { "days": { "min": 34 } },
+    "texts": ["自転車置き場に屋根がついた。持ち主のわからない自転車が二台、堂々と居座っている"],
+    "effects": [{ "type": "purse", "delta": -15000 }]
+  },
+  {
+    "id": "facility-heater",
+    "kind": "daily",
+    "trigger": "day-start",
+    "once": true,
+    "chance": 0.6,
+    "when": { "days": { "min": 42 } },
+    "texts": ["湯沸かし器が新しくなった。お湯が出るまでの時間は、三分から二分になった"],
+    "effects": [{ "type": "purse", "delta": -30000 }]
+  }
+]

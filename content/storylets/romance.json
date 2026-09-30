@@ -1,0 +1,230 @@
+[
+  {
+    "id": "crush-start",
+    "kind": "romance",
+    "trigger": "hour",
+    "cooldownDays": 1,
+    "chance": 0.5,
+    "roles": {
+      "a": { "age": { "max": 45 }, "notTag": ["old"], "single": true },
+      "b": {
+        "age": { "max": 45 },
+        "notTag": ["old"],
+        "single": true,
+        "affinity": { "min": 50 },
+        "romance": ["none"]
+      }
+    },
+    "texts": [
+      "{a}さんが{b}さんを見ては、目をそらすようになった。{b}さんはまだ気づいていない",
+      "{a}さん、{b}さんの部屋の前を三回往復してから自室に戻った",
+      "{a}さんが、{b}さんの好きな缶コーヒーを理由もなく買ってきた"
+    ],
+    "effects": [
+      { "type": "romance", "stage": "crush" },
+      { "type": "say", "role": "a", "text": "（あ、今日もいる…）" },
+      { "type": "book", "next": [{ "id": "confession" }], "afterMinutes": [2880, 7200] }
+    ]
+  },
+  {
+    "id": "crush-misunderstanding",
+    "kind": "romance",
+    "trigger": "hour",
+    "cooldownDays": 3,
+    "chance": 0.4,
+    "roles": { "a": {}, "b": { "romance": ["crush"], "affinity": { "max": 85 } } },
+    "texts": ["{a}さんは、{b}さんの部屋から他の住人が出てくるのを見て、何かを誤解した。{b}さんは理由がわからない", "{a}さんが{b}さんに挨拶をして、無視された（{b}さんはイヤホンをしていた）"],
+    "effects": [{ "type": "bond", "delta": -10 }, { "type": "adjust", "role": "a", "stat": "mood", "delta": -8 }]
+  },
+  {
+    "id": "crush-fade",
+    "kind": "romance",
+    "trigger": "hour",
+    "cooldownDays": 5,
+    "chance": 0.3,
+    "roles": { "a": {}, "b": { "romance": ["crush"], "affinity": { "max": 35 } } },
+    "texts": ["{a}さんの{b}さんへの気持ちは、いつのまにか冷めていた。本人は「そんな時期もあった」と言っている"],
+    "effects": [{ "type": "romance", "stage": "none" }]
+  },
+  {
+    "id": "confession",
+    "kind": "romance",
+    "trigger": "book",
+    "when": { "hours": [18, 23] },
+    "roles": { "a": {}, "b": { "romance": ["crush"], "affinity": { "min": 50 } } },
+    "texts": [
+      "{a}さんが{b}さんに、銭湯の帰り道で気持ちを伝えた。{b}さんは「湯冷めするから、続きは部屋で」と答えた",
+      "{a}さんが{b}さんに告白した。{b}さんは三十秒黙ってから「いいよ」と言った。廊下の電球が一度だけ瞬いた"
+    ],
+    "effects": [
+      { "type": "romance", "stage": "dating" },
+      { "type": "bond", "delta": 10 },
+      { "type": "adjust", "role": "a", "stat": "mood", "delta": 25 },
+      { "type": "adjust", "role": "b", "stat": "mood", "delta": 25 },
+      { "type": "say", "role": "b", "text": "……いいよ" },
+      { "type": "book", "next": [{ "id": "moving-in" }], "afterMinutes": [4320, 11520] }
+    ]
+  },
+  {
+    "id": "moving-in",
+    "kind": "romance",
+    "trigger": "book",
+    "when": { "hours": [9, 15] },
+    "roles": { "a": {}, "b": { "romance": ["dating"], "affinity": { "min": 55 } } },
+    "texts": ["{a}さんが{b}さんの部屋に引っ越した。{room}は空室になり、家賃の請求書が一枚減った", "{a}さんの荷物が{b}さんの部屋へ運び込まれた。{room}の鍵は、大家に返された"],
+    "effects": [
+      { "type": "cohabit", "role": "a" },
+      { "type": "romance", "stage": "cohabiting" },
+      { "type": "bond", "delta": 5 },
+      { "type": "book", "next": [{ "id": "proposal" }], "afterMinutes": [5760, 12960] }
+    ]
+  },
+  {
+    "id": "proposal",
+    "kind": "romance",
+    "trigger": "book",
+    "when": { "hours": [18, 23] },
+    "roles": { "a": {}, "b": { "romance": ["cohabiting"], "affinity": { "min": 60 } } },
+    "texts": ["{a}さんが{b}さんにプロポーズした。指輪の代わりに、レジ袋の持ち手を結んだ", "{a}さんが{b}さんに結婚を申し込んだ。{b}さんは返事の代わりに、炊飯器のスイッチを入れた"],
+    "effects": [
+      { "type": "romance", "stage": "married" },
+      { "type": "bond", "delta": 8 },
+      { "type": "adjust", "role": "a", "stat": "mood", "delta": 30 },
+      { "type": "adjust", "role": "b", "stat": "mood", "delta": 30 },
+      { "type": "book", "next": [{ "id": "wedding-party" }], "afterMinutes": [1440, 2880] }
+    ]
+  },
+  {
+    "id": "wedding-party",
+    "kind": "romance",
+    "trigger": "book",
+    "when": { "hours": [17, 22] },
+    "roles": { "a": { "inRoom": true }, "b": { "romance": ["married"] } },
+    "texts": ["{a}さんと{b}さんの結婚祝いの宴会が、勝手に開かれた。全員の「おめでとう」が、なぜか全部同じ声量だった", "{a}さんと{b}さんの結婚祝い。乾杯は三回あって、三回目で誰も覚えていなくなった"],
+    "effects": [
+      { "type": "party", "bond": 8, "mood": 10 },
+      { "type": "book", "next": [{ "id": "baby-born" }], "afterMinutes": [11520, 20160] }
+    ]
+  },
+  {
+    "id": "baby-born",
+    "kind": "romance",
+    "trigger": "book",
+    "roles": { "a": {}, "b": { "romance": ["married"] } },
+    "texts": ["{a}さんと{b}さんのところに、赤ちゃんが生まれた。廊下に、小さなくつ下が干された", "{a}さんと{b}さんに赤ちゃんが生まれた。大家にも、赤い卵が届いた"],
+    "effects": [
+      { "type": "adjust", "role": "a", "stat": "mood", "delta": 20 },
+      { "type": "adjust", "role": "b", "stat": "mood", "delta": 20 },
+      { "type": "book", "next": [{ "id": "baby-first-night" }], "afterMinutes": [1440, 2880] }
+    ]
+  },
+  {
+    "id": "baby-first-night",
+    "kind": "romance",
+    "trigger": "book",
+    "logKind": "noise",
+    "when": { "hours": [0, 6] },
+    "roles": { "a": {}, "b": { "romance": ["married"] } },
+    "texts": ["{a}さんと{b}さんの部屋から、赤ちゃんの夜泣き。隣の住人は、二日目までは誰も文句を言わなかった"],
+    "effects": [
+      { "type": "adjust", "role": "a", "stat": "sleepy", "delta": 25 },
+      { "type": "adjust", "role": "b", "stat": "sleepy", "delta": 25 },
+      { "type": "book", "next": [{ "id": "family-farewell" }], "afterMinutes": [14400, 25920] }
+    ]
+  },
+  {
+    "id": "family-farewell",
+    "kind": "romance",
+    "trigger": "book",
+    "when": { "hours": [15, 22] },
+    "roles": { "a": { "inRoom": true }, "b": { "romance": ["married"] } },
+    "texts": ["{a}さんと{b}さん一家の送別会。赤ちゃんは乾杯の途中で寝た。新居は二駅先の、壁の厚い部屋らしい", "{a}さんと{b}さんの送別会。みんなで育てた気分の赤ちゃんを、順番に抱いた"],
+    "effects": [
+      { "type": "party", "bond": 10, "mood": 8 },
+      { "type": "book", "next": [{ "id": "family-moves-out" }], "afterMinutes": [600, 1200] }
+    ]
+  },
+  {
+    "id": "family-moves-out",
+    "kind": "romance",
+    "trigger": "book",
+    "logKind": "move",
+    "roles": { "a": {}, "b": { "romance": ["married"] } },
+    "texts": ["{a}さんと{b}さんが、赤ちゃんを連れて引っ越していった。{room}の玄関に、小さなくつ下が片方だけ落ちていた"],
+    "effects": [{ "type": "moveOut", "role": "a" }, { "type": "moveOut", "role": "b" }]
+  },
+  {
+    "id": "couple-stroll",
+    "kind": "romance",
+    "trigger": "hour",
+    "cooldownDays": 2,
+    "chance": 0.4,
+    "when": { "hours": [16, 22] },
+    "roles": { "a": {}, "b": { "romance": ["dating", "cohabiting", "married"] } },
+    "texts": ["{a}さんと{b}さんが、並んで銭湯に出かけた。帰りは、コーヒー牛乳を半分ずつ飲んだ", "{a}さんと{b}さんが、コンビニの袋を片方ずつ持って帰ってきた"],
+    "effects": [
+      { "type": "bond", "delta": 3 },
+      { "type": "adjust", "role": "a", "stat": "mood", "delta": 6 },
+      { "type": "adjust", "role": "b", "stat": "mood", "delta": 6 }
+    ]
+  },
+  {
+    "id": "couple-quarrel",
+    "kind": "romance",
+    "trigger": "hour",
+    "cooldownDays": 4,
+    "chance": 0.4,
+    "logKind": "noise",
+    "roles": { "a": {}, "b": { "romance": ["dating", "cohabiting", "married"], "affinity": { "max": 75 } } },
+    "texts": ["{a}さんと{b}さんが痴話喧嘩。壁越しに聞こえたのは「靴下を裏返しで出すな」だった", "{a}さんと{b}さんの口論。原因は、冷蔵庫のプリンだったらしい"],
+    "effects": [
+      { "type": "bond", "delta": -8 },
+      { "type": "adjust", "role": "a", "stat": "mood", "delta": -10 },
+      { "type": "adjust", "role": "b", "stat": "mood", "delta": -10 }
+    ]
+  },
+  {
+    "id": "couple-makeup",
+    "kind": "romance",
+    "trigger": "hour",
+    "cooldownDays": 4,
+    "chance": 0.5,
+    "roles": { "a": {}, "b": { "romance": ["dating", "cohabiting", "married"], "affinity": { "min": 35, "max": 80 } } },
+    "texts": ["{a}さんが{b}さんに、高い方のプリンを買ってきた。仲直りの味がした"],
+    "effects": [
+      { "type": "bond", "delta": 12 },
+      { "type": "adjust", "role": "a", "stat": "mood", "delta": 8 },
+      { "type": "adjust", "role": "b", "stat": "mood", "delta": 8 }
+    ]
+  },
+  {
+    "id": "breakup-dating",
+    "kind": "romance",
+    "trigger": "hour",
+    "cooldownDays": 3,
+    "chance": 0.4,
+    "roles": { "a": {}, "b": { "romance": ["dating"], "affinity": { "max": 38 } } },
+    "texts": ["{a}さんと{b}さんが別れた。{b}さんの部屋から、合い鍵を返す小さな音がした", "{a}さんと{b}さんは、別れた。二人とも、銭湯の時間をずらすようになった"],
+    "effects": [
+      { "type": "romance", "stage": "none" },
+      { "type": "bond", "delta": -5 },
+      { "type": "adjust", "role": "a", "stat": "mood", "delta": -25 },
+      { "type": "adjust", "role": "b", "stat": "mood", "delta": -25 }
+    ]
+  },
+  {
+    "id": "breakup-cohabiting",
+    "kind": "romance",
+    "trigger": "hour",
+    "cooldownDays": 3,
+    "chance": 0.4,
+    "logKind": "move",
+    "roles": { "a": {}, "b": { "romance": ["cohabiting"], "affinity": { "max": 35 } } },
+    "texts": ["{a}さんと{b}さんの同棲が終わった。{a}さんは荷物をまとめて、ひとりで出ていった"],
+    "effects": [
+      { "type": "romance", "stage": "none" },
+      { "type": "adjust", "role": "b", "stat": "mood", "delta": -25 },
+      { "type": "moveOut", "role": "a" }
+    ]
+  }
+]

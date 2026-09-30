@@ -4,7 +4,7 @@ import { ROMANCE_STAGES, WEATHER_IDS } from "@/content/schema";
 
 /**
  * 2: 日誌を構造（出来事 id・役割・言い回し）で持つ形にし、関係・予約・出来事の履歴を足した
- * 部屋の装飾・退去後の部屋・大家・町並みの変化・速さは、版を上げずに足した（欠けていれば読み込み時に補う）
+ * 部屋の装飾・退去後の部屋・大家・町並みの変化・速さ・大家の所持金・出ていった住人の記録・築 50 年の買収提案の状態は、版を上げずに足した（欠けていれば読み込み時に補う）
  */
 export const SCHEMA_VERSION = 2;
 
@@ -66,7 +66,7 @@ const resident = z.object({
   path: z.array(point),
   pi: nonNegInt,
   walkMode: z.enum(["leave", "return"]).nullable(),
-  outPurpose: z.enum(["work", "konbini", "sento"]).nullable(),
+  outPurpose: z.enum(["work", "konbini", "sento", "hospital"]).nullable(),
   outUntil: finite,
   outDur: finite,
   hurry: z.boolean(),
@@ -81,6 +81,17 @@ const resident = z.object({
 
 const roleRef = z.object({ id: nonNegInt, sei: z.string(), room });
 
+const storyletEntry = z.object({
+  t: finite,
+  kind: z.enum(["", "move", "noise"]),
+  storyletId: z.string().min(1),
+  roles: z.object({ a: roleRef.optional(), b: roleRef.optional() }),
+  variant: z.object({
+    text: nonNegInt,
+    slots: z.record(z.string(), z.union([finite, z.string()])),
+  }),
+});
+
 const logEntry = z.union([
   z.object({ t: finite, kind: z.literal("day") }),
   z.object({
@@ -89,16 +100,7 @@ const logEntry = z.union([
     changeId: z.string().min(1),
     stage: nonNegInt,
   }),
-  z.object({
-    t: finite,
-    kind: z.enum(["", "move", "noise"]),
-    storyletId: z.string().min(1),
-    roles: z.object({ a: roleRef.optional(), b: roleRef.optional() }),
-    variant: z.object({
-      text: nonNegInt,
-      slots: z.record(z.string(), z.union([finite, z.string()])),
-    }),
-  }),
+  storyletEntry,
 ]);
 
 const landlord = z.object({
@@ -111,6 +113,19 @@ const landlord = z.object({
   pi: nonNegInt,
   until: finite,
   escort: resident.nullable(),
+});
+
+const departed = z.object({
+  id: nonNegInt,
+  sei: z.string().min(1),
+  mei: z.string().min(1),
+  age: nonNegInt,
+  job: jobId,
+  traits: z.array(traitId),
+  room,
+  since: finite,
+  left: finite,
+  last: storyletEntry.nullable(),
 });
 
 const gameState = z
@@ -152,6 +167,15 @@ const gameState = z
       z.object({ room, former: roleRef, cleared: z.boolean(), moveInAt: finite })
     ),
     landlord,
+    // 大家の所持金はマイナスにもなる（お金が尽きても終わらない）。足す前の保存（版 2）には無いので欠けていれば既定値
+    landlordMoney: finite.default(200000),
+    departed: z.array(departed).default([]),
+    buyout: z
+      .object({
+        phase: z.enum(["none", "pending", "declined", "sold"]),
+        voice: storyletEntry.nullable(),
+      })
+      .default({ phase: "none", voice: null }),
   })
   // lastHour は経過時間から決まる値。食い違う保存は、1 時間ごとの処理が延々と回るので拒否する
   .refine((s) => s.lastHour === Math.floor(s.t / 60), "lastHour が t と一致しない");

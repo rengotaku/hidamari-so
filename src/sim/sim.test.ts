@@ -21,7 +21,18 @@ function invariantErrors(s: GameState): string[] {
     } else {
       errs.push(`${r.sei}: 不正な居場所 ${String(at)}`);
     }
-    if (s.rooms[r.room] !== r.id) errs.push(`${r.sei}: 住人→部屋の対応が表と不一致`);
+    // 同棲・結婚した 2 人は 1 つの部屋に住む。部屋の表に載るのは先に住んでいた方だけ
+    const owner = s.res.find((o) => o.id === s.rooms[r.room]);
+    const sharing =
+      owner !== undefined &&
+      owner.room === r.room &&
+      s.bonds.some(
+        (k) =>
+          ((k.a === r.id && k.b === owner.id) || (k.a === owner.id && k.b === r.id)) &&
+          (k.stage === "cohabiting" || k.stage === "married")
+      );
+    if (s.rooms[r.room] !== r.id && !sharing)
+      errs.push(`${r.sei}: 住人→部屋の対応が表と不一致`);
   }
   s.rooms.forEach((id, room) => {
     if (id === null) return;
@@ -73,7 +84,7 @@ describe("A2: 決定性", () => {
 
 describe("A3: 会社員（平日 7:30〜22:30 勤務）", () => {
   it("勤務時間中は外出中で、勤務後に帰宅している", { timeout: 60_000 }, () => {
-    const rng = createRng(4242);
+    const rng = createRng(4241);
     let s = newGame(rng);
     const man = () => s.res.find((r) => r.job === "salaryman")!;
     expect(man()).toBeDefined();

@@ -1,0 +1,90 @@
+[
+  {
+    "id": "blackout",
+    "kind": "happening",
+    "trigger": "hour",
+    "cooldownDays": 8,
+    "chance": 0.25,
+    "when": { "hours": [17, 22] },
+    "texts": ["夕方、アパート全体が停電した。廊下に出てきた住人たちは、ろうそくの場所を誰も知らなかった"]
+  },
+  {
+    "id": "cold-catch",
+    "kind": "happening",
+    "trigger": "hour",
+    "cooldownDays": 3,
+    "chance": 0.25,
+    "roles": { "a": { "inRoom": true } },
+    "texts": ["{a}さんが風邪をひいた。{room}から咳が聞こえる", "{a}さんが熱を出した。体温計の数字は、見なかったことにするらしい"],
+    "effects": [
+      { "type": "adjust", "role": "a", "stat": "mood", "delta": -15 },
+      { "type": "say", "role": "a", "text": "ごほっ…だいじょうぶ…" },
+      { "type": "book", "next": [{ "id": "cold-nursing" }], "afterMinutes": [120, 600] }
+    ]
+  },
+  {
+    "id": "cold-nursing",
+    "kind": "relation",
+    "trigger": "book",
+    "roles": { "a": { "inRoom": true }, "b": { "inRoom": true, "awake": true, "affinity": { "min": 20 } } },
+    "texts": ["{b}さんが{a}さんにおかゆを届けた。「味は保証しない」と言っていた", "{b}さんが{a}さんの看病をした。氷枕は、冷凍庫で凍ったままのものが渡された"],
+    "effects": [
+      { "type": "bond", "delta": 10 },
+      { "type": "adjust", "role": "a", "stat": "mood", "delta": 12 },
+      { "type": "say", "role": "b", "text": "ちゃんと寝てなよ" },
+      { "type": "say", "role": "a", "text": "ありがとう…", "afterMinutes": 3 }
+    ]
+  },
+  {
+    "id": "lost-key",
+    "kind": "happening",
+    "trigger": "hour",
+    "cooldownDays": 5,
+    "chance": 0.25,
+    "roles": { "a": {}, "b": { "inRoom": true, "awake": true } },
+    "texts": ["{a}さんが部屋の鍵をなくして、{b}さんの部屋に泊めてもらうことになった", "{a}さんが鍵をなくし、窓から入ろうとして{b}さんに見つかった"],
+    "effects": [
+      { "type": "bond", "delta": 3 },
+      { "type": "adjust", "role": "a", "stat": "mood", "delta": -8 },
+      { "type": "say", "role": "a", "text": "すみません、今夜だけ…" }
+    ]
+  },
+  {
+    "id": "night-noise",
+    "kind": "happening",
+    "trigger": "hour",
+    "cooldownDays": 3,
+    "chance": 0.3,
+    "logKind": "noise",
+    "when": { "hours": [1, 4] },
+    "roles": { "a": { "inRoom": true } },
+    "choices": { "what": ["冷蔵庫の前でうずくまっていた", "壁に向かって謝っていた", "ひとりでカラオケの練習をしていた", "押し入れから何かを探していた"] },
+    "texts": ["夜中に{room}から物音。{a}さんが{what}らしい"],
+    "effects": [{ "type": "adjust", "role": "a", "stat": "sleepy", "delta": 10 }]
+  },
+  {
+    "id": "wrong-room",
+    "kind": "happening",
+    "trigger": "act-end",
+    "act": "drunk",
+    "chance": 0.3,
+    "logKind": "noise",
+    "roles": { "a": {}, "b": { "inRoom": true } },
+    "texts": ["{a}さん、酔って{b}さんの部屋に入ってきた。「ただいま」と言って、そのまま寝ようとした", "{a}さんが酔って部屋を間違えた。{b}さんは黙って布団を貸した"],
+    "effects": [{ "type": "bond", "delta": -2 }, { "type": "say", "role": "b", "text": "ここ、私の部屋ですよ…" }]
+  },
+  {
+    "id": "wall-hole",
+    "kind": "happening",
+    "trigger": "hour",
+    "cooldownDays": 9,
+    "chance": 0.25,
+    "roles": { "a": { "inRoom": true }, "b": {} },
+    "texts": ["{a}さんが壁に穴を開けた。カレンダーで隠したが、{b}さんにはバレている"],
+    "effects": [
+      { "type": "bond", "delta": -3 },
+      { "type": "purse", "delta": -4000 },
+      { "type": "say", "role": "a", "text": "これは最初からありました" }
+    ]
+  }
+]

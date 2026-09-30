@@ -9,6 +9,7 @@ import {
   roomRect,
   ROOM_COUNT,
   townLooks,
+  nightScenes,
   type GameState,
 } from "@/sim";
 import type { Ambient } from "./ambient";
@@ -24,6 +25,7 @@ import {
   seasonPhase,
   shovelerAt,
 } from "./season";
+import { drawNightScenes } from "./night";
 import { currentSky, nightness } from "./sky";
 import { drawAging, drawTown, signBoard } from "./town";
 
@@ -297,8 +299,10 @@ export function drawScene(
   }
   // 部屋は、暗い夜のフィルターの前に描くものと、明かりのついた部屋（フィルターの後）に分ける
   const lits: number[] = [];
+  // 夜の場面の部屋は明かりを消す（あとで暗くしてハートを浮かべる）
+  const nights = nightScenes(s);
   for (let i = 0; i < ROOM_COUNT; i++) {
-    if (roomLit(s, i, n)) lits.push(i);
+    if (roomLit(s, i, n) && !nights.some((sc) => sc.room === i)) lits.push(i);
     else drawRoom(ctx, sv, i, now, sky, false);
   }
   if (n > 0) {
@@ -327,5 +331,6 @@ export function drawScene(
     ctx.fillStyle = g;
     ctx.fillRect(0, 100, 70, 100);
   }
+  drawNightScenes(ctx, nights, now);
   drawSelection(ctx, s, selectedId, now);
 }

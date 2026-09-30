@@ -1,0 +1,76 @@
+/* 築五十年の記念日のダイアログ・結末・日誌の名前（押すと出ていった住人のことが見られる） */
+.veil {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  background: rgba(13, 12, 17, 0.72);
+  padding: 16px;
+}
+.dialog {
+  max-width: 420px;
+  width: 100%;
+  background: var(--g-paper);
+  color: var(--g-paper-ink);
+  border: 3px solid #0d0c11;
+  box-shadow: 0 0 0 2px var(--g-line);
+  padding: 14px 18px 16px;
+}
+.dialog h2 {
+  margin: 0 0 6px;
+  font-family: var(--g-pixel);
+  font-weight: 400;
+  font-size: 18px;
+  letter-spacing: 0.08em;
+}
+.dialog p {
+  margin: 6px 0;
+  font-size: 13.5px;
+  line-height: 1.7;
+}
+.dialog .voice {
+  color: #1f6b5f;
+  font-weight: 700;
+}
+.dialog .fin {
+  text-align: right;
+  font-family: var(--g-pixel);
+  color: #6c6475;
+}
+.choices {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+.choices button {
+  flex: 1;
+  font: inherit;
+  font-family: var(--g-pixel);
+  font-size: 15px;
+  padding: 8px 0;
+  background: var(--g-panel);
+  color: var(--g-ink);
+  border: 2px solid #0d0c11;
+  cursor: pointer;
+}
+.choices button:hover,
+.choices button:focus-visible {
+  background: var(--g-accent);
+  color: #0d0c11;
+  outline: none;
+}
+.ent .name {
+  cursor: pointer;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+}
+.ent .name:hover,
+.ent .name:focus-visible {
+  color: #1f6b5f;
+  outline: none;
+}
+.profile .last {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+}

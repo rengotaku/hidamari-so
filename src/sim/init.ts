@@ -22,8 +22,12 @@ const START_T = 17 * 60;
 /** 最初から入居している部屋（残りの二部屋は空室） */
 const INITIAL_ROOMS = [0, 1, 3, 5] as const;
 const OPENING_ID = "opening";
+/** 大家の所持金の初期値（画面には出ない） */
+const START_LANDLORD_MONEY = 200000;
 
 const isOld = (a: Archetype): boolean => a.tags.includes("old");
+/** 人生の筋の途中でだけなる種類（専門学校生など）。新しい入居者としては抽選しない */
+export const isArcOnly = (a: Archetype): boolean => a.tags.includes("arc-only");
 
 interface ResidentOption {
   sei?: string;
@@ -131,7 +135,7 @@ export function moveIn(c: Ctx, r: Resident, room: number): void {
 
 /** 種類を重複なしで n 個抽選する。高齢の住人は階段のない一階へ入れるため先に並べる */
 function drawArchetypes(rng: Rng, content: Content, n: number): Archetype[] {
-  const pool = Object.values(content.archetypes);
+  const pool = Object.values(content.archetypes).filter((a) => !isArcOnly(a));
   const drawn: Archetype[] = [];
   while (drawn.length < n && pool.length > 0) {
     const i = Math.floor(rng.next() * pool.length);
@@ -163,6 +167,9 @@ export function newGame(rng: Rng, content: Content = defaultContent): GameState 
     decor: [0, 1, 2, 3, 4, 5].map(emptyRoomDecor),
     vacancies: [],
     landlord: newLandlord(),
+    landlordMoney: START_LANDLORD_MONEY,
+    departed: [],
+    buyout: { phase: "none", voice: null },
   };
   const c: Ctx = { s, rng, quiet: true, content };
   drawArchetypes(rng, content, INITIAL_ROOMS.length).forEach((arch, i) => {

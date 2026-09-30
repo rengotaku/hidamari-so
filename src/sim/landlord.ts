@@ -1,11 +1,11 @@
 import { hourOf, inWin } from "./clock";
 import type { Ctx } from "./context";
-import { newLandlord, refOf, startSettling } from "./decor";
+import { newLandlord, startSettling } from "./decor";
 import { chooseAct, stepPath } from "./behavior";
-import { makeResident, moveIn } from "./init";
+import { isArcOnly, makeResident, moveIn } from "./init";
 import { exitPath, roomRect } from "./layout";
 import { pick } from "./random";
-import { bookArc, logStorylet } from "./storylets";
+import { bookArc, fireStorylet, logStorylet } from "./storylets";
 import type { Landlord } from "./types";
 
 /** 大家の歩く速さ（1 分あたりの px。住人の通常の歩き 6 より少しゆっくり） */
@@ -49,7 +49,13 @@ function startJob(c: Ctx): void {
   const newcomer = makeResident(
     c,
     s.nextId++,
-    pick(c.rng, Object.keys(c.content.archetypes))
+    // 人生の筋の途中でだけなる種類（専門学校生など）は新入居者にしない
+    pick(
+      c.rng,
+      Object.values(c.content.archetypes)
+        .filter((a) => !isArcOnly(a))
+        .map((a) => a.id)
+    )
   );
   newcomer.room = due.room;
   // 住人の表にはまだ入れない（部屋に着いたら moveIn が居場所を決める）
@@ -82,7 +88,8 @@ function welcome(c: Ctx): void {
     startSettling(c, r);
     bookArc(c, r);
     chooseAct(c, r);
-    logStorylet(c, "room-move-in", refOf(r));
+    // 入居の日誌（と歓迎会の予約）は、大家が部屋に連れて着いたこの時点の 1 回だけ
+    fireStorylet(c, "room-move-in", { a: r });
   }
   s.vacancies = s.vacancies.filter((v) => v.room !== L.room);
   L.escort = null;
