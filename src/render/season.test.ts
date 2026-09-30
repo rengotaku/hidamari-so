@@ -2,7 +2,17 @@ import { describe, it, expect } from "vitest";
 import { createRng, newGame, step, roomRect, SCENE_H, DAY_MIN, YEAR_DAYS } from "@/sim";
 import type { GameState, Season, Weather } from "@/sim";
 import { drawScene, createAmbient } from "@/render";
-import { pickShoveler, seasonLook, seasonPhase, shovelerAt, snowCover } from "./season";
+import {
+  WINDOW_COLS,
+  WINDOW_ROWS,
+  drawWindowSeason,
+  pickShoveler,
+  seasonLook,
+  seasonPhase,
+  shovelerAt,
+  snowCover,
+  windowSeasonMarks,
+} from "./season";
 
 function fakeCtx() {
   const calls = { fillRect: 0 };
@@ -305,5 +315,118 @@ describe("雪かき役と部屋の二重描画 (b)", () => {
     expect(pickShoveler(home.res)!.id).toBe(home.res[0]!.id);
     const once = countColor(hair(at("winter", 0, 7.5, "snow", 0), false), "#123456");
     expect(countColor(home, "#123456")).toBe(once);
+  });
+});
+
+/** 窓の季節の印を切り出す前の drawWindowSeason の式（比べる元。season.ts の実装は使わない） */
+function oldWindowSeason(
+  ctx: CanvasRenderingContext2D,
+  s: GameState,
+  x: number,
+  y: number
+): void {
+  const frac = (i: number): number => (Math.imul(i + 1, 2654435761) >>> 0) / 4294967296;
+  const PINK = ["#f4b6c8", "#f9d3de", "#eea0b8"];
+  const RED = ["#d9893a", "#c2502f", "#e0b040"];
+  const P = (px: number, py: number, w: number, h: number, c: string) => {
+    ctx.fillStyle = c;
+    ctx.fillRect(Math.round(px), Math.round(py), w, h);
+  };
+  const { season, p } = seasonPhase(s);
+  const dots = (colors: string[], n: number) => {
+    for (let i = 0; i < n; i++)
+      P(
+        x + 7 + Math.floor(frac(i * 5 + 1) * 17),
+        y + 9 + Math.floor(frac(i * 5 + 2) * 11),
+        1,
+        1,
+        colors[i % colors.length]!
+      );
+  };
+  if (season === "spring" && p > 0.25 && p < 0.95) dots(PINK, 5);
+  else if (season === "autumn") dots(RED, 4);
+  else if (season === "summer") P(x + 19, y + 10, 4, 2, "#ffffff");
+  const snow = snowCover(s);
+  if (snow > 0)
+    P(x + 7, y + 21 - Math.round(snow * 2), 18, Math.round(snow * 2) + 1, "#f4f8ff");
+}
+
+/** fillRect の (色, x, y, 幅, 高さ) を呼ばれた順に記録する偽 Canvas */
+function rectLog() {
+  const log: Array<[string, number, number, number, number]> = [];
+  const ctx = new Proxy({} as Record<string, unknown>, {
+    get(t, prop: string) {
+      if (prop === "fillRect")
+        return (x: number, y: number, w: number, h: number) =>
+          void log.push([String(t.fillStyle), x, y, w, h]);
+      return t[prop];
+    },
+    set(t, prop: string, value) {
+      t[prop] = value;
+      return true;
+    },
+  }) as unknown as CanvasRenderingContext2D;
+  return { ctx, log };
+}
+
+describe("C6-8: 全体図の窓の季節は、切り出す前の式と同じ fillRect の列を出す", () => {
+  const cases: Array<[Season, number, Weather, number]> = [
+    ["spring", 0, "sunny", 0],
+    ["spring", 1, "rain", 0],
+    ["spring", 3, "cloudy", 0],
+    ["autumn", 0, "sunny", 0],
+    ["autumn", 2, "cloudy", 0],
+    ["summer", 1, "sunny", 0],
+    ["winter", 1, "snow", 1],
+    ["winter", 2, "sunny", 3],
+  ];
+  it("春・秋・夏・冬のどの状態でも、座標・大きさ・色・順序が一致する", () => {
+    for (const [season, offset, weather, snowDays] of cases)
+      for (const hour of [8, 12, 20])
+        for (const room of [0, 4]) {
+          const s = at(season, offset, hour, weather, snowDays);
+          const { x, y } = roomRect(room);
+          const now = rectLog();
+          drawWindowSeason(now.ctx, s, x, y);
+          const old = rectLog();
+          oldWindowSeason(old.ctx, s, x, y);
+          expect(now.log).toEqual(old.log);
+        }
+  });
+
+  it("比べる状態が空ではない（春・秋・夏・冬のそれぞれで、何かが塗られる状態を含む）", () => {
+    const painted = new Set<Season>();
+    for (const [season, offset, weather, snowDays] of cases)
+      for (const hour of [8, 12, 20]) {
+        const old = rectLog();
+        oldWindowSeason(old.ctx, at(season, offset, hour, weather, snowDays), 0, 0);
+        if (old.log.length > 0) painted.add(season);
+      }
+    expect([...painted].sort()).toEqual(["autumn", "spring", "summer", "winter"]);
+  });
+});
+
+describe("追加: 窓の季節の印（格子上の純関数）", () => {
+  it("どの印も 18×13 の格子の中の整数座標に収まる", () => {
+    for (const [season, offset, weather, snowDays] of [
+      ["spring", 1, "sunny", 0],
+      ["autumn", 1, "sunny", 0],
+      ["summer", 1, "sunny", 0],
+      ["winter", 1, "snow", 3],
+    ] as Array<[Season, number, Weather, number]>) {
+      const marks = windowSeasonMarks(at(season, offset, 12, weather, snowDays));
+      expect(marks.length).toBeGreaterThan(0);
+      for (const m of marks) {
+        for (const v of [m.x, m.y, m.w, m.h]) expect(Number.isInteger(v)).toBe(true);
+        expect(m.x).toBeGreaterThanOrEqual(0);
+        expect(m.y).toBeGreaterThanOrEqual(0);
+        expect(m.x + m.w).toBeLessThanOrEqual(WINDOW_COLS);
+        expect(m.y + m.h).toBeLessThanOrEqual(WINDOW_ROWS);
+      }
+    }
+  });
+
+  it("梅雨には印が無い", () => {
+    expect(windowSeasonMarks(at("tsuyu", 1, 12, "rain"))).toEqual([]);
   });
 });

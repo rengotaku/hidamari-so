@@ -14,6 +14,7 @@ import { drawNightRect } from "./night";
 import { P, shade } from "./palette";
 import { drawFigure, type Face, type Pose } from "./person";
 import { LANDLORD_LOOK, roomOccupants, STAINS } from "./room";
+import { WINDOW_COLS, WINDOW_ROWS, windowSeasonMarks } from "./season";
 import { currentSky, nightness } from "./sky";
 
 /**
@@ -269,8 +270,70 @@ const CLUTTER: Array<[number, number, number, number, string]> = [
   [0.72, 0.88, 0.05, 0.03, "#d86a6a"],
 ];
 
+/** 窓の外（ガラスの部分）: 奥の壁の x 0.095〜0.345、床からの高さ 0.41〜0.81 */
+const winRect = { x0: 0.095, x1: 0.345, z0: 0.41, z1: 0.81 };
+const RAIN_DROPS = 22;
+const SNOW_FLAKES = 26;
+/** 雨粒の長さ（窓の高さに対する比率）と、雨・雪が落ちる速さ（窓の高さ/ミリ秒） */
+const RAIN_LEN = 0.14;
+const RAIN_SPEED = 0.0012;
+const SNOW_SPEED = 0.00012;
+
+/** 決定的な 0〜1 の疑似乱数（描画専用） */
+const frac = (i: number): number => (Math.imul(i + 1, 2654435761) >>> 0) / 4294967296;
+
+/** 窓の中の比率 (u, v)（左上が 0,0）の位置に、比率 (w, h) の塗りを置く */
+function winPatch(
+  ctx: CanvasRenderingContext2D,
+  u: number,
+  v: number,
+  w: number,
+  h: number,
+  c: string
+): void {
+  const { x0, x1, z0, z1 } = winRect;
+  wallRect(
+    ctx,
+    lerp(x0, x1, u),
+    lerp(x0, x1, u + w),
+    lerp(z1, z0, v + h),
+    lerp(z1, z0, v),
+    c
+  );
+}
+
+/** 窓の外: 空の上に、季節の印（全体図と同じ格子）と、雨・雪の粒を描く。桟とカーテンはこのあとに重ねる */
+function drawWindowOutside(
+  ctx: CanvasRenderingContext2D,
+  s: GameState,
+  now: number
+): void {
+  for (const m of windowSeasonMarks(s))
+    winPatch(
+      ctx,
+      m.x / WINDOW_COLS,
+      m.y / WINDOW_ROWS,
+      m.w / WINDOW_COLS,
+      m.h / WINDOW_ROWS,
+      m.color
+    );
+  if (s.weather === "rain")
+    for (let k = 0; k < RAIN_DROPS; k++) {
+      const v = (frac(k * 7 + 2) + now * RAIN_SPEED) % (1 - RAIN_LEN);
+      winPatch(ctx, frac(k * 5 + 1) * 0.97, v, 0.025, RAIN_LEN, "rgba(170,200,235,0.8)");
+    }
+  if (s.weather === "snow")
+    for (let k = 0; k < SNOW_FLAKES; k++) {
+      const v = (frac(k * 11 + 3) + now * SNOW_SPEED * (0.6 + frac(k * 3 + 4))) % 0.95;
+      const u = 0.02 + frac(k * 13 + 5) * 0.9 + Math.sin(now / 700 + k) * 0.03;
+      winPatch(ctx, u, v, 0.04, 0.05, "#ffffff");
+    }
+}
+
 function drawShell(
   ctx: CanvasRenderingContext2D,
+  s: GameState,
+  now: number,
   room: number,
   sky: string,
   ownerCurtain: string | null,
@@ -308,7 +371,8 @@ function drawShell(
   wallRect(ctx, 0, 1, 0, 0.05, shade(WALL, -30));
   // 窓（全体図と同じ位置。外は空の色）
   wallRect(ctx, 0.08, 0.36, 0.39, 0.83, "#6b4b32");
-  wallRect(ctx, 0.095, 0.345, 0.41, 0.81, sky);
+  wallRect(ctx, winRect.x0, winRect.x1, winRect.z0, winRect.z1, sky);
+  drawWindowOutside(ctx, s, now);
   wallRect(ctx, 0.218, 0.226, 0.41, 0.81, "#6b4b32");
   if (ownerCurtain) {
     wallRect(ctx, 0.095, 0.15, 0.41, 0.81, ownerCurtain);
@@ -516,7 +580,7 @@ export function drawCloseup(
     owner !== undefined &&
     occ.some((o) => o === owner && (o.act === "sleep" || o.act === "nap"));
 
-  drawShell(ctx, room, sky, owner?.look.curtain ?? null, packed);
+  drawShell(ctx, s, now, room, sky, owner?.look.curtain ?? null, packed);
   drawLamp(ctx, light === "fluorescent");
   drawDecorBack(ctx, s, room, acts);
   drawDecorFloor(ctx, s, room, acts);

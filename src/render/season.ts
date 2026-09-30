@@ -143,31 +143,53 @@ export function drawSeasonBack(
   drawTree(ctx, season, p, snowCover(s));
 }
 
-/** 窓の外に映る季節（花びら・落ち葉・窓枠の雪）。窓の左上 (x+7, y+9) の 18×13 の中 */
+/** 窓の外の格子の大きさ（全体図の窓の中身 18×13 ドット） */
+export const WINDOW_COLS = 18;
+export const WINDOW_ROWS = 13;
+
+/** 窓の格子上の印 1 つ（整数座標。左上が原点） */
+export interface WindowMark {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  color: string;
+}
+
+/** 窓の外に映る季節（花びら・落ち葉・入道雲・窓枠の雪）。18×13 の格子上の印を、塗る順に返す */
+export function windowSeasonMarks(s: GameState): WindowMark[] {
+  const { season, p } = seasonPhase(s);
+  const dots = (colors: string[], n: number): WindowMark[] =>
+    Array.from({ length: n }, (_, i) => ({
+      x: Math.floor(frac(i * 5 + 1) * 17),
+      y: Math.floor(frac(i * 5 + 2) * 11),
+      w: 1,
+      h: 1,
+      color: colors[i % colors.length]!,
+    }));
+  const marks: WindowMark[] =
+    season === "spring" && p > 0.25 && p < 0.95
+      ? dots(PINK, 5)
+      : season === "autumn"
+        ? dots(RED, 4)
+        : season === "summer"
+          ? [{ x: 12, y: 1, w: 4, h: 2, color: "#ffffff" }]
+          : [];
+  const snow = snowCover(s);
+  if (snow <= 0) return marks;
+  const h = Math.round(snow * 2) + 1;
+  return [...marks, { x: 0, y: WINDOW_ROWS - h, w: WINDOW_COLS, h, color: "#f4f8ff" }];
+}
+
+/** 全体図の窓に、窓の外の季節を写す。窓の左上は (x+7, y+9) */
 export function drawWindowSeason(
   ctx: CanvasRenderingContext2D,
   s: GameState,
   x: number,
   y: number
 ): void {
-  const { season, p } = seasonPhase(s);
-  const dots = (colors: string[], n: number) => {
-    for (let i = 0; i < n; i++)
-      P(
-        ctx,
-        x + 7 + Math.floor(frac(i * 5 + 1) * 17),
-        y + 9 + Math.floor(frac(i * 5 + 2) * 11),
-        1,
-        1,
-        colors[i % colors.length]!
-      );
-  };
-  if (season === "spring" && p > 0.25 && p < 0.95) dots(PINK, 5);
-  else if (season === "autumn") dots(RED, 4);
-  else if (season === "summer") P(ctx, x + 19, y + 10, 4, 2, "#ffffff");
-  const snow = snowCover(s);
-  if (snow > 0)
-    P(ctx, x + 7, y + 21 - Math.round(snow * 2), 18, Math.round(snow * 2) + 1, "#f4f8ff");
+  for (const m of windowSeasonMarks(s))
+    P(ctx, x + 7 + m.x, y + 9 + m.y, m.w, m.h, m.color);
 }
 
 /** 雪かきを始める朝の時間帯（時） */
