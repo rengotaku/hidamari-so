@@ -232,7 +232,8 @@ body {
   color: #1f6b5f;
   font-weight: 700;
 }
-@media (max-width: 760px) {
+/* 縦積みは縦長の狭い画面だけ。横向きのスマホは左右2列のままにして日誌の高さを確保する */
+@media (max-width: 760px) and (orientation: portrait) {
   .game {
     gap: 6px;
     padding: 6px 10px 8px;
