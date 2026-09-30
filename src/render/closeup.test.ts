@@ -1,5 +1,13 @@
 import { describe, it, expect } from "vitest";
-import { createRng, newGame, step, type GameState } from "@/sim";
+import {
+  DAY_MIN,
+  createRng,
+  newGame,
+  step,
+  type GameState,
+  type Season,
+  type Weather,
+} from "@/sim";
 import {
   closeupBubbleAnchor,
   closeupPlacements,
@@ -278,5 +286,178 @@ describe("#36: 大写しの行動中の色替え", () => {
     const phone = fillsWith("phone");
     expect(n(stream, "#ffffff") - n(phone, "#ffffff")).toBe(4);
     expect(n(phone, "#bbbbbb") - n(stream, "#bbbbbb")).toBe(4);
+  });
+});
+
+/** 塗りを (色, 頂点の列) で呼ばれた順に記録する偽 Canvas。polygon の fill も fillRect も拾う */
+function fillLog() {
+  type Fill = { color: string; pts: Array<[number, number]> };
+  const log: Fill[] = [];
+  let path: Array<[number, number]> = [];
+  const state: Record<string, unknown> = {};
+  const gradient = { addColorStop: () => undefined };
+  const ctx = new Proxy(state, {
+    get(t, prop: string) {
+      if (prop === "createRadialGradient") return () => gradient;
+      if (prop === "beginPath") return () => void (path = []);
+      if (prop === "moveTo" || prop === "lineTo")
+        return (x: number, y: number) => void path.push([x, y]);
+      if (prop === "fill")
+        return () => void log.push({ color: String(t.fillStyle), pts: path });
+      if (prop === "fillRect")
+        return (x: number, y: number, w: number, h: number) =>
+          void log.push({
+            color: String(t.fillStyle),
+            pts: [
+              [x, y],
+              [x + w, y + h],
+            ],
+          });
+      if (typeof t[prop] === "undefined") return () => undefined;
+      return t[prop];
+    },
+    set(t, prop: string, value) {
+      t[prop] = value;
+      return true;
+    },
+  }) as unknown as CanvasRenderingContext2D;
+  return { ctx, log };
+}
+
+const RAIN = "rgba(170,200,235,0.8)";
+const PETALS = ["#f4b6c8", "#f9d3de", "#eea0b8"];
+const SNOW_COVER = "#f4f8ff";
+const FLAKE = "#ffffff";
+/** 窓の外の範囲（奥の壁の 0.095〜0.345 × 床からの高さ 0.41〜0.81 を、画面の座標にしたもの） */
+const WIN = {
+  x0: 72 + 176 * 0.095,
+  x1: 72 + 176 * 0.345,
+  y0: 112 - 96 * 0.81,
+  y1: 112 - 96 * 0.41,
+};
+
+const FIRST_DAY: Record<Season, number> = {
+  spring: 1,
+  tsuyu: 5,
+  summer: 8,
+  autumn: 12,
+  winter: 16,
+};
+
+/** 季節 season の offset 日目・正午の状態。雪の日数は snowDays で固定する */
+function inSeason(
+  season: Season,
+  offset: number,
+  weather: Weather,
+  snowDays = 0
+): GameState {
+  const s = newGame(createRng(9));
+  return {
+    ...s,
+    t: (FIRST_DAY[season] + offset - 1) * DAY_MIN + 12 * 60,
+    weather,
+    snowDays,
+  };
+}
+
+/** 部屋を空室にして、窓の外の季節と天気以外に同じ色の塗りが混ざらないようにする */
+function vacantRoom(s: GameState, room: number): GameState {
+  const c = structuredClone(s);
+  c.res = c.res.filter((r) => r.room !== room);
+  c.rooms[room] = null;
+  c.vacancies = [];
+  c.decor[room] = { items: [], boxes: 0 };
+  return c;
+}
+
+const fillsOf = (s: GameState, room: number, now: number, colors: string[]) => {
+  const { ctx, log } = fillLog();
+  drawCloseup(ctx, s, room, now);
+  return log.filter((f) => colors.includes(f.color));
+};
+
+describe("C6: 大写しの窓の外（季節と天気）", () => {
+  const room = newGame(createRng(9)).res[0]!.room;
+
+  it("C6-1: 雨の日は雨の塗りが 1 件以上あり、曇りの日は 0 件", () => {
+    const rain = vacantRoom(inSeason("summer", 1, "rain"), room);
+    const cloudy = vacantRoom(inSeason("summer", 1, "cloudy"), room);
+    expect(fillsOf(rain, room, 0, [RAIN]).length).toBeGreaterThanOrEqual(1);
+    expect(fillsOf(cloudy, room, 0, [RAIN]).length).toBe(0);
+  });
+
+  it("C6-2: now=0 と now=500 で雨の頂点の並びが違う（雨が動く）", () => {
+    const s = vacantRoom(inSeason("summer", 1, "rain"), room);
+    const a = fillsOf(s, room, 0, [RAIN]).map((f) => f.pts);
+    const b = fillsOf(s, room, 500, [RAIN]).map((f) => f.pts);
+    expect(a.length).toBeGreaterThan(0);
+    expect(b).not.toEqual(a);
+  });
+
+  it("C6-3: 春（進み具合 0.25〜0.95）には花びらの色の塗りがあり、夏には無い", () => {
+    const spring = vacantRoom(inSeason("spring", 1, "sunny"), room);
+    const summer = vacantRoom(inSeason("summer", 1, "sunny"), room);
+    expect(fillsOf(spring, room, 0, PETALS).length).toBeGreaterThanOrEqual(1);
+    expect(fillsOf(summer, room, 0, PETALS).length).toBe(0);
+  });
+
+  it("C6-4: 冬で積雪があれば窓枠の雪の塗りがあり、春には無い", () => {
+    const winter = vacantRoom(inSeason("winter", 1, "sunny", 2), room);
+    const spring = vacantRoom(inSeason("spring", 1, "sunny"), room);
+    expect(fillsOf(winter, room, 0, [SNOW_COVER]).length).toBeGreaterThanOrEqual(1);
+    expect(fillsOf(spring, room, 0, [SNOW_COVER]).length).toBe(0);
+  });
+
+  it("C6-5: 雪の日は雪の粒（白）の塗りが 1 件以上ある", () => {
+    const snow = vacantRoom(inSeason("winter", 1, "snow", 2), room);
+    expect(fillsOf(snow, room, 0, [FLAKE]).length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("C6-6: 季節と天気の塗りの頂点は、すべて窓の範囲（誤差 1px）に収まる", () => {
+    const states: Array<[GameState, string[]]> = [
+      [inSeason("summer", 1, "rain"), [RAIN]],
+      [inSeason("spring", 1, "sunny"), PETALS],
+      [inSeason("autumn", 1, "sunny"), ["#d9893a", "#c2502f", "#e0b040"]],
+      [inSeason("winter", 1, "snow", 3), [SNOW_COVER, FLAKE]],
+    ];
+    for (const [s, colors] of states)
+      for (const now of [0, 500, 1777, 9000]) {
+        const fills = fillsOf(vacantRoom(s, room), room, now, colors);
+        expect(fills.length).toBeGreaterThan(0);
+        for (const f of fills)
+          for (const [x, y] of f.pts) {
+            expect(x).toBeGreaterThanOrEqual(WIN.x0 - 1);
+            expect(x).toBeLessThanOrEqual(WIN.x1 + 1);
+            expect(y).toBeGreaterThanOrEqual(WIN.y0 - 1);
+            expect(y).toBeLessThanOrEqual(WIN.y1 + 1);
+          }
+      }
+  });
+
+  it("C6-7: 空室の貼り紙も、住人のいる部屋のカーテンも、雨の塗りより後に描かれる", () => {
+    const rain = inSeason("summer", 1, "rain");
+    const inWindow = (f: { pts: Array<[number, number]> }) =>
+      f.pts.every(
+        ([x, y]) =>
+          x >= WIN.x0 - 1 && x <= WIN.x1 + 1 && y >= WIN.y0 - 1 && y <= WIN.y1 + 1
+      );
+
+    const vacant = fillLog();
+    drawCloseup(vacant.ctx, vacantRoom(rain, room), room, 0);
+    const lastRain = vacant.log.map((f) => f.color).lastIndexOf(RAIN);
+    const poster = vacant.log.findIndex((f) => f.color === "#f4f0e4" && inWindow(f));
+    expect(lastRain).toBeGreaterThanOrEqual(0);
+    expect(poster).toBeGreaterThan(lastRain);
+
+    const home = structuredClone(rain);
+    const owner = home.res.find((r) => r.id === home.rooms[room])!;
+    const lived = fillLog();
+    drawCloseup(lived.ctx, home, room, 0);
+    const lastRain2 = lived.log.map((f) => f.color).lastIndexOf(RAIN);
+    const curtain = lived.log.findIndex(
+      (f) => f.color === owner.look.curtain && inWindow(f)
+    );
+    expect(lastRain2).toBeGreaterThanOrEqual(0);
+    expect(curtain).toBeGreaterThan(lastRain2);
   });
 });
