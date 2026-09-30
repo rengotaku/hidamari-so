@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 
 
 jobs:
@@ -50,30 +51,35 @@ jobs:
 
   deploy:
     needs: test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    concurrency:
+      group: cloudflare-production
+      cancel-in-progress: false
     env:
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      # アカウント ID は秘密ではない
+      CLOUDFLARE_ACCOUNT_ID: 8c8a65303124de06011e3cdd16926f12
 
     steps:
-      - name: Check Cloudflare secrets
-        id: secrets
+      - name: Check Cloudflare token
+        id: token
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
-          if [ -n "$CLOUDFLARE_API_TOKEN" ] && [ -n "$CLOUDFLARE_ACCOUNT_ID" ]; then
+          if [ -n "$CLOUDFLARE_API_TOKEN" ]; then
             echo "configured=true" >> "$GITHUB_OUTPUT"
           else
             echo "configured=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID が未登録のため、Cloudflare Pages へのデプロイをスキップしました"
+            echo "::warning::CLOUDFLARE_API_TOKEN が未登録のため、Cloudflare Pages へのデプロイをスキップしました"
           fi
 
       - uses: actions/checkout@v6
-        if: steps.secrets.outputs.configured == 'true'
+        if: steps.token.outputs.configured == 'true'
 
       - name: Use Node.js
-        if: steps.secrets.outputs.configured == 'true'
+        if: steps.token.outputs.configured == 'true'
         uses: actions/setup-node@v6
         with:
           node-version-file: .node-version
@@ -81,17 +87,47 @@ jobs:
           cache-dependency-path: package-lock.json
 
       - name: Compose shared-react-ui
-        if: steps.secrets.outputs.configured == 'true'
+        if: steps.token.outputs.configured == 'true'
         run: make compose-ui
 
       - name: Install dependencies
-        if: steps.secrets.outputs.configured == 'true'
+        if: steps.token.outputs.configured == 'true'
         run: npm ci
 
       - name: Build
-        if: steps.secrets.outputs.configured == 'true'
+        if: steps.token.outputs.configured == 'true'
         run: npm run build
 
+      - name: Check this commit is still the head of main
+        id: fresh
+        if: steps.token.outputs.configured == 'true'
+        run: |
+          HEAD_SHA=$(git ls-remote origin refs/heads/main | cut -f1)
+          if [ -z "$HEAD_SHA" ]; then
+            echo "::error::origin/main の先頭を取得できませんでした"
+            exit 1
+          fi
+          if [ "$HEAD_SHA" = "$GITHUB_SHA" ]; then
+            echo "latest=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "latest=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::main がより新しいコミット($HEAD_SHA)に進んでいるため、古い $GITHUB_SHA のデプロイをスキップしました"
+          fi
+
+      - name: Create Pages project if missing
+        if: steps.token.outputs.configured == 'true' && steps.fresh.outputs.latest == 'true'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          LIST=$(npx wrangler pages project list)
+          if printf '%s\n' "$LIST" | grep -q 'hidamari-so'; then
+            echo "Pages project hidamari-so already exists"
+          else
+            npx wrangler pages project create hidamari-so --production-branch=main
+          fi
+
       - name: Deploy to Cloudflare Pages
-        if: steps.secrets.outputs.configured == 'true'
+        if: steps.token.outputs.configured == 'true' && steps.fresh.outputs.latest == 'true'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: npx wrangler pages deploy dist --project-name=hidamari-so --branch=main

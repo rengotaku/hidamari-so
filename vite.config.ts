@@ -19,8 +19,9 @@ export default defineConfig({
         globPatterns: ["**/*.{js,css,html,svg,png}"],
         navigateFallback: "/index.html",
         cleanupOutdatedCaches: true,
-        skipWaiting: true,
-        clientsClaim: true,
+        // 新しい版は古い画面がすべて閉じた後（次回起動）に有効にする。読み込み途中で版が混ざらない
+        skipWaiting: false,
+        clientsClaim: false,
         // 日本語ドットフォントを Google Fonts から取得している。2回目以降はオフラインでも表示できるようにする
         runtimeCaching: [
           {

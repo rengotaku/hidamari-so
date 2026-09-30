@@ -30,12 +30,7 @@ make ci        # lint + format-check + test + build
 ## デプロイ
 
 `main` へのマージで、CI（`.github/workflows/ci.yml`）が Cloudflare Pages（プロジェクト名 `hidamari-so`）へデプロイします。
-GitHub リポジトリの Settings → Secrets and variables → Actions に、次の 2 つを登録してください。
+必要なシークレットは `CLOUDFLARE_API_TOKEN` だけです。GitHub リポジトリの Settings → Secrets and variables → Actions に、Cloudflare Pages の編集権限を持つ API トークンを登録してください（アカウント ID は秘密ではないためワークフローに直接書いてあります）。
 
-| 名前 | 内容 |
-| --- | --- |
-| `CLOUDFLARE_API_TOKEN` | Cloudflare Pages の編集権限を持つ API トークン |
-| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare のアカウント ID |
-
-どちらかが未登録の間、デプロイジョブは失敗にならず、警告を出してスキップします。
-初回のみ、Pages プロジェクトを作成する必要があります（`make pages-login` → `make pages-create`）。
+未登録の間、デプロイジョブは失敗にならず、警告を出してスキップします。Pages プロジェクトが無ければ、デプロイ前に自動で作成します。
+デプロイは `test` ジョブの成功後にだけ走り、その時点で `main` の先頭でないコミットはスキップされます。

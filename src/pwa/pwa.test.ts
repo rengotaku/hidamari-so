@@ -1,4 +1,6 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { manifest } from "./manifest";
 import { registerServiceWorker } from "./register";
 
@@ -41,5 +43,13 @@ describe("registerServiceWorker", () => {
     ).not.toThrow();
     await Promise.resolve();
     expect(register).toHaveBeenCalledWith("/sw.js", { scope: "/" });
+  });
+});
+
+describe("vite.config の service worker 更新方針", () => {
+  it("skipWaiting / clientsClaim を無効にし、次回起動で切り替える", () => {
+    const src = readFileSync(resolve(__dirname, "../../vite.config.ts"), "utf8");
+    expect(src).toMatch(/skipWaiting:\s*false/);
+    expect(src).toMatch(/clientsClaim:\s*false/);
   });
 });
