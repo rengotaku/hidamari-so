@@ -39,5 +39,19 @@ export { stepPath } from "./behavior";
 export { JOBS, TRAITS, ACTS } from "./data";
 export { planDecor, newLandlord, SETTLE_MIN, START_BOXES } from "./decor";
 export { CLEAR_MIN } from "./landlord";
-export { composeEntry, bondOf, DEFAULT_AFFINITY } from "./storylets";
+export {
+  composeEntry,
+  composeParts,
+  bondOf,
+  DEFAULT_AFFINITY,
+  type EntryPart,
+} from "./storylets";
+export {
+  ANNIVERSARY_AGE,
+  decideBuyout,
+  isBuyoutPending,
+  isEnded,
+  type BuyoutChoice,
+} from "./buyout";
+export { nightScenes, NIGHT_SCENE_HOURS, type NightScene } from "./night";
 export type * from "./types";

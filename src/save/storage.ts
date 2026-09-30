@@ -79,7 +79,8 @@ export interface OpenedGame {
 /** 保存があれば続きから、無ければ seed から新しいゲームを始める */
 export function loadOrNew(storage: KeyValueStorage, seed: number): OpenedGame {
   const loaded = loadGame(storage);
-  if (loaded)
+  // 売って結末を迎えた保存は続きが無いので、開き直したら新しいゲームを始める
+  if (loaded && loaded.state.buyout.phase !== "sold")
     return {
       state: loaded.state,
       rng: createRng(loaded.rngState),

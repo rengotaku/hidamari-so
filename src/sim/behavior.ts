@@ -307,6 +307,10 @@ function arrive(c: Ctx, r: Resident): void {
         "新作のスナック出てた",
       ])
     );
+  } else if (p === "hospital") {
+    r.mood = clamp(r.mood + 5, 0, 100);
+    r.hunger = Math.max(r.hunger, 40);
+    say(c, r, pick(c.rng, ["ただいま…（少し痩せた）", "病院食、味がしなかった"]));
   } else if (p === "sento") {
     r.bathed = true;
     r.money = Math.max(0, r.money - 550);

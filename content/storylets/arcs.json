@@ -8,10 +8,7 @@
     "effects": [
       {
         "type": "book",
-        "next": [
-          { "id": "ronin-mock-good", "weight": 45 },
-          { "id": "ronin-mock-bad", "weight": 55 }
-        ],
+        "next": [{ "id": "ronin-mock-good", "weight": 45 }, { "id": "ronin-mock-bad", "weight": 55 }],
         "afterMinutes": [1440, 1440]
       }
     ]
@@ -25,7 +22,15 @@
     "effects": [
       { "type": "say", "role": "a", "text": "丸…丸がついた…" },
       { "type": "adjust", "role": "a", "stat": "mood", "delta": 50 },
-      { "type": "book", "next": [{ "id": "ronin-mock-eve" }], "afterMinutes": [14400, 21600] }
+      {
+        "type": "book",
+        "next": [
+          { "id": "ronin-mock-eve", "weight": 6 },
+          { "id": "ronin-exam-pass", "weight": 3 },
+          { "id": "ronin-exam-school", "weight": 1 }
+        ],
+        "afterMinutes": [14400, 21600]
+      }
     ]
   },
   {
@@ -37,7 +42,11 @@
     "texts": ["{a}さん、模試の結果が返ってきた。{how}。隣の人が黙ってカップ麺を置いていった"],
     "effects": [
       { "type": "adjust", "role": "a", "stat": "mood", "delta": -30 },
-      { "type": "book", "next": [{ "id": "ronin-mock-eve" }], "afterMinutes": [14400, 21600] }
+      {
+        "type": "book",
+        "next": [{ "id": "ronin-mock-eve", "weight": 7 }, { "id": "ronin-exam-fail", "weight": 3 }],
+        "afterMinutes": [14400, 21600]
+      }
     ]
   },
   {
@@ -50,10 +59,7 @@
       { "type": "adjust", "role": "a", "stat": "mood", "delta": 20 },
       {
         "type": "book",
-        "next": [
-          { "id": "band-deal-fell-through", "weight": 7 },
-          { "id": "band-deal-toast", "weight": 3 }
-        ],
+        "next": [{ "id": "band-deal-fell-through", "weight": 7 }, { "id": "band-deal-toast", "weight": 3 }],
         "afterMinutes": [4320, 4320]
       }
     ]
@@ -64,7 +70,10 @@
     "trigger": "book",
     "roles": { "a": { "archetype": ["band"] } },
     "texts": ["{a}さんのバンド、デビューの話が本決まりになった。祝杯は発泡酒だった"],
-    "effects": [{ "type": "adjust", "role": "a", "stat": "mood", "delta": 30 }]
+    "effects": [
+      { "type": "adjust", "role": "a", "stat": "mood", "delta": 30 },
+      { "type": "book", "next": [{ "id": "farewell-party" }], "afterMinutes": [2880, 4320] }
+    ]
   },
   {
     "id": "band-deal-fell-through",
@@ -76,10 +85,7 @@
       { "type": "adjust", "role": "a", "stat": "mood", "delta": -25 },
       {
         "type": "book",
-        "next": [
-          { "id": "band-breakup", "weight": 6 },
-          { "id": "band-scout", "weight": 4 }
-        ],
+        "next": [{ "id": "band-breakup", "weight": 6 }, { "id": "band-scout", "weight": 4 }],
         "afterMinutes": [12960, 12960]
       }
     ]
@@ -102,7 +108,260 @@
     "texts": ["{a}さん、係長になった。お祝いに自分で自分に寿司を買った"],
     "effects": [
       { "type": "adjust", "role": "a", "stat": "money", "delta": 30000 },
-      { "type": "adjust", "role": "a", "stat": "mood", "delta": 15 }
+      { "type": "adjust", "role": "a", "stat": "mood", "delta": 15 },
+      { "type": "book", "next": [{ "id": "salaryman-transfer" }], "afterMinutes": [14400, 28800] }
     ]
+  },
+  {
+    "id": "ronin-exam-pass",
+    "kind": "arc",
+    "trigger": "book",
+    "once": true,
+    "roles": { "a": { "archetype": ["ronin"] } },
+    "texts": ["{a}さんの合格発表の日。掲示板の前で膝から崩れ落ち、その足で全員にカップ麺をおごった"],
+    "effects": [
+      { "type": "say", "role": "a", "text": "受かった…受かった…" },
+      { "type": "adjust", "role": "a", "stat": "mood", "delta": 60 },
+      { "type": "book", "next": [{ "id": "farewell-party" }], "afterMinutes": [1440, 2880] }
+    ]
+  },
+  {
+    "id": "ronin-exam-school",
+    "kind": "arc",
+    "trigger": "book",
+    "once": true,
+    "roles": { "a": { "archetype": ["ronin"] } },
+    "texts": ["{a}さん、志望校は落ちたが、専門学校の合格通知が届いた。「手に職だ」と自分に言い聞かせている"],
+    "effects": [
+      { "type": "adjust", "role": "a", "stat": "mood", "delta": 20 },
+      { "type": "changeJob", "role": "a", "archetype": "senmon" }
+    ]
+  },
+  {
+    "id": "ronin-exam-fail",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": { "a": { "archetype": ["ronin"] } },
+    "texts": ["{a}さんの合格発表。番号は、なかった。その夜は誰も廊下を通らなかった"],
+    "effects": [
+      { "type": "adjust", "role": "a", "stat": "mood", "delta": -40 },
+      {
+        "type": "book",
+        "next": [{ "id": "ronin-mock-eve", "weight": 6 }, { "id": "go-home", "weight": 4 }],
+        "afterMinutes": [2880, 5760]
+      }
+    ]
+  },
+  {
+    "id": "mangaka-pitch",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": { "a": { "archetype": ["mangaka"] } },
+    "texts": ["{a}さん、持ち込みで十八回目の編集者の前に座った。帰り道の缶コーヒーは無糖だった"],
+    "effects": [
+      {
+        "type": "book",
+        "next": [{ "id": "mangaka-rejected", "weight": 7 }, { "id": "mangaka-serial", "weight": 3 }],
+        "afterMinutes": [4320, 4320]
+      }
+    ]
+  },
+  {
+    "id": "mangaka-rejected",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": { "a": { "archetype": ["mangaka"] } },
+    "texts": ["{a}さんの原稿に、赤ペンで「キャラが薄い」と書かれて戻ってきた。本人は「濃くすると描けない」と反論している"],
+    "effects": [
+      { "type": "adjust", "role": "a", "stat": "mood", "delta": -20 },
+      { "type": "book", "next": [{ "id": "mangaka-pitch" }], "afterMinutes": [10080, 20160] }
+    ]
+  },
+  {
+    "id": "mangaka-serial",
+    "kind": "arc",
+    "trigger": "book",
+    "once": true,
+    "roles": { "a": { "archetype": ["mangaka"] } },
+    "texts": ["{a}さんの連載が決まった。担当は「月に三十ページ」と言っていた。{a}さんは三日ぶりに風呂に入った"],
+    "effects": [
+      { "type": "adjust", "role": "a", "stat": "mood", "delta": 40 },
+      { "type": "adjust", "role": "a", "stat": "money", "delta": 50000 },
+      { "type": "say", "role": "a", "text": "連載…連載だ…" },
+      { "type": "book", "next": [{ "id": "farewell-party" }], "afterMinutes": [14400, 28800] }
+    ]
+  },
+  {
+    "id": "pachinko-slump",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": { "a": { "archetype": ["pachinko"] } },
+    "texts": ["{a}さんの財布には、パチンコ店のポイントカードが二十枚。全部、ポイントが残っている"],
+    "effects": [
+      { "type": "adjust", "role": "a", "stat": "mood", "delta": -10 },
+      {
+        "type": "book",
+        "next": [{ "id": "pachinko-quit", "weight": 3 }, { "id": "pachinko-slump", "weight": 7 }],
+        "afterMinutes": [7200, 14400]
+      }
+    ]
+  },
+  {
+    "id": "pachinko-quit",
+    "kind": "arc",
+    "trigger": "book",
+    "once": true,
+    "roles": { "a": { "archetype": ["pachinko"] } },
+    "texts": ["{a}さんがパチンコから足を洗った。ポイントカードは全部ゴミ箱へ。今度は夜のコンビニで働いている"],
+    "effects": [
+      { "type": "adjust", "role": "a", "stat": "mood", "delta": 10 },
+      { "type": "say", "role": "a", "text": "もう、やめた" },
+      { "type": "changeJob", "role": "a", "archetype": "konbini" }
+    ]
+  },
+  {
+    "id": "youtuber-viral",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": { "a": { "archetype": ["youtuber"] } },
+    "numbers": { "n": [2, 9] },
+    "texts": ["{a}さんの動画が一本だけ伸びた。再生回数は{n}万回。コメント欄の半分は、本人が書いたものだ"],
+    "effects": [
+      { "type": "adjust", "role": "a", "stat": "mood", "delta": 35 },
+      { "type": "adjust", "role": "a", "stat": "money", "delta": 80000 },
+      { "type": "say", "role": "a", "text": "見て！見て！" },
+      {
+        "type": "book",
+        "next": [{ "id": "youtuber-fade", "weight": 7 }, { "id": "youtuber-upgrade", "weight": 3 }],
+        "afterMinutes": [2880, 7200]
+      }
+    ]
+  },
+  {
+    "id": "youtuber-fade",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": { "a": { "archetype": ["youtuber"] } },
+    "texts": ["{a}さんの動画の熱が冷めた。再生回数は、また身内だけに戻った"],
+    "effects": [
+      { "type": "adjust", "role": "a", "stat": "mood", "delta": -15 },
+      { "type": "book", "next": [{ "id": "youtuber-viral" }], "afterMinutes": [14400, 28800] }
+    ]
+  },
+  {
+    "id": "youtuber-upgrade",
+    "kind": "arc",
+    "trigger": "book",
+    "once": true,
+    "roles": { "a": { "archetype": ["youtuber"] } },
+    "texts": ["{a}さん、広告収入で駅前のマンションを契約した。音を出しても怒られない部屋だそうだ"],
+    "effects": [
+      { "type": "adjust", "role": "a", "stat": "mood", "delta": 25 },
+      { "type": "book", "next": [{ "id": "farewell-party" }], "afterMinutes": [1440, 2880] }
+    ]
+  },
+  {
+    "id": "student-credits",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": { "a": { "archetype": ["student"] } },
+    "texts": ["{a}さんのところに、成績通知が届いた。卒業に必要な数の、三分の一だったらしい"],
+    "effects": [
+      { "type": "adjust", "role": "a", "stat": "mood", "delta": -10 },
+      {
+        "type": "book",
+        "next": [{ "id": "student-credits", "weight": 6 }, { "id": "student-graduate", "weight": 3 }],
+        "afterMinutes": [10080, 20160]
+      }
+    ]
+  },
+  {
+    "id": "student-graduate",
+    "kind": "arc",
+    "trigger": "book",
+    "once": true,
+    "roles": { "a": { "archetype": ["student"] } },
+    "texts": ["{a}さんの卒業が決まった。大学八年目。ゼミの教授が泣いていた。{a}さんは就職先を探し始めた"],
+    "effects": [
+      { "type": "adjust", "role": "a", "stat": "mood", "delta": 40 },
+      { "type": "say", "role": "a", "text": "そつぎょう…できる…" },
+      { "type": "changeJob", "role": "a", "archetype": "salaryman" }
+    ]
+  },
+  {
+    "id": "senmon-term",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": { "a": { "archetype": ["senmon"] } },
+    "texts": ["{a}さんの専門学校の課題が、提出期限の二分前に終わった。本人は「いつもこう」と言っている"],
+    "effects": [
+      { "type": "adjust", "role": "a", "stat": "mood", "delta": 5 },
+      {
+        "type": "book",
+        "next": [{ "id": "senmon-term", "weight": 6 }, { "id": "senmon-graduate", "weight": 4 }],
+        "afterMinutes": [10080, 20160]
+      }
+    ]
+  },
+  {
+    "id": "senmon-graduate",
+    "kind": "arc",
+    "trigger": "book",
+    "once": true,
+    "roles": { "a": { "archetype": ["senmon"] } },
+    "texts": ["{a}さんが専門学校を卒業した。内定先は「まだ言えない」らしい。卒業証書は冷蔵庫の扉に貼られた"],
+    "effects": [
+      { "type": "adjust", "role": "a", "stat": "mood", "delta": 35 },
+      { "type": "book", "next": [{ "id": "farewell-party" }], "afterMinutes": [1440, 2880] }
+    ]
+  },
+  {
+    "id": "salaryman-transfer",
+    "kind": "arc",
+    "trigger": "book",
+    "once": true,
+    "roles": { "a": { "archetype": ["salaryman"] } },
+    "texts": ["{a}さんに転勤の辞令が出た。紙を二度見て、三度見て、部屋の電気を消した"],
+    "effects": [
+      { "type": "adjust", "role": "a", "stat": "mood", "delta": -15 },
+      { "type": "say", "role": "a", "text": "…また引っ越しか" },
+      { "type": "book", "next": [{ "id": "farewell-party" }], "afterMinutes": [2880, 5760] }
+    ]
+  },
+  {
+    "id": "oldman-fall-ill",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": { "a": { "archetype": ["oldman"], "inRoom": true } },
+    "texts": ["{a}さんが倒れ、救急車で運ばれた。廊下に集まった住人は、サイレンが聞こえなくなるまで黙っていた"],
+    "effects": [
+      { "type": "away", "role": "a", "minutes": [7200, 9000] },
+      { "type": "book", "next": [{ "id": "oldman-discharge" }], "afterMinutes": [10800, 10800] }
+    ]
+  },
+  {
+    "id": "oldman-discharge",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": { "a": { "archetype": ["oldman"], "inRoom": true } },
+    "texts": ["{a}さんが退院した。玄関の前に、誰かが置いた花が一日で増えた"],
+    "effects": [
+      { "type": "adjust", "role": "a", "stat": "mood", "delta": 10 },
+      { "type": "say", "role": "a", "text": "ただいま。お世話をかけました" },
+      {
+        "type": "book",
+        "next": [{ "id": "oldman-fall-ill", "weight": 6 }, { "id": "oldman-care-home", "weight": 1 }],
+        "afterMinutes": [43200, 86400]
+      }
+    ]
+  },
+  {
+    "id": "oldman-care-home",
+    "kind": "arc",
+    "trigger": "book",
+    "once": true,
+    "roles": { "a": { "archetype": ["oldman"] } },
+    "texts": ["{a}さんが介護施設に移ることになった。管理人の猫が、最後の日まで膝から動かなかった"],
+    "effects": [{ "type": "book", "next": [{ "id": "farewell-party" }], "afterMinutes": [1440, 2880] }]
   }
 ]

@@ -1,0 +1,74 @@
+[
+  {
+    "id": "welcome-party",
+    "kind": "relation",
+    "trigger": "book",
+    "when": { "hours": [19, 23] },
+    "roles": { "a": { "inRoom": true } },
+    "texts": ["{a}さんの歓迎会が、本人の部屋で勝手に始まった。主役より先に、隣の住人が酔いつぶれた", "{a}さんの歓迎会。誰かが持ってきた一升瓶は、いつのまにか空になっていた"],
+    "effects": [{ "type": "party", "bond": 8, "mood": 8 }, { "type": "say", "role": "a", "text": "あの…ここ、私の部屋です…" }]
+  },
+  {
+    "id": "farewell-party",
+    "kind": "relation",
+    "trigger": "book",
+    "when": { "hours": [18, 23] },
+    "roles": { "a": { "inRoom": true } },
+    "texts": ["{a}さんの送別会が、本人の部屋で勝手に始まった。主役が一番泣いた", "{a}さんの送別会。荷造り途中の段ボールが、そのままテーブルになった"],
+    "effects": [
+      { "type": "party", "bond": 6, "mood": 6 },
+      { "type": "say", "role": "a", "text": "みんな、ありがとう…" },
+      { "type": "book", "next": [{ "id": "moveout-good" }], "afterMinutes": [600, 1200] }
+    ]
+  },
+  {
+    "id": "moveout-good",
+    "kind": "relation",
+    "trigger": "book",
+    "logKind": "move",
+    "roles": { "a": {} },
+    "texts": ["{a}さんが引っ越していった。{room}の表札が外され、ドアに空室の貼り紙が貼られた", "{a}さん、旅立ちの朝。見送る人はいなかったが、廊下に缶コーヒーが置いてあった"],
+    "effects": [{ "type": "moveOut", "role": "a" }]
+  },
+  {
+    "id": "go-home",
+    "kind": "relation",
+    "trigger": "book",
+    "logKind": "move",
+    "roles": { "a": {} },
+    "texts": ["{a}さんは実家に帰ることにした。親が駅まで迎えに来ていた", "{a}さんが実家に帰った。荷物は段ボールが二つ。残りは「どうせ捨てる」そうだ"],
+    "effects": [{ "type": "moveOut", "role": "a" }]
+  },
+  {
+    "id": "homesick",
+    "kind": "relation",
+    "trigger": "hour",
+    "cooldownDays": 6,
+    "chance": 0.15,
+    "weight": 0.4,
+    "when": { "hours": [18, 24] },
+    "roles": { "a": { "mood": { "max": 25 }, "stayDays": { "min": 6 }, "inRoom": true } },
+    "texts": ["{a}さん、母親からの電話のあと、しばらく黙り込んでいた。{room}の電気は朝までついていた"],
+    "effects": [{ "type": "book", "next": [{ "id": "go-home" }], "afterMinutes": [1440, 2880] }]
+  },
+  {
+    "id": "runaway",
+    "kind": "happening",
+    "trigger": "hour",
+    "cooldownDays": 8,
+    "chance": 0.12,
+    "weight": 0.3,
+    "logKind": "move",
+    "when": { "hours": [2, 5] },
+    "roles": {
+      "a": {
+        "money": { "max": 1500 },
+        "stayDays": { "min": 8 },
+        "inRoom": true,
+        "trait": ["kinketsu", "mie", "sake"]
+      }
+    },
+    "texts": ["{a}さんが夜逃げした。{room}には「お世話になりました」の紙と、空き缶だけが残っていた"],
+    "effects": [{ "type": "moveOut", "role": "a" }]
+  }
+]

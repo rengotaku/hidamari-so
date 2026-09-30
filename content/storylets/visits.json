@@ -7,7 +7,8 @@
     "texts": ["{a}さんが{b}さんに醤油を借りに行った（今月三回目）"],
     "effects": [
       { "type": "say", "role": "a", "text": "醤油、貸してもらえます？" },
-      { "type": "say", "role": "b", "text": "またですか", "afterMinutes": 3 }
+      { "type": "say", "role": "b", "text": "またですか", "afterMinutes": 3 },
+      { "type": "bond", "delta": 1 }
     ]
   },
   {
@@ -20,7 +21,8 @@
       { "type": "say", "role": "a", "text": "聞いてくださいよ…" },
       { "type": "say", "role": "b", "text": "（この話三回目だ）", "afterMinutes": 3 },
       { "type": "adjust", "role": "a", "stat": "mood", "delta": 6 },
-      { "type": "adjust", "role": "b", "stat": "mood", "delta": -3 }
+      { "type": "adjust", "role": "b", "stat": "mood", "delta": -3 },
+      { "type": "bond", "delta": 2 }
     ]
   },
   {
@@ -86,7 +88,20 @@
     "texts": ["{a}さんが{b}さんのWi-Fiにただ乗りを始めた"],
     "effects": [
       { "type": "say", "role": "a", "text": "Wi-Fiのパスワード、教えてもらえたり…" },
-      { "type": "say", "role": "b", "text": "…いいですけど", "afterMinutes": 3 }
+      { "type": "say", "role": "b", "text": "…いいですけど", "afterMinutes": 3 },
+      { "type": "bond", "delta": 2 }
+    ]
+  },
+  {
+    "id": "visit-stand-talk",
+    "kind": "relation",
+    "trigger": "visit",
+    "roles": { "a": {}, "b": {} },
+    "texts": ["{a}さんと{b}さんが玄関先で小一時間の立ち話。内容は、二人とも覚えていない", "{a}さんが{b}さんと、天気の話だけで三十分話した"],
+    "effects": [
+      { "type": "bond", "delta": 3 },
+      { "type": "adjust", "role": "a", "stat": "mood", "delta": 3 },
+      { "type": "adjust", "role": "b", "stat": "mood", "delta": 3 }
     ]
   }
 ]

@@ -36,7 +36,7 @@ export interface Shift {
   pay: number | "gamble";
 }
 
-export type OutPurpose = "work" | "konbini" | "sento";
+export type OutPurpose = "work" | "konbini" | "sento" | "hospital";
 
 export interface Resident {
   id: number;
@@ -120,6 +120,9 @@ export type LogEntry =
       variant: Variant;
     };
 
+/** 出来事（storylet）の日誌の 1 行 */
+export type StoryletEntry = Extract<LogEntry, { storyletId: string }>;
+
 export interface Pending {
   id: number;
   text: string;
@@ -196,6 +199,31 @@ export interface Landlord {
   escort: Resident | null;
 }
 
+/** 出ていった住人の記録。日誌の名前を押すと、この内容が見られる */
+export interface Departed {
+  id: number;
+  sei: string;
+  mei: string;
+  age: number;
+  job: JobId;
+  traits: TraitId[];
+  /** 住んでいた部屋 */
+  room: number;
+  /** 入居した時刻 */
+  since: number;
+  /** 出ていった時刻 */
+  left: number;
+  /** その人が最後に登場した出来事（日誌の 1 行と同じ構造） */
+  last: StoryletEntry | null;
+}
+
+/** 築 50 年の買収提案。none → pending（記念日のダイアログ）→ sold（結末）/ declined（続行。二度と立たない） */
+export interface Buyout {
+  phase: "none" | "pending" | "declined" | "sold";
+  /** ダイアログに出す住人の一言（日誌に載せたのと同じ構造）。住人がいなければ null */
+  voice: StoryletEntry | null;
+}
+
 export interface GameState {
   /** 1 日目 0:00 からの経過分 */
   t: number;
@@ -220,4 +248,9 @@ export interface GameState {
   decor: RoomDecor[];
   vacancies: Vacancy[];
   landlord: Landlord;
+  /** 大家の所持金（内部だけ。マイナスになってもゲームは終わらない） */
+  landlordMoney: number;
+  /** 出ていった住人（古いものから捨てる） */
+  departed: Departed[];
+  buyout: Buyout;
 }

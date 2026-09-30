@@ -43,7 +43,14 @@ export const ACT_IDS = [
   "return",
   "out",
 ] as const;
-export const ROMANCE_STAGES = ["none", "crush", "dating", "married"] as const;
+/** 恋の段階: 関係なし / 片想い / 付き合っている / 同棲 / 結婚 */
+export const ROMANCE_STAGES = [
+  "none",
+  "crush",
+  "dating",
+  "cohabiting",
+  "married",
+] as const;
 export const STORYLET_KINDS = [
   "daily",
   "happening",
@@ -63,6 +70,7 @@ export const TRIGGERS = [
   "gamble-loss", // ギャンブルで大きく負けて帰ったとき（a=本人）
   "season-start", // 季節の最初の日（日付が変わった直後）
   "opening", // 新規ゲームの最初の 1 件
+  "rent-late", // 家賃が払えなかったとき（a=払えなかった住人）
   "book", // 他の出来事の結果（next）や人生の筋の入口から予約されたときだけ
 ] as const;
 /** 装飾の置き場所: 壁（奥の壁）/ 窓辺 / 床 / 天井 */
@@ -220,6 +228,12 @@ const roleCond = z.strictObject({
   /** 在住日数 */
   stayDays: openRange.optional(),
   money: openRange.optional(),
+  /** 年齢 */
+  age: openRange.optional(),
+  /** 気分（内部値 0〜100） */
+  mood: openRange.optional(),
+  /** 恋の相手が他にいない（関係が「なし」以外の相手がいない）か */
+  single: z.boolean().optional(),
   /** a との仲の良さ（0〜100、初期値 30）。b にだけ書ける */
   affinity: openRange.optional(),
   /** a との恋の段階のどれか。b にだけ書ける */
@@ -261,6 +275,14 @@ const effect = z.discriminatedUnion("type", [
     afterMinutes: intRange,
   }),
   z.strictObject({ type: z.literal("moveOut"), role }),
+  /** 大家の所持金を増減する（マイナスになってもゲームは終わらない） */
+  z.strictObject({ type: z.literal("purse"), delta: finite }),
+  /** role の住人が入院などで部屋を空ける（minutes 分のあと帰ってくる） */
+  z.strictObject({ type: z.literal("away"), role, minutes: intRange }),
+  /** role の住人が、もう一方の部屋へ移って一緒に住む（元の部屋は空室になる） */
+  z.strictObject({ type: z.literal("cohabit"), role }),
+  /** a の部屋に住人が集まって宴会になる。仲の良さ・気分を全員ぶん増減する */
+  z.strictObject({ type: z.literal("party"), bond: finite, mood: finite }),
   z.strictObject({ type: z.literal("changeJob"), role, archetype: id }),
   /** role の部屋に装飾を足す / 外す（decor.json の id） */
   z.strictObject({ type: z.literal("decorAdd"), role, decor: id }),
@@ -307,6 +329,7 @@ const NEEDS_A: Trigger[] = [
   "gamble-loss",
   "visit",
   "noise",
+  "rent-late",
 ];
 
 export const storyletSchema = z
@@ -326,6 +349,8 @@ export const storyletSchema = z
         hours: hourWindow.optional(),
         weather: z.array(z.enum(WEATHER_IDS)).min(1).optional(),
         season: z.array(z.enum(SEASON_IDS)).min(1).optional(),
+        /** ゲーム開始からの日数の範囲（設備が年月とともに増える出来事に使う） */
+        days: openRange.optional(),
       })
       .default({}),
     roles: z.strictObject({ a: roleCond.optional(), b: roleCond.optional() }).default({}),
@@ -364,8 +389,13 @@ export const storyletSchema = z
     for (const e of st.effects) {
       if ("role" in e && !st.roles[e.role])
         add(`effect が未宣言の役割 ${e.role} を使っている`);
-      if ((e.type === "bond" || e.type === "romance") && !(st.roles.a && st.roles.b))
+      if (
+        (e.type === "bond" || e.type === "romance" || e.type === "cohabit") &&
+        !(st.roles.a && st.roles.b)
+      )
         add(`${e.type} には roles.a と roles.b が要る`);
+      if (e.type === "party" && !st.roles.a)
+        add("party には roles.a（宴会を開く部屋の主）が要る");
     }
   });
 

@@ -7,13 +7,22 @@ import type {
   Storylet,
   Trigger,
 } from "@/content/schema";
-import { dayOf, hourOf, inWin } from "./clock";
+import { DAY_MIN, dayOf, hourOf, inWin } from "./clock";
+import { startLeave } from "./behavior";
 import { archOf, getRes, isAwake, pushLog, say, type Ctx } from "./context";
 import { addDecor, openVacancy, removeDecor } from "./decor";
 import { roomNo, roomRect } from "./layout";
 import { chance, clamp, kanji, randi, type Rng } from "./random";
 import { seasonOf } from "./season";
-import type { Bond, LogEntry, Resident, RoleRef, Variant } from "./types";
+import type {
+  Bond,
+  Departed,
+  LogEntry,
+  Resident,
+  RoleRef,
+  StoryletEntry,
+  Variant,
+} from "./types";
 
 /**
  * 出来事エンジン。何が・いつ・誰に起きるかは content/ の storylet（JSON）が決め、ここは
@@ -91,6 +100,14 @@ function roleOk(c: Ctx, r: Resident, cond: RoleCond | undefined, a?: Resident): 
   }
   if (!inRange((s.t - r.since) / 1440, cond.stayDays)) return false;
   if (!inRange(r.money, cond.money)) return false;
+  if (!inRange(r.age, cond.age)) return false;
+  if (!inRange(r.mood, cond.mood)) return false;
+  if (cond.single !== undefined) {
+    const taken = s.bonds.some(
+      (k) => (k.a === r.id || k.b === r.id) && k.stage !== "none"
+    );
+    if (taken === cond.single) return false;
+  }
   if (a && (cond.affinity || cond.romance)) {
     const bond = bondOf(s.bonds, a.id, r.id);
     if (!inRange(bond?.affinity ?? DEFAULT_AFFINITY, cond.affinity)) return false;
@@ -114,6 +131,7 @@ function storyOk(c: Ctx, st: Storylet): boolean {
     return false;
   if (st.when.weather && !st.when.weather.includes(s.weather)) return false;
   if (st.when.season && !st.when.season.includes(seasonOf(dayOf(s.t)))) return false;
+  if (!inRange((s.t - s.t0) / DAY_MIN, st.when.days)) return false;
   return true;
 }
 
@@ -176,28 +194,67 @@ export function storyletById(content: Content, id: string): Storylet | undefined
   return index.get(id);
 }
 
-/** 日誌の 1 行の本文を組み立てる。日付の見出し・定義が見つからない行は null */
-export function composeEntry(content: Content, e: LogEntry): string | null {
+/** 本文の 1 かたまり。住人の名前の部分だけ ref を持つ（日誌で押せるようにする） */
+export interface EntryPart {
+  text: string;
+  ref?: RoleRef;
+}
+
+/** 日誌の 1 行の本文を、名前の部分とそれ以外に分けて組み立てる。日付の見出し・定義が見つからない行は null */
+export function composeParts(content: Content, e: LogEntry): EntryPart[] | null {
   if (e.kind === "day") return null;
-  if (e.kind === "town")
-    return content.town.find((t) => t.id === e.changeId)?.stages[e.stage]?.log ?? null;
+  if (e.kind === "town") {
+    const text = content.town.find((t) => t.id === e.changeId)?.stages[e.stage]?.log;
+    return text === undefined ? null : [{ text }];
+  }
   const st = storyletById(content, e.storyletId);
   if (!st) return null;
   const template = st.texts[e.variant.text] ?? st.texts[0]!;
-  return template.replace(PLACEHOLDER, (_m, name: string) => {
-    if (name === "a" || name === "b") return e.roles[name]?.sei ?? "";
-    if (name === "room") return e.roles.a ? String(roomNo(e.roles.a.room)) : "";
+  const parts: EntryPart[] = [];
+  const push = (text: string, ref?: RoleRef) => {
+    if (text === "") return;
+    const last = parts[parts.length - 1];
+    if (!ref && last && !last.ref) last.text += text;
+    else parts.push(ref ? { text, ref } : { text });
+  };
+  let from = 0;
+  for (const m of template.matchAll(PLACEHOLDER)) {
+    push(template.slice(from, m.index));
+    from = m.index + m[0].length;
+    const name = m[1]!;
+    if (name === "a" || name === "b") {
+      const ref = e.roles[name];
+      if (ref) push(ref.sei, ref);
+      continue;
+    }
+    if (name === "room") {
+      push(e.roles.a ? String(roomNo(e.roles.a.room)) : "");
+      continue;
+    }
     const slot = e.variant.slots[name];
     // 定義の後から足された差し込みなど、slots に値が無いときは定義から決定的に補う
     const range =
       st.numbers && Object.hasOwn(st.numbers, name) ? st.numbers[name] : undefined;
-    if (range)
-      return kanji(typeof slot === "number" && Number.isFinite(slot) ? slot : range[0]);
+    if (range) {
+      push(kanji(typeof slot === "number" && Number.isFinite(slot) ? slot : range[0]));
+      continue;
+    }
     const list =
       st.choices && Object.hasOwn(st.choices, name) ? st.choices[name] : undefined;
-    if (list) return (typeof slot === "number" ? list[slot] : undefined) ?? list[0]!;
-    return typeof slot === "string" ? slot : "";
-  });
+    if (list) {
+      push((typeof slot === "number" ? list[slot] : undefined) ?? list[0]!);
+      continue;
+    }
+    push(typeof slot === "string" ? slot : "");
+  }
+  push(template.slice(from));
+  return parts;
+}
+
+/** 日誌の 1 行の本文を組み立てる。日付の見出し・定義が見つからない行は null */
+export function composeEntry(content: Content, e: LogEntry): string | null {
+  const parts = composeParts(content, e);
+  return parts === null ? null : parts.map((p) => p.text).join("");
 }
 
 /* ---------- 起こす ---------- */
@@ -230,10 +287,10 @@ function fire(
   const gone = new Set<Resident>();
   for (const e of st.effects) {
     const involved =
-      "role" in e
-        ? [b[e.role]]
-        : e.type === "bond" || e.type === "romance"
-          ? [b.a, b.b]
+      e.type === "bond" || e.type === "romance" || e.type === "cohabit"
+        ? [b.a, b.b]
+        : "role" in e
+          ? [b[e.role]]
           : [];
     if (involved.some((r) => r && gone.has(r))) continue;
     if (e.type === "moveOut" && b[e.role]) gone.add(b[e.role]!);
@@ -304,6 +361,26 @@ function applyEffect(c: Ctx, e: Effect, b: Bindings): void {
       if (r) removeDecor(c, r, e.decor);
       return;
     }
+    case "purse": {
+      s.landlordMoney += e.delta;
+      return;
+    }
+    case "away": {
+      const r = b[e.role];
+      if (!r || r.at !== r.room || r.visiting) return;
+      startLeave(c, r, "hospital", "（救急車のサイレンが遠ざかる）", {
+        dur: randi(rng, e.minutes[0], e.minutes[1]),
+      });
+      return;
+    }
+    case "cohabit": {
+      if (b.a && b.b) cohabit(c, e.role === "a" ? b.a : b.b, e.role === "a" ? b.b : b.a);
+      return;
+    }
+    case "party": {
+      if (b.a) party(c, b.a, e.bond, e.mood);
+      return;
+    }
     case "changeJob": {
       const r = b[e.role];
       if (!r || !Object.hasOwn(c.content.archetypes, e.archetype)) return;
@@ -314,11 +391,11 @@ function applyEffect(c: Ctx, e: Effect, b: Bindings): void {
   }
 }
 
-/** 住人が出ていく。訪問中の客は自室へ帰し、関係と予約は片付ける */
-function moveOut(c: Ctx, r: Resident): void {
+/** room にいる訪問客を自室へ帰す（except は除く） */
+function sendVisitorsHome(c: Ctx, room: number, except: Resident): void {
   const { s } = c;
   for (const v of s.res) {
-    if (v === r || !v.visiting || v.at !== r.room) continue;
+    if (v === except || !v.visiting || v.at !== room) continue;
     v.visiting = false;
     v.at = v.room;
     v.act = "idle";
@@ -326,11 +403,38 @@ function moveOut(c: Ctx, r: Resident): void {
     v.x = roomRect(v.room).x + 62;
     v.tx = v.x;
   }
+}
+
+/** 出ていった住人の記録（最後に登場した出来事つき）。古いものから捨てる */
+const DEPARTED_LIMIT = 30;
+
+/** 住人が出ていく。訪問中の客は自室へ帰し、関係と予約は片付け、記録を残す */
+function moveOut(c: Ctx, r: Resident): void {
+  const { s } = c;
+  sendVisitorsHome(c, r.room, r);
+  const last = s.log.find(
+    (e): e is StoryletEntry =>
+      "storyletId" in e && (e.roles.a?.id === r.id || e.roles.b?.id === r.id)
+  );
+  const record: Departed = {
+    id: r.id,
+    sei: r.sei,
+    mei: r.mei,
+    age: r.age,
+    job: r.job,
+    traits: [...r.traits],
+    room: r.room,
+    since: r.since,
+    left: s.t,
+    last: last ? structuredClone(last) : null,
+  };
+  s.departed = [record, ...s.departed].slice(0, DEPARTED_LIMIT);
   s.res = s.res.filter((x) => x !== r);
   if (s.rooms[r.room] === r.id) {
-    s.rooms[r.room] = null;
-    // 荷物は残る。大家が片付けに来て、次の入居の日も決まる
-    openVacancy(c, r);
+    // 同棲の相手が残るなら、部屋はその人のものになる。誰も残らなければ空室（荷物は残る。大家が片付けに来て、次の入居の日も決まる）
+    const partner = s.res.find((x) => x.room === r.room);
+    s.rooms[r.room] = partner ? partner.id : null;
+    if (!partner) openVacancy(c, r);
   }
   s.bonds = s.bonds.filter((k) => k.a !== r.id && k.b !== r.id);
   s.pending = s.pending.filter((p) => p.id !== r.id);
@@ -351,6 +455,60 @@ export function logStorylet(c: Ctx, id: string, a: RoleRef): void {
     variant: drawVariant(c.rng, st, {}),
   });
   c.s.story.last[st.id] = c.s.t;
+}
+
+/** mover が other の部屋へ移って一緒に住む。元の部屋は空室になる */
+function cohabit(c: Ctx, mover: Resident, other: Resident): void {
+  const { s } = c;
+  if (mover.room === other.room || s.rooms[other.room] !== other.id) return;
+  if (s.rooms[mover.room] !== mover.id) return;
+  const old = mover.room;
+  sendVisitorsHome(c, old, mover);
+  s.rooms[old] = null;
+  // 元の部屋は空室になる。荷物は残り、大家が片付けて次の入居者を迎える
+  openVacancy(c, mover);
+  mover.room = other.room;
+  if (typeof mover.at === "number") {
+    // 部屋にいたなら新しい部屋へ。人の部屋を訪ねていた最中でも、そのまま同じ部屋の住人になる
+    mover.at = other.room;
+    mover.visiting = false;
+    mover.act = "idle";
+    mover.until = s.t;
+    mover.x = roomRect(other.room).x + 40;
+    mover.tx = mover.x;
+  }
+}
+
+/** host の部屋に、起きて自室にいる住人が集まって宴会になる。全員の仲の良さ・気分を動かす */
+function party(c: Ctx, host: Resident, bond: number, mood: number): void {
+  const { s, rng } = c;
+  const dur = randi(rng, 70, 130);
+  const inRoom = host.at === host.room && !host.visiting;
+  const rr = roomRect(host.room);
+  if (inRoom) {
+    sendVisitorsHome(c, host.room, host);
+    host.act = "host";
+    host.until = s.t + dur;
+    host.tx = rr.x + 32;
+  }
+  let k = 0;
+  for (const g of s.res) {
+    if (g === host) continue;
+    const b = ensureBond(c, host.id, g.id);
+    b.affinity = clamp(b.affinity + bond, 0, 100);
+    g.mood = clamp(g.mood + mood, 0, 100);
+    // 同じ部屋に住む相手は、最初からそこにいる（訪問客にはしない）
+    if (!inRoom || g.room === host.room || g.at !== g.room || g.visiting || !isAwake(g))
+      continue;
+    g.visiting = true;
+    g.at = host.room;
+    g.x = rr.x + 62;
+    g.tx = rr.x + 40 + (k++ % 3) * 6;
+    g.act = "visit";
+    g.lastAct = "visit";
+    g.until = s.t + dur;
+  }
+  host.mood = clamp(host.mood + mood, 0, 100);
 }
 
 /* ---------- 選ぶ ---------- */

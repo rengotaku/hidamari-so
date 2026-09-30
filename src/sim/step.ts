@@ -1,4 +1,5 @@
 import { defaultContent, type Content } from "@/content";
+import { isEnded } from "./buyout";
 import type { Ctx } from "./context";
 import type { Rng } from "./random";
 import type { GameState } from "./types";
@@ -26,6 +27,8 @@ export function step(
   options: StepOptions = {}
 ): GameState {
   if (!Number.isFinite(minutes) || minutes <= 0) return state;
+  // 売却して結末を迎えたあとは、もう何も進まない
+  if (isEnded(state)) return state;
   const s = structuredClone(state);
   const c: Ctx = {
     s,
