@@ -2,7 +2,10 @@ import { z } from "zod";
 import { ACTS, JOBS, TRAITS } from "@/sim";
 import { ROMANCE_STAGES, WEATHER_IDS } from "@/content/schema";
 
-/** 2: 日誌を構造（出来事 id・役割・言い回し）で持つ形にし、関係・予約・出来事の履歴を足した */
+/**
+ * 2: 日誌を構造（出来事 id・役割・言い回し）で持つ形にし、関係・予約・出来事の履歴を足した
+ * 部屋の装飾・退去後の部屋・大家・町並みの変化・速さは、版を上げずに足した（欠けていれば読み込み時に補う）
+ */
 export const SCHEMA_VERSION = 2;
 
 const finite = z.number().refine(Number.isFinite, "有限値でない");
@@ -43,6 +46,8 @@ const resident = z.object({
   sleepy: percent,
   comfort: finite,
   clutter: percent,
+  decorPlan: z.array(z.string()),
+  settled: nonNegInt,
   room,
   at: z.union([room, z.literal("out"), z.literal("walking")]),
   visiting: z.boolean(),
@@ -96,6 +101,18 @@ const logEntry = z.union([
   }),
 ]);
 
+const landlord = z.object({
+  phase: z.enum(["idle", "up", "clearing", "escort", "down"]),
+  room: int.min(-1).max(5),
+  x: finite,
+  y: finite,
+  dir: z.union([z.literal(1), z.literal(-1)]),
+  path: z.array(point),
+  pi: nonNegInt,
+  until: finite,
+  escort: resident.nullable(),
+});
+
 const gameState = z
   .object({
     t: nonNeg,
@@ -130,6 +147,11 @@ const gameState = z
     }),
     // 町並みの変化。足す前の保存（版 2）には無いので、欠けていれば「まだ何も変わっていない」とする
     town: z.record(z.string(), z.object({ start: finite, stage: nonNegInt })).default({}),
+    decor: z.array(z.object({ items: z.array(z.string()), boxes: nonNegInt })).length(6),
+    vacancies: z.array(
+      z.object({ room, former: roleRef, cleared: z.boolean(), moveInAt: finite })
+    ),
+    landlord,
   })
   // lastHour は経過時間から決まる値。食い違う保存は、1 時間ごとの処理が延々と回るので拒否する
   .refine((s) => s.lastHour === Math.floor(s.t / 60), "lastHour が t と一致しない");

@@ -6,7 +6,7 @@ import {
   type GameState,
   type SeededRng,
 } from "@/sim";
-import { migrateSave } from "./migrate";
+import { fillHouse, migrateSave } from "./migrate";
 import { SCHEMA_VERSION, SPEEDS, saveEnvelope, type Speed } from "./schema";
 
 export { SCHEMA_VERSION };
@@ -58,7 +58,7 @@ export function loadGame(storage: KeyValueStorage): LoadedGame | null {
     // 古い版は最新まで段階的に移してから検証する
     const migrated = migrateSave(JSON.parse(raw), SCHEMA_VERSION);
     if (!migrated) return null;
-    const parsed = saveEnvelope.safeParse(migrated);
+    const parsed = saveEnvelope.safeParse(fillHouse(migrated));
     if (!parsed.success) return null;
     const { state, rngState, savedAt, speed } = parsed.data;
     return { state: state as GameState, rngState, savedAt, speed: speed ?? 1 };

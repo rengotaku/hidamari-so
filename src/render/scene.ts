@@ -14,8 +14,9 @@ import {
 import type { Ambient } from "./ambient";
 import { BG, STARS } from "./background";
 import { P, mix, shade } from "./palette";
+import { drawWindowDecor } from "./decor";
 import { drawCat, drawPerson } from "./person";
-import { drawRoom, roomLit } from "./room";
+import { LANDLORD_LOOK, drawRoom, roomLit } from "./room";
 import {
   drawSeasonBack,
   drawSeasonFront,
@@ -270,6 +271,22 @@ export function drawScene(
           : null;
     drawPerson(ctx, r.look, r.x, r.y, "walk", walkFr, r.dir < 0, prop);
   }
+  const L = s.landlord;
+  if (L.phase === "up" || L.phase === "escort" || L.phase === "down") {
+    drawPerson(ctx, LANDLORD_LOOK, L.x, L.y, "walk", walkFr, L.dir < 0, null);
+    // 連れてきた新しい住人は、大家の一歩後ろを荷物を抱えてついてくる
+    if (L.escort)
+      drawPerson(
+        ctx,
+        L.escort.look,
+        L.x - L.dir * 9,
+        L.y,
+        "walk",
+        walkFr,
+        L.dir < 0,
+        "bag"
+      );
+  }
   if (s.weather === "rain") {
     ctx.fillStyle = "rgba(170,200,235,0.55)";
     for (let k = 0; k < 90; k++) {
@@ -300,6 +317,7 @@ export function drawScene(
         P(ctx, rr.x + 21, rr.y + 9, 4, 13, owner.look.curtain);
       }
       P(ctx, rr.x + 16, rr.y + 9, 1, 13, "#6b4b32");
+      drawWindowDecor(ctx, s, i, rr.x, rr.y);
     }
   }
   if (n > 0.2) {

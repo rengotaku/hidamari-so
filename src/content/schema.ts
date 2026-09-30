@@ -65,6 +65,17 @@ export const TRIGGERS = [
   "opening", // 新規ゲームの最初の 1 件
   "book", // 他の出来事の結果（next）や人生の筋の入口から予約されたときだけ
 ] as const;
+/** 装飾の置き場所: 壁（奥の壁）/ 窓辺 / 床 / 天井 */
+export const DECOR_SLOTS = ["wall", "window", "floor", "ceiling"] as const;
+/** 置き場所ごとに同時に飾れる数（描画側の置き場の数と同じ。これを超える組は描かれない） */
+export const DECOR_CAPACITY: Record<(typeof DECOR_SLOTS)[number], number> = {
+  wall: 5,
+  window: 3,
+  floor: 6,
+  ceiling: 2,
+};
+/** 入居直後の「段ボール」。模様替えが進むにつれて数が減る（decor.json に必ず要る） */
+export const MOVING_BOX_ID = "moving-box";
 export const EFFECT_STATS = [
   "mood",
   "money",
@@ -116,6 +127,54 @@ const shift = z.strictObject({
   pay: z.union([nonNeg, z.literal("gamble")]),
 });
 
+export type DecorSlot = (typeof DECOR_SLOTS)[number];
+
+const color = z.string().regex(/^#[0-9a-fA-F]{6}$/, "色は #rrggbb");
+
+/**
+ * 装飾の部品。ドット絵を「色つきの矩形の並び」で持つ。
+ * 矩形は [x, y, w, h, 色]（部品の左上が原点。w × h の枠からはみ出さない）。
+ * 置き場所（slot）の区画に、左下を合わせて描く。
+ */
+export const decorSchema = z
+  .strictObject({
+    id,
+    name: nonEmpty,
+    slot: z.enum(DECOR_SLOTS),
+    w: posInt,
+    h: posInt,
+    rects: z
+      .array(
+        z.tuple([z.number().int().min(0), z.number().int().min(0), posInt, posInt, color])
+      )
+      .min(1),
+    /** この行動をしている間は描かない（弾いているギターなど） */
+    hideDuringAct: z.enum(ACT_IDS).optional(),
+    /** 同じ部品を並べて描くときの 1 つごとのずれ（段ボール用） */
+    step: z.tuple([z.number().int(), z.number().int()]).optional(),
+  })
+  .superRefine((d, ctx) => {
+    for (const [x, y, w, h] of d.rects)
+      if (x + w > d.w || y + h > d.h) {
+        ctx.addIssue({ code: "custom", message: `矩形が ${d.w}x${d.h} の枠を出ている` });
+        return;
+      }
+  });
+
+/** 種類がもつ装飾のセット: 必ず置くもの + 候補から抽選するもの */
+const decorSet = z
+  .strictObject({
+    required: z.array(id),
+    pool: z.array(id),
+    /** pool から何点抽選するか（[最小, 最大]） */
+    pick: intRange.refine(([lo]) => lo >= 0, "負の数"),
+  })
+  .refine(
+    (d) => new Set([...d.required, ...d.pool]).size === d.required.length + d.pool.length,
+    "required と pool で id が重複している"
+  )
+  .refine((d) => d.pick[1] <= d.pool.length, "pick が pool より多い");
+
 export const archetypeSchema = z.strictObject({
   id,
   label: nonEmpty,
@@ -136,6 +195,8 @@ export const archetypeSchema = z.strictObject({
   traits: z.array(id).min(1),
   /** 人生の筋の入口になる storylet の id */
   arc: id.optional(),
+  /** 部屋の装飾のセット（decor.json の id）。同じ種類でも住人ごとに pool から抽選して違う部屋になる */
+  decor: decorSet.default({ required: [], pool: [], pick: [0, 0] }),
 });
 
 export const traitSchema = z.strictObject({ id, label: nonEmpty, desc: nonEmpty });
@@ -201,6 +262,9 @@ const effect = z.discriminatedUnion("type", [
   }),
   z.strictObject({ type: z.literal("moveOut"), role }),
   z.strictObject({ type: z.literal("changeJob"), role, archetype: id }),
+  /** role の部屋に装飾を足す / 外す（decor.json の id） */
+  z.strictObject({ type: z.literal("decorAdd"), role, decor: id }),
+  z.strictObject({ type: z.literal("decorRemove"), role, decor: id }),
 ]);
 
 export const PLACEHOLDER = /\{([A-Za-z][A-Za-z0-9]*)\}/g;
@@ -351,6 +415,7 @@ export type TownChange = z.infer<typeof townChangeSchema>;
 export type Archetype = z.infer<typeof archetypeSchema>;
 export type ShiftDef = Archetype["shifts"][number];
 export type Trait = z.infer<typeof traitSchema>;
+export type Decor = z.infer<typeof decorSchema>;
 export type Storylet = z.infer<typeof storyletSchema>;
 export type RoleCond = z.infer<typeof roleCond>;
 export type Effect = z.infer<typeof effect>;
@@ -358,6 +423,7 @@ export type Effect = z.infer<typeof effect>;
 export interface Content {
   archetypes: Record<string, Archetype>;
   traits: Record<string, Trait>;
+  decor: Record<string, Decor>;
   storylets: Storylet[];
   /** 町並みの変化（content/town.json） */
   town: TownChange[];
@@ -375,8 +441,27 @@ export function contentErrors(c: Content): string[] {
     for (const x of ids ?? [])
       if (!Object.hasOwn(c.traits, x)) errs.push(`${where}: 未知の trait ${x}`);
   };
+  const decorIds = (where: string, ids: string[]) => {
+    for (const x of ids)
+      if (!Object.hasOwn(c.decor, x)) errs.push(`${where}: 未知の decor ${x}`);
+  };
+  if (!Object.hasOwn(c.decor, MOVING_BOX_ID))
+    errs.push(`decor: 段ボール ${MOVING_BOX_ID} が要る`);
   for (const a of Object.values(c.archetypes)) {
     trait(`archetype ${a.id}`, a.traits);
+    const where = `archetype ${a.id}`;
+    decorIds(where, [...a.decor.required, ...a.decor.pool]);
+    // 最悪の抽選でも、置き場所の数に収まること（収まらないと描かれない装飾が出る）
+    const slotOf = (x: string) => c.decor[x]?.slot;
+    for (const slot of DECOR_SLOTS) {
+      const fixed = a.decor.required.filter((x) => slotOf(x) === slot).length;
+      const cand = a.decor.pool.filter((x) => slotOf(x) === slot).length;
+      const worst = fixed + Math.min(cand, a.decor.pick[1]);
+      if (worst > DECOR_CAPACITY[slot])
+        errs.push(
+          `${where}: decor の ${slot} が最大 ${worst} 点で置き場所（${DECOR_CAPACITY[slot]}）を超える`
+        );
+    }
     if (a.arc && !story.has(a.arc))
       errs.push(`archetype ${a.id}: 未知の storylet ${a.arc}`);
   }
@@ -394,6 +479,8 @@ export function contentErrors(c: Content): string[] {
         for (const n of e.next)
           if (!story.has(n.id)) errs.push(`storylet ${s.id}: 未知の storylet ${n.id}`);
       if (e.type === "changeJob") arch(`storylet ${s.id}`, [e.archetype]);
+      if (e.type === "decorAdd" || e.type === "decorRemove")
+        decorIds(`storylet ${s.id}`, [e.decor]);
     }
   }
   return errs;

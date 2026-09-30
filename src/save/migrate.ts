@@ -1,4 +1,5 @@
 import { defaultContent } from "@/content";
+import { newLandlord } from "@/sim";
 
 /** 保存の封筒（{schemaVersion, savedAt, rngState, state}）を JSON のまま扱う */
 type Raw = Record<string, unknown>;
@@ -51,6 +52,53 @@ function v1ToV2(env: Raw): Raw {
       bonds: [],
       booked: [],
       story: { last: { [NOTEBOOK_REPLACED_ID]: t }, done: [NOTEBOOK_REPLACED_ID] },
+    },
+  };
+}
+
+/**
+ * 部屋の装飾・退去後の部屋・大家の欠けを補う（版は上げない。足す前の保存にはこれらが無い）。
+ * 欠けている項目だけを補い、あるものは触らない（壊れた値は検証で落とす）。乱数は使わず、同じ保存からは同じ結果になる。
+ * 住人には、その種類の「必ず置くもの」と候補の先頭を装飾として持たせ、住んでいる部屋にはそれがそろった状態で置く。
+ * 退去後の部屋はなく、大家は姿を見せていない。
+ */
+export function fillHouse(env: Raw): Raw {
+  const state = env.state;
+  if (!isRecord(state)) return env;
+  const res = Array.isArray(state.res) ? state.res : [];
+  const plans = new Map<unknown, unknown>();
+  const fixedRes = res.map((r: unknown) => {
+    if (!isRecord(r)) return r;
+    let out: Raw = r;
+    if (r.decorPlan === undefined) {
+      const arch =
+        typeof r.job === "string" && Object.hasOwn(defaultContent.archetypes, r.job)
+          ? defaultContent.archetypes[r.job]
+          : undefined;
+      const plan = arch
+        ? [...arch.decor.required, ...arch.decor.pool.slice(0, arch.decor.pick[0])]
+        : [];
+      out = { ...out, decorPlan: plan };
+    }
+    if (out.settled === undefined)
+      out = { ...out, settled: Array.isArray(out.decorPlan) ? out.decorPlan.length : 0 };
+    plans.set(out.id, out.decorPlan);
+    return out;
+  });
+  const rooms = Array.isArray(state.rooms) ? state.rooms : [];
+  return {
+    ...env,
+    state: {
+      ...state,
+      res: fixedRes,
+      decor:
+        state.decor ??
+        [0, 1, 2, 3, 4, 5].map((i) => {
+          const plan = plans.get(rooms[i]);
+          return { items: Array.isArray(plan) ? [...plan] : [], boxes: 0 };
+        }),
+      vacancies: state.vacancies ?? [],
+      landlord: state.landlord ?? newLandlord(),
     },
   };
 }

@@ -9,6 +9,7 @@ import type {
 } from "@/content/schema";
 import { dayOf, hourOf, inWin } from "./clock";
 import { archOf, getRes, isAwake, pushLog, say, type Ctx } from "./context";
+import { addDecor, openVacancy, removeDecor } from "./decor";
 import { roomNo, roomRect } from "./layout";
 import { chance, clamp, kanji, randi, type Rng } from "./random";
 import { seasonOf } from "./season";
@@ -293,6 +294,16 @@ function applyEffect(c: Ctx, e: Effect, b: Bindings): void {
       if (r) moveOut(c, r);
       return;
     }
+    case "decorAdd": {
+      const r = b[e.role];
+      if (r) addDecor(c, r.room, e.decor);
+      return;
+    }
+    case "decorRemove": {
+      const r = b[e.role];
+      if (r) removeDecor(c, r, e.decor);
+      return;
+    }
     case "changeJob": {
       const r = b[e.role];
       if (!r || !Object.hasOwn(c.content.archetypes, e.archetype)) return;
@@ -316,9 +327,30 @@ function moveOut(c: Ctx, r: Resident): void {
     v.tx = v.x;
   }
   s.res = s.res.filter((x) => x !== r);
-  if (s.rooms[r.room] === r.id) s.rooms[r.room] = null;
+  if (s.rooms[r.room] === r.id) {
+    s.rooms[r.room] = null;
+    // 荷物は残る。大家が片付けに来て、次の入居の日も決まる
+    openVacancy(c, r);
+  }
   s.bonds = s.bonds.filter((k) => k.a !== r.id && k.b !== r.id);
   s.pending = s.pending.filter((p) => p.id !== r.id);
+}
+
+/**
+ * 効果のない出来事を、すでに住人の表にいない人（前の住人など）を a にして日誌に残す。
+ * 大家の片付け・入居・模様替えのように、エンジンの側から起こす出来事用。定義が無ければ何もしない。
+ */
+export function logStorylet(c: Ctx, id: string, a: RoleRef): void {
+  const st = storyletById(c.content, id);
+  if (!st) return;
+  pushLog(c, {
+    t: c.s.t,
+    kind: st.logKind ?? "",
+    storyletId: st.id,
+    roles: { a },
+    variant: drawVariant(c.rng, st, {}),
+  });
+  c.s.story.last[st.id] = c.s.t;
 }
 
 /* ---------- 選ぶ ---------- */

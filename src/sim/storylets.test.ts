@@ -270,7 +270,8 @@ describe("追加: 結果の適用", () => {
     const content = fakeContentOf([
       { id: "leave", once: true, effects: [{ type: "moveOut", role: "a" }] },
     ]);
-    const s = runWith(content, 13, 5);
+    // 二日のうちに出ていけば、次の入居（退去の二日後以降）はまだ来ていない
+    const s = runWith(content, 13, 2);
     expect(s.res.length).toBe(3);
     expect(s.rooms.filter((id) => id !== null).length).toBe(3);
     for (const r of s.res) expect(s.rooms[r.room]).toBe(r.id);

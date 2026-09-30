@@ -1,10 +1,12 @@
 import { z } from "zod";
 import archetypesJson from "../../content/archetypes.json";
+import decorJson from "../../content/decor.json";
 import traitsJson from "../../content/traits.json";
 import townJson from "../../content/town.json";
 import {
   archetypeSchema,
   contentErrors,
+  decorSchema,
   storyletSchema,
   townChangeSchema,
   traitSchema,
@@ -16,6 +18,8 @@ export * from "./schema";
 export interface RawContent {
   archetypes: unknown;
   traits: unknown;
+  /** 装飾の部品。省略すると同梱の content/decor.json */
+  decor?: unknown;
   /** storylet の配列（1 ファイルに複数件でも 1 件でもよい） */
   storylets: unknown;
   /** 町並みの変化の配列（省略すると変化なし） */
@@ -41,6 +45,7 @@ function indexById<T extends { id: string }>(
 export function parseContent(raw: RawContent): Content {
   const archetypes = z.array(archetypeSchema).parse(asList(raw.archetypes));
   const traits = z.array(traitSchema).parse(asList(raw.traits));
+  const decor = z.array(decorSchema).parse(asList(raw.decor ?? decorJson));
   const storylets = z.array(storyletSchema).parse(asList(raw.storylets));
   const town = z.array(townChangeSchema).parse(asList(raw.town ?? []));
   indexById("town", town);
@@ -52,6 +57,7 @@ export function parseContent(raw: RawContent): Content {
   const content: Content = {
     archetypes: indexById("archetype", archetypes),
     traits: indexById("trait", traits),
+    decor: indexById("decor", decor),
     storylets,
     town,
   };
@@ -70,6 +76,7 @@ export const defaultContent: Content = parseContent({
   archetypes: archetypesJson,
   traits: traitsJson,
   town: townJson,
+  decor: decorJson,
   storylets: Object.keys(storyletFiles)
     .sort()
     .flatMap((p) => asList(storyletFiles[p])),

@@ -53,6 +53,10 @@ export interface Resident {
   sleepy: number;
   comfort: number;
   clutter: number;
+  /** 部屋の装飾のセット（decor.json の id。入居のときに抽選する） */
+  decorPlan: string[];
+  /** decorPlan のうち、もう部屋に置いた数（入居から少しずつ増える） */
+  settled: number;
   // 居場所
   room: number;
   at: Place;
@@ -153,6 +157,45 @@ export interface TownProgress {
   stage: number;
 }
 
+/** 部屋ごとの装飾: いま飾られている部品と、入居直後の段ボールの数 */
+export interface RoomDecor {
+  items: string[];
+  boxes: number;
+}
+
+/** 退去のあとの部屋。大家が片付け、次の入居の日に新しい住人を連れてくる */
+export interface Vacancy {
+  room: number;
+  /** 前の住人（日誌の本文に使う。もう住人の表にはいない） */
+  former: RoleRef;
+  /** 大家の片付けが終わったか（終わると窓に募集の貼り紙が出る） */
+  cleared: boolean;
+  /** 次の入居の日（1 日目 0:00 からの経過分） */
+  moveInAt: number;
+}
+
+/**
+ * 大家（画面の登場人物。プレイヤーは操作しない）。
+ * idle: 姿が見えない / up: 部屋へ向かう / clearing: 部屋で片付け中 /
+ * escort: 新しい住人を連れて部屋へ向かう / down: 用が済んで帰る
+ */
+export type LandlordPhase = "idle" | "up" | "clearing" | "escort" | "down";
+
+export interface Landlord {
+  phase: LandlordPhase;
+  /** 向かっている（片付けている）部屋。idle のときは -1 */
+  room: number;
+  x: number;
+  y: number;
+  dir: 1 | -1;
+  path: Point[];
+  pi: number;
+  /** clearing のとき、片付けが終わる時刻 */
+  until: number;
+  /** escort のとき、連れてきている新しい住人（部屋に着くまで住人の表には入らない） */
+  escort: Resident | null;
+}
+
 export interface GameState {
   /** 1 日目 0:00 からの経過分 */
   t: number;
@@ -173,4 +216,8 @@ export interface GameState {
   story: StoryLedger;
   /** 町並みの変化の進み具合（content/town.json の id → 進み具合。始まっていないものは無い） */
   town: Record<string, TownProgress>;
+  /** 部屋（0〜5）ごとの装飾 */
+  decor: RoomDecor[];
+  vacancies: Vacancy[];
+  landlord: Landlord;
 }
