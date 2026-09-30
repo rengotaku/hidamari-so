@@ -84,7 +84,8 @@ describe("A2: 決定性", () => {
 
 describe("A3: 会社員（平日 7:30〜22:30 勤務）", () => {
   it("勤務時間中は外出中で、勤務後に帰宅している", { timeout: 60_000 }, () => {
-    const rng = createRng(4241);
+    // 種類を足して抽選の並びが変わったため、会社員が初期住人にいる最小の近傍シードへ変更（4241 -> 4242）
+    const rng = createRng(4242);
     let s = newGame(rng);
     const man = () => s.res.find((r) => r.job === "salaryman")!;
     expect(man()).toBeDefined();

@@ -12,6 +12,14 @@ export const SEASON_IDS = ["spring", "tsuyu", "summer", "autumn", "winter"] as c
 export const TOWN_SLOTS = ["east", "pole"] as const;
 /** 町並みの見た目の種類。新しい種類は render/town.ts に描画を足す */
 export const TOWN_LOOKS = ["lot", "fence", "mansion", "pole", "underground"] as const;
+/** 場所ごとに取りうる見た目（render/town.ts の描画と対応。ここに無い組は描かれない） */
+export const TOWN_SLOT_LOOKS: Record<
+  (typeof TOWN_SLOTS)[number],
+  readonly (typeof TOWN_LOOKS)[number][]
+> = {
+  east: ["lot", "fence", "mansion"],
+  pole: ["pole", "underground"],
+};
 export const HOBBY_IDS = [
   "phone",
   "tv",
@@ -114,6 +122,11 @@ const hourWindow = z.tuple([hour, hour]);
 const intRange = z
   .tuple([z.number().int(), z.number().int()])
   .refine(([lo, hi]) => lo <= hi, "最小が最大より大きい");
+/** 漢数字で表示できる範囲（0〜99）の整数範囲。{n} の抽選に使う */
+const kanjiRange = intRange.refine(
+  ([lo, hi]) => lo >= 0 && hi <= 99,
+  "0〜99 の範囲外（漢数字で表示できるのは 0〜99）"
+);
 const openRange = z
   .strictObject({ min: finite.optional(), max: finite.optional() })
   .refine(
@@ -122,10 +135,15 @@ const openRange = z
   );
 
 /** 「day % every が on のどれかに一致する日」（every=1, on=[0] なら毎日） */
-const dayRule = z.strictObject({
-  every: posInt,
-  on: z.array(z.number().int().min(0)).min(1),
-});
+const dayRule = z
+  .strictObject({
+    every: posInt,
+    on: z.array(z.number().int().min(0)).min(1),
+  })
+  .refine(
+    (d) => d.on.every((x) => x < d.every),
+    "on の値は every 未満（day % every は every に届かない）"
+  );
 
 const shift = z.strictObject({
   days: dayRule,
@@ -360,7 +378,7 @@ export const storyletSchema = z
     /** 本文の言い回し。{a} {b} {room} などを差し込める */
     texts: z.array(nonEmpty).min(1),
     /** {名前} に入る漢数字。[最小, 最大] から抽選する */
-    numbers: z.record(z.string().regex(/^[A-Za-z][A-Za-z0-9]*$/), intRange).optional(),
+    numbers: z.record(z.string().regex(/^[A-Za-z][A-Za-z0-9]*$/), kanjiRange).optional(),
     /** {名前} に入る言い回しの候補 */
     choices: z
       .record(z.string().regex(/^[A-Za-z][A-Za-z0-9]*$/), z.array(nonEmpty).min(1))
@@ -434,6 +452,10 @@ export const townChangeSchema = z
         prev = st.afterDays;
       }
       if (st.log && /[0-9０-９]/.test(st.log)) add("log に数字を書かない");
+    });
+    t.stages.forEach((st, i) => {
+      if (!TOWN_SLOT_LOOKS[t.slot].includes(st.look))
+        add(`段階 ${i} の look ${st.look} は slot ${t.slot} に置けない`);
     });
     for (let i = 1; i < t.stages.length; i++)
       if (t.stages[i]!.look === t.stages[i - 1]!.look)
