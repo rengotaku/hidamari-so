@@ -10,7 +10,8 @@
       { "days": { "every": 1, "on": [0] }, "start": 22, "end": 6, "label": "コンビニ夜勤", "pay": 11000 }
     ],
     "hobbies": { "phone": 3, "tv": 2, "game": 2, "beer": 2, "stare": 1 },
-    "traits": ["katazuke"]
+    "traits": ["katazuke"],
+    "decor": { "required": ["hanger-rack", "calendar", "color-box"], "pool": ["cup-noodle", "photo-frame", "fan", "plant-pots"], "pick": [2, 3] }
   },
   {
     "id": "band",
@@ -26,7 +27,8 @@
     ],
     "hobbies": { "guitar": 5, "beer": 3, "phone": 2, "nap": 1 },
     "traits": ["nebou", "sake"],
-    "arc": "band-scout"
+    "arc": "band-scout",
+    "decor": { "required": ["guitar", "amp", "poster-band"], "pool": ["bottle-tower", "cardboard-stack", "laundry-pile", "cup-noodle"], "pick": [2, 3] }
   },
   {
     "id": "ronin",
@@ -41,7 +43,8 @@
     ],
     "hobbies": { "study": 4, "phone": 4, "game": 2, "nap": 2, "stare": 1 },
     "traits": ["samishi", "hitorigoto"],
-    "arc": "ronin-mock-eve"
+    "arc": "ronin-mock-eve",
+    "decor": { "required": ["low-desk", "book-tower", "motivational-paper"], "pool": ["pennant", "cup-noodle", "color-box", "calendar"], "pick": [2, 3] }
   },
   {
     "id": "oldman",
@@ -56,7 +59,8 @@
       { "days": { "every": 1, "on": [0] }, "start": 5.5, "end": 7, "label": "朝の散歩", "pay": 0 }
     ],
     "hobbies": { "plants": 3, "radio": 3, "tv": 3, "stare": 1 },
-    "traits": ["neko", "hitorigoto"]
+    "traits": ["neko", "hitorigoto"],
+    "decor": { "required": ["tansu", "kamidana", "radio-old"], "pool": ["plant-pots", "clock-wall", "photo-frame"], "pick": [2, 3] }
   },
   {
     "id": "salaryman",
@@ -70,7 +74,8 @@
     ],
     "hobbies": { "beer": 4, "tv": 3, "phone": 2, "nap": 2 },
     "traits": ["sake", "mie"],
-    "arc": "salaryman-promotion"
+    "arc": "salaryman-promotion",
+    "decor": { "required": ["hanger-rack", "fish-tank", "calendar"], "pool": ["magazine-pile", "bottle-tower", "photo-frame"], "pick": [2, 3] }
   },
   {
     "id": "mangaka",
@@ -84,7 +89,8 @@
       { "days": { "every": 3, "on": [2] }, "start": 10, "end": 18, "label": "倉庫バイト", "pay": 9000 }
     ],
     "hobbies": { "draw": 6, "phone": 2, "stare": 2, "nap": 1 },
-    "traits": ["nebou", "jisui"]
+    "traits": ["nebou", "jisui"],
+    "decor": { "required": ["drawing-desk", "magazine-pile", "book-tower"], "pool": ["cup-noodle", "bottle-tower", "fan"], "pick": [2, 3] }
   },
   {
     "id": "pachinko",
@@ -97,7 +103,8 @@
       { "days": { "every": 2, "on": [0] }, "start": 10, "end": 21, "label": "パチンコ", "pay": "gamble" }
     ],
     "hobbies": { "keiba": 4, "beer": 3, "tv": 2, "phone": 1 },
-    "traits": ["kinketsu", "mie"]
+    "traits": ["kinketsu", "mie"],
+    "decor": { "required": ["magazine-pile", "bottle-tower", "notice-paper"], "pool": ["calendar", "cup-noodle", "clock-wall", "poster-idol"], "pick": [2, 3] }
   },
   {
     "id": "student",
@@ -112,7 +119,8 @@
       { "days": { "every": 3, "on": [0] }, "start": 18, "end": 23, "label": "居酒屋バイト", "pay": 8000 }
     ],
     "hobbies": { "phone": 4, "game": 4, "beer": 2, "nap": 3, "guitar": 1 },
-    "traits": ["katazuke", "nebou"]
+    "traits": ["katazuke", "nebou"],
+    "decor": { "required": ["low-desk", "book-tower", "calendar"], "pool": ["cup-noodle", "color-box", "poster-idol", "fan", "mini-fridge"], "pick": [2, 3] }
   },
   {
     "id": "youtuber",
@@ -125,6 +133,7 @@
       { "days": { "every": 5, "on": [3] }, "start": 14, "end": 22, "label": "倉庫バイト", "pay": 9000 }
     ],
     "hobbies": { "stream": 5, "phone": 3, "stare": 1 },
-    "traits": ["hitorigoto", "jisui"]
+    "traits": ["hitorigoto", "jisui"],
+    "decor": { "required": ["pc-desk", "streaming-set", "cup-noodle"], "pool": ["poster-idol", "photo-frame", "fan", "bottle-tower", "laundry-line"], "pick": [2, 3] }
   }
 ]

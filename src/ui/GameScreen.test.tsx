@@ -48,8 +48,8 @@ function clickRoom(canvas: HTMLElement, room: number) {
 /** 日付・時刻・築年数・年齢・部屋番号・速さの倍率は数字を許す。それ以外に数字が残ったら NG */
 function digitsOutsideAllowed(text: string): string[] {
   const stripped = text
+    .replace(/\d{1,2}:\d{2}/g, "") // 時刻を先に消す（「00:00日が高い」の 00日 を日付と誤認しない）
     .replace(/\d+日目?/g, "")
-    .replace(/\d{1,2}:\d{2}/g, "")
     .replace(/築\d+年/g, "")
     .replace(/\d+歳/g, "")
     .replace(/\d+倍/g, "") // 時間の速さのボタン（1倍・4倍・15倍）

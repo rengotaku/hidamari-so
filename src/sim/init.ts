@@ -12,6 +12,7 @@ import {
   SKIN,
   SURNAMES,
 } from "./data";
+import { emptyRoomDecor, furnishNow, newLandlord, planDecor } from "./decor";
 import { roomRect } from "./layout";
 import { chance, pick, randi, type Rng } from "./random";
 import { bookArc, fireStorylet } from "./storylets";
@@ -87,6 +88,8 @@ export function makeResident(
     sleepy: randi(rng, 10, 40),
     comfort: 55,
     clutter: randi(rng, 5, 40),
+    decorPlan: planDecor(rng, j),
+    settled: 0,
     room: -1,
     at: -1,
     visiting: false,
@@ -117,7 +120,7 @@ export function makeResident(
   };
 }
 
-function moveIn(c: Ctx, r: Resident, room: number): void {
+export function moveIn(c: Ctx, r: Resident, room: number): void {
   c.s.rooms[room] = r.id;
   r.room = room;
   r.at = room;
@@ -157,10 +160,15 @@ export function newGame(rng: Rng, content: Content = defaultContent): GameState 
     booked: [],
     story: { last: {}, done: [] },
     town: {},
+    decor: [0, 1, 2, 3, 4, 5].map(emptyRoomDecor),
+    vacancies: [],
+    landlord: newLandlord(),
   };
   const c: Ctx = { s, rng, quiet: true, content };
   drawArchetypes(rng, content, INITIAL_ROOMS.length).forEach((arch, i) => {
-    moveIn(c, makeResident(c, s.nextId++, arch.id), INITIAL_ROOMS[i]!);
+    const r = makeResident(c, s.nextId++, arch.id);
+    moveIn(c, r, INITIAL_ROOMS[i]!);
+    furnishNow(c, r);
   });
   for (const r of s.res) {
     const sh = workNow(c, r);

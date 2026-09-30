@@ -2,8 +2,10 @@ import { dayOf } from "./clock";
 import { archOf, isHome, pushLog, say, type Ctx } from "./context";
 import { chance, clamp } from "./random";
 import { updateRes } from "./behavior";
+import { settleDecor, refOf } from "./decor";
+import { updateLandlord } from "./landlord";
 import { drawWeather, seasonDay } from "./season";
-import { AMBIENT_CHANCE, fireTrigger, processBooked } from "./storylets";
+import { AMBIENT_CHANCE, fireTrigger, logStorylet, processBooked } from "./storylets";
 import { advanceTown } from "./town";
 import type { Resident } from "./types";
 
@@ -65,6 +67,8 @@ export function update(c: Ctx, dt: number): void {
     onHour(c, s.lastHour);
   }
   for (const r of s.res.slice()) if (s.res.includes(r)) updateRes(c, r, dt);
+  for (const r of settleDecor(c)) logStorylet(c, "room-settled", refOf(r));
+  updateLandlord(c, dt);
   if (s.pending.length > 0) {
     const due = s.pending.filter((p) => s.t >= p.at);
     s.pending = s.pending.filter((p) => s.t < p.at);

@@ -37,5 +37,7 @@ export {
 } from "./layout";
 export { stepPath } from "./behavior";
 export { JOBS, TRAITS, ACTS } from "./data";
+export { planDecor, newLandlord, SETTLE_MIN, START_BOXES } from "./decor";
+export { CLEAR_MIN } from "./landlord";
 export { composeEntry, bondOf, DEFAULT_AFFINITY } from "./storylets";
 export type * from "./types";

@@ -1,5 +1,6 @@
 import { ACTS, roomRect, type GameState, type Resident } from "@/sim";
 import { P, shade } from "./palette";
+import { drawBackDecor, drawFloorDecor } from "./decor";
 import { drawLying, drawPerson } from "./person";
 import { drawWindowSeason } from "./season";
 
@@ -20,12 +21,23 @@ const CLUTTER: Array<[number, number, string]> = [
   [25, 43, "can"],
 ];
 
+/** 大家の見た目（禿げ頭に、くすんだ茶の羽織） */
+export const LANDLORD_LOOK = {
+  hair: "#d8d4cc",
+  skin: "#e8c9a0",
+  shirt: "#7a6a4a",
+  pants: "#4a4438",
+  bald: true,
+  long: false,
+};
+
 export const roomOccupants = (s: GameState, i: number): Resident[] =>
   s.res.filter((r) => r.at === i).sort((a, b) => a.x - b.x);
 
 /** 夜で、誰かが起きている部屋は明かりがつく */
 export function roomLit(s: GameState, i: number, night: number): boolean {
   if (night < 0.05) return false;
+  if (s.landlord.phase === "clearing" && s.landlord.room === i) return true;
   return roomOccupants(s, i).some((o) => o.act !== "sleep" && o.act !== "nap");
 }
 
@@ -36,56 +48,6 @@ function drawOwnerBelongings(
   y: number,
   acts: Set<string>
 ): void {
-  const job = owner.job;
-  if (job === "band" && !acts.has("guitar")) {
-    P(ctx, x + 54, y + 22, 1, 10, "#5a3a1a");
-    P(ctx, x + 52, y + 31, 5, 6, "#a8642e");
-    P(ctx, x + 54, y + 33, 1, 2, "#3a2412");
-  }
-  if (job === "salaryman") {
-    P(ctx, x + 30, y + 8, 1, 1, "#555555");
-    P(ctx, x + 28, y + 9, 6, 10, "#3a3f52");
-    P(ctx, x + 30, y + 9, 2, 3, "#eeeeee");
-  }
-  if (job === "konbini") {
-    P(ctx, x + 28, y + 9, 6, 9, "#4a7ab0");
-    P(ctx, x + 28, y + 12, 6, 1, "#e8e8e8");
-  }
-  if (job === "oldman") {
-    P(ctx, x + 8, y + 20, 3, 2, "#6b8f3a");
-    P(ctx, x + 8, y + 22, 3, 1, "#a0522d");
-    P(ctx, x + 20, y + 19, 3, 3, "#7fa64a");
-    P(ctx, x + 20, y + 22, 3, 1, "#a0522d");
-  }
-  if (job === "ronin") {
-    P(ctx, x + 29, y + 8, 7, 10, "#f4f0e4");
-    P(ctx, x + 29, y + 8, 7, 2, "#c44a3a");
-    P(ctx, x + 31, y + 12, 3, 4, "#26222c");
-    for (let k = 0; k < 4; k++)
-      P(ctx, x + 50, y + 37 - k * 2, 5, 2, k % 2 ? "#a84a4a" : "#4a6fa8");
-  }
-  if (job === "mangaka") {
-    P(ctx, x + 49, y + 34, 6, 4, "#efeae0");
-    P(ctx, x + 50, y + 32, 6, 2, "#e4ddcd");
-  }
-  if (job === "pachinko") {
-    P(ctx, x + 29, y + 8, 7, 9, "#e6d06a");
-    P(ctx, x + 30, y + 12, 5, 2, "#5a3a1a");
-    P(ctx, x + 33, y + 10, 1, 2, "#5a3a1a");
-  }
-  if (job === "student") {
-    P(ctx, x + 29, y + 9, 7, 9, "#3a3f52");
-    P(ctx, x + 30, y + 11, 5, 4, "#d98a4a");
-    P(ctx, x + 50, y + 42, 7, 2, "#d9b36a");
-  }
-  if (job === "youtuber") {
-    P(ctx, x + 27, y + 16, 1, 22, "#555555");
-    const lc = acts.has("stream") ? "#ffffff" : "#bbbbbb";
-    P(ctx, x + 24, y + 12, 7, 1, lc);
-    P(ctx, x + 24, y + 18, 7, 1, lc);
-    P(ctx, x + 24, y + 12, 1, 7, lc);
-    P(ctx, x + 30, y + 12, 1, 7, lc);
-  }
   if (owner.traits.includes("mikka")) {
     if (owner.quitGym) {
       P(ctx, x + 48, y + 40, 8, 1, "#777777");
@@ -149,10 +111,6 @@ function drawOwnerFurniture(
   P(ctx, x + 56, y + 29, 1, 1, "#c44a3a");
   P(ctx, x + 48, y + 37, 2, 1, "#555555");
   P(ctx, x + 53, y + 37, 2, 1, "#555555");
-  if (owner.job === "oldman") {
-    P(ctx, x + 48, y + 24, 6, 3, "#6a4a2a");
-    P(ctx, x + 49, y + 25, 2, 1, "#c9c0a0");
-  }
   drawClutter(ctx, owner, x, y);
 }
 
@@ -203,6 +161,20 @@ function drawTableThings(
   }
 }
 
+/** 片付け中の大家: 戸口の近くで箒を動かす */
+function drawLandlordSweeping(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  frame: number
+): void {
+  const px = x + 54;
+  drawPerson(ctx, LANDLORD_LOOK, px, y + 45, "stand", frame, true, null);
+  const sway = frame ? 1 : 0;
+  P(ctx, px - 6 - sway, y + 34, 1, 11, "#8a6a3a");
+  P(ctx, px - 8 - sway, y + 44, 4, 1, "#c9b070");
+}
+
 export function drawRoom(
   ctx: CanvasRenderingContext2D,
   s: GameState,
@@ -230,10 +202,12 @@ export function drawRoom(
   P(ctx, x + 16, y + 9, 1, 13, "#6b4b32");
   drawWindowSeason(ctx, s, x, y);
   P(ctx, x + 5, y + 22, 22, 1, "#5a3d28");
+  // 退去した部屋は、大家が片付けるまで荷物が残る（募集の貼り紙はまだ出ない）
+  const packed = s.vacancies.some((v) => v.room === i && !v.cleared);
   if (owner) {
     P(ctx, x + 7, y + 9, 4, 13, owner.look.curtain);
     P(ctx, x + 21, y + 9, 4, 13, owner.look.curtain);
-  } else {
+  } else if (!packed) {
     P(ctx, x + 10, y + 11, 12, 9, "#f4f0e4");
     P(ctx, x + 12, y + 13, 8, 1, "#c44a3a");
     P(ctx, x + 12, y + 15, 6, 1, "#777777");
@@ -259,7 +233,9 @@ export function drawRoom(
     const dy = (now / 9) % 38;
     P(ctx, x + 46, y + 3 + dy, 1, 2, "#9fc4e8");
   }
+  drawBackDecor(ctx, s, i, x, y, acts);
   if (owner) drawOwnerFurniture(ctx, owner, x, y, acts, occ, now);
+  drawFloorDecor(ctx, s, i, x, y, acts);
   for (const o of occ) {
     const a = o.act in ACTS ? ACTS[o.act as keyof typeof ACTS] : undefined;
     const moving = Math.abs(o.tx - o.x) > 0.5 && a?.pose !== "lie";
@@ -271,6 +247,9 @@ export function drawRoom(
     drawPerson(ctx, o.look, o.x, y + 45, pose, frame, o.dir < 0, moving ? null : a?.prop);
   }
   drawTableThings(ctx, x, y, acts, frame, now);
+  if (s.landlord.phase === "clearing" && s.landlord.room === i) {
+    drawLandlordSweeping(ctx, x, y, frame);
+  }
   if (lit) {
     ctx.fillStyle = "rgba(255,196,110,0.08)";
     ctx.fillRect(x, y, 74, 48);

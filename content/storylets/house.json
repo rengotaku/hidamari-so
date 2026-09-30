@@ -1,0 +1,42 @@
+[
+  {
+    "id": "room-cleared",
+    "kind": "happening",
+    "trigger": "book",
+    "logKind": "move",
+    "roles": { "a": {} },
+    "choices": {
+      "found": [
+        "押し入れから前の住人の年賀状が出てきた",
+        "畳の下から古い十円玉が出てきた",
+        "流しの隅に、使いかけの洗剤が残っていた",
+        "壁に、ポスターの日焼けの跡が四角く残っていた"
+      ]
+    },
+    "texts": [
+      "大家が{room}号室を掃除した。{found}",
+      "大家が{a}さんの荷物を片付けた。{found}。{room}号室の窓に募集の貼り紙が出た"
+    ]
+  },
+  {
+    "id": "room-move-in",
+    "kind": "happening",
+    "trigger": "book",
+    "logKind": "move",
+    "roles": { "a": {} },
+    "texts": [
+      "大家に案内されて、{a}さんが{room}号室に越してきた。荷物は段ボールが三つだけ",
+      "{a}さんが{room}号室に入居した。大家は「壁は薄いから」とだけ言って帰っていった"
+    ]
+  },
+  {
+    "id": "room-settled",
+    "kind": "daily",
+    "trigger": "book",
+    "roles": { "a": {} },
+    "texts": [
+      "{a}さんの{room}号室が、ようやく住人の部屋らしくなった",
+      "{a}さんが荷ほどきを終えた。{room}号室の段ボールが空になった"
+    ]
+  }
+]
