@@ -109,7 +109,11 @@
     "effects": [
       { "type": "adjust", "role": "a", "stat": "money", "delta": 30000 },
       { "type": "adjust", "role": "a", "stat": "mood", "delta": 15 },
-      { "type": "book", "next": [{ "id": "salaryman-transfer" }], "afterMinutes": [14400, 28800] }
+      {
+        "type": "book",
+        "next": [{ "id": "salaryman-transfer", "weight": 7 }, { "id": "salaryman-overwork", "weight": 3 }],
+        "afterMinutes": [14400, 28800]
+      }
     ]
   },
   {
@@ -201,7 +205,11 @@
       { "type": "adjust", "role": "a", "stat": "mood", "delta": -10 },
       {
         "type": "book",
-        "next": [{ "id": "pachinko-quit", "weight": 3 }, { "id": "pachinko-slump", "weight": 7 }],
+        "next": [
+          { "id": "pachinko-quit", "weight": 3 },
+          { "id": "pachinko-slump", "weight": 7 },
+          { "id": "pachinko-loan", "weight": 2 }
+        ],
         "afterMinutes": [7200, 14400]
       }
     ]
@@ -270,7 +278,11 @@
       { "type": "adjust", "role": "a", "stat": "mood", "delta": -10 },
       {
         "type": "book",
-        "next": [{ "id": "student-credits", "weight": 6 }, { "id": "student-graduate", "weight": 3 }],
+        "next": [
+          { "id": "student-credits", "weight": 6 },
+          { "id": "student-graduate", "weight": 3 },
+          { "id": "student-leave-form", "weight": 2 }
+        ],
         "afterMinutes": [10080, 20160]
       }
     ]
@@ -336,7 +348,11 @@
     "texts": ["{a}さんが倒れ、救急車で運ばれた。廊下に集まった住人は、サイレンが聞こえなくなるまで黙っていた"],
     "effects": [
       { "type": "away", "role": "a", "minutes": [7200, 9000] },
-      { "type": "book", "next": [{ "id": "oldman-discharge" }], "afterMinutes": [10800, 10800] }
+      {
+        "type": "book",
+        "next": [{ "id": "oldman-discharge", "weight": 7 }, { "id": "oldman-old-friend", "weight": 3 }],
+        "afterMinutes": [10800, 10800]
+      }
     ]
   },
   {
@@ -363,5 +379,2026 @@
     "roles": { "a": { "archetype": ["oldman"] } },
     "texts": ["{a}さんが介護施設に移ることになった。管理人の猫が、最後の日まで膝から動かなかった"],
     "effects": [{ "type": "book", "next": [{ "id": "farewell-party" }], "afterMinutes": [1440, 2880] }]
+  },
+  {
+    "id": "yamikin-notice",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": {
+      "a": {
+        "archetype": [
+          "yamikin"
+        ]
+      }
+    },
+    "texts": [
+      "{a}さんの郵便受けに、差出人のない封筒がまた入っていた。{room}の電気は、昼間も消えたままだ",
+      "{a}さん宛の封筒が、ドアの下から半分だけ覗いている。本人は気づかないふりを続けている"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": -10
+      },
+      {
+        "type": "say",
+        "role": "a",
+        "text": "今日は留守です…"
+      },
+      {
+        "type": "book",
+        "next": [
+          {
+            "id": "yamikin-consult",
+            "weight": 4
+          },
+          {
+            "id": "yamikin-night-plan",
+            "weight": 6
+          }
+        ],
+        "afterMinutes": [
+          1440,
+          4320
+        ]
+      }
+    ]
+  },
+  {
+    "id": "yamikin-consult",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": {
+      "a": {
+        "archetype": [
+          "yamikin"
+        ]
+      }
+    },
+    "texts": [
+      "{a}さんが、町の無料相談に行ってきたらしい。帰りの紙袋には、書類が一式、きれいに揃って入っていた",
+      "{a}さんが、相談窓口で長いこと待たされた。それでも帰りの足取りは、行きより軽かった"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": 12
+      },
+      {
+        "type": "book",
+        "next": [
+          {
+            "id": "yamikin-clear"
+          }
+        ],
+        "afterMinutes": [
+          4320,
+          8640
+        ]
+      }
+    ]
+  },
+  {
+    "id": "yamikin-clear",
+    "kind": "arc",
+    "trigger": "book",
+    "once": true,
+    "when": {
+      "hours": [
+        17,
+        23
+      ]
+    },
+    "roles": {
+      "a": {
+        "archetype": [
+          "yamikin"
+        ],
+        "inRoom": true
+      }
+    },
+    "texts": [
+      "{a}さんの借金の話がようやく片付いた。{room}では、缶ビールとカップ麺で小さな乾杯が始まった",
+      "{a}さん、最後の書類に判が押された。廊下に、久しぶりに大きな笑い声が響いた"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": 30
+      },
+      {
+        "type": "say",
+        "role": "a",
+        "text": "やっと電話に出られる…"
+      },
+      {
+        "type": "party",
+        "bond": 6,
+        "mood": 8
+      }
+    ]
+  },
+  {
+    "id": "yamikin-night-plan",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": {
+      "a": {
+        "archetype": [
+          "yamikin"
+        ]
+      }
+    },
+    "texts": [
+      "{a}さんが、夜中に押入れの荷物を段ボールに詰めていた。{room}から、ガムテープを引く音が何度も聞こえた",
+      "{a}さん、誰にも言わずに荷造りを始めた。ただ、詰めているのは服ばかりで、布団は置いたままだ"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": -12
+      },
+      {
+        "type": "book",
+        "next": [
+          {
+            "id": "yamikin-taken",
+            "weight": 6
+          },
+          {
+            "id": "yamikin-notice",
+            "weight": 4
+          }
+        ],
+        "afterMinutes": [
+          2880,
+          7200
+        ]
+      }
+    ]
+  },
+  {
+    "id": "yamikin-taken",
+    "kind": "arc",
+    "trigger": "book",
+    "once": true,
+    "logKind": "move",
+    "roles": {
+      "a": {
+        "archetype": [
+          "yamikin"
+        ]
+      }
+    },
+    "texts": [
+      "{a}さんが、迎えに来た人たちと話をつけて、黒い車に乗せられていった。{room}には、こたつの上の湯呑みだけが残っている",
+      "夜明け前、{a}さんは黒い車に乗って出ていった。大家が廊下に出たときには、もうエンジンの音も聞こえなかった"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": -30
+      },
+      {
+        "type": "moveOut",
+        "role": "a"
+      }
+    ]
+  },
+  {
+    "id": "rakugo-stage",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": {
+      "a": {
+        "archetype": [
+          "rakugo"
+        ]
+      }
+    },
+    "texts": [
+      "{a}さん、寄席の楽屋で「そろそろ二つ目の話をしておくか」と言われたらしい。壁の向こうの稽古の声が、いつもより熱い",
+      "{a}さんの稽古が、いつもの時間に始まった。{room}から「えー、毎度ばかばかしいお笑いを」と聞こえる"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": 10
+      },
+      {
+        "type": "book",
+        "next": [
+          {
+            "id": "rakugo-audience",
+            "weight": 5
+          },
+          {
+            "id": "rakugo-slump",
+            "weight": 5
+          }
+        ],
+        "afterMinutes": [
+          1440,
+          4320
+        ]
+      }
+    ]
+  },
+  {
+    "id": "rakugo-audience",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": {
+      "a": {
+        "archetype": [
+          "rakugo"
+        ]
+      }
+    },
+    "texts": [
+      "{a}さん、住人を客に見立てて廊下で一席やった。座布団代わりのクッションに、みんな行儀よく座っていた",
+      "{a}さんの噺に、隣の住人が思わず声を出して笑った。本人は袖で鼻をかんで平気なふりをした"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": 15
+      },
+      {
+        "type": "book",
+        "next": [
+          {
+            "id": "rakugo-promote"
+          }
+        ],
+        "afterMinutes": [
+          4320,
+          8640
+        ]
+      }
+    ]
+  },
+  {
+    "id": "rakugo-promote",
+    "kind": "arc",
+    "trigger": "book",
+    "once": true,
+    "roles": {
+      "a": {
+        "archetype": [
+          "rakugo"
+        ]
+      }
+    },
+    "texts": [
+      "{a}さん、二つ目に上がることになった。{room}の壁に、新しい名前の紙が貼られた",
+      "{a}さんの昇進が決まった。大家が「おめでとう」とだけ言って、家賃の話は翌週に回した"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": 40
+      },
+      {
+        "type": "book",
+        "next": [
+          {
+            "id": "farewell-party"
+          }
+        ],
+        "afterMinutes": [
+          1440,
+          2880
+        ]
+      }
+    ]
+  },
+  {
+    "id": "rakugo-slump",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": {
+      "a": {
+        "archetype": [
+          "rakugo"
+        ]
+      }
+    },
+    "texts": [
+      "{a}さん、ネタ帳を開いたまま夜が明けた。稽古の声はせず、ページをめくる音だけがしていた",
+      "{a}さんが「明日から本気を出す」と言った。三日前にも同じことを言っていたらしい"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": -15
+      },
+      {
+        "type": "book",
+        "next": [
+          {
+            "id": "rakugo-quit",
+            "weight": 6
+          },
+          {
+            "id": "rakugo-stage",
+            "weight": 4
+          }
+        ],
+        "afterMinutes": [
+          2880,
+          7200
+        ]
+      }
+    ]
+  },
+  {
+    "id": "rakugo-quit",
+    "kind": "arc",
+    "trigger": "book",
+    "once": true,
+    "roles": {
+      "a": {
+        "archetype": [
+          "rakugo"
+        ]
+      }
+    },
+    "texts": [
+      "{a}さん、師匠から電話があった。電話を切ったあと、{room}からは何の音もしなかった",
+      "{a}さんが、着物を畳んで風呂敷に包んでいた。実家の駅の名前を、小さく口の中で繰り返している"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": -25
+      },
+      {
+        "type": "book",
+        "next": [
+          {
+            "id": "go-home"
+          }
+        ],
+        "afterMinutes": [
+          1440,
+          2880
+        ]
+      }
+    ]
+  },
+  {
+    "id": "busybody-stew",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": {
+      "a": {
+        "archetype": [
+          "busybody"
+        ]
+      }
+    },
+    "texts": [
+      "{a}さん、煮物を作りすぎた。廊下に、醤油の匂いがずっと漂っている",
+      "{a}さんが、鍋を抱えて廊下を歩いている。どの部屋のドアを叩くか、まだ決めかねているようだ"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": 8
+      },
+      {
+        "type": "book",
+        "next": [
+          {
+            "id": "busybody-soup",
+            "weight": 5
+          },
+          {
+            "id": "busybody-gossip",
+            "weight": 5
+          }
+        ],
+        "afterMinutes": [
+          1440,
+          4320
+        ]
+      }
+    ]
+  },
+  {
+    "id": "busybody-soup",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": {
+      "a": {
+        "archetype": [
+          "busybody"
+        ]
+      }
+    },
+    "texts": [
+      "{a}さんが、落ち込んでいる住人の部屋に湯気の立つ椀を置いていった。何も聞かずに、ただ置いていった",
+      "{a}さんの煮物を食べた住人が、久しぶりに笑った。作り方は「目分量」としか教えてもらえなかった"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": 12
+      },
+      {
+        "type": "book",
+        "next": [
+          {
+            "id": "busybody-thanks"
+          }
+        ],
+        "afterMinutes": [
+          4320,
+          8640
+        ]
+      }
+    ]
+  },
+  {
+    "id": "busybody-thanks",
+    "kind": "arc",
+    "trigger": "book",
+    "once": true,
+    "when": {
+      "hours": [
+        17,
+        23
+      ]
+    },
+    "roles": {
+      "a": {
+        "archetype": [
+          "busybody"
+        ],
+        "inRoom": true
+      }
+    },
+    "texts": [
+      "住人たちが、{a}さんに寄せ書きを渡した。字の下手な人ほど、大きな字で名前を書いていた",
+      "{a}さんの誕生日に、廊下のあちこちから少しずつ料理が集まった。主役が一番たくさん配った"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": 30
+      },
+      {
+        "type": "say",
+        "role": "a",
+        "text": "あら、やだ…"
+      },
+      {
+        "type": "party",
+        "bond": 8,
+        "mood": 8
+      }
+    ]
+  },
+  {
+    "id": "busybody-gossip",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": {
+      "a": {
+        "archetype": [
+          "busybody"
+        ]
+      }
+    },
+    "texts": [
+      "{a}さんの世間話が、三つの部屋を回っているうちに別の話になっていた",
+      "{a}さん、良かれと思って住人の近況を別の住人に伝えた。聞いた方の顔が、少し固まった"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": -5
+      },
+      {
+        "type": "book",
+        "next": [
+          {
+            "id": "busybody-silence",
+            "weight": 6
+          },
+          {
+            "id": "busybody-stew",
+            "weight": 4
+          }
+        ],
+        "afterMinutes": [
+          2880,
+          7200
+        ]
+      }
+    ]
+  },
+  {
+    "id": "busybody-silence",
+    "kind": "arc",
+    "trigger": "book",
+    "once": true,
+    "roles": {
+      "a": {
+        "archetype": [
+          "busybody"
+        ]
+      }
+    },
+    "texts": [
+      "住人たちが、{a}さんの前で急に口数が減った。本人はそれに気づいて、煮物の鍋を抱えたまま引き返した",
+      "{a}さんの足音が廊下で止まり、ドアを叩かずに戻っていった。{room}の台所に、火のついていない鍋が置かれた"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": -20
+      },
+      {
+        "type": "book",
+        "next": [
+          {
+            "id": "busybody-stew"
+          }
+        ],
+        "afterMinutes": [
+          14400,
+          28800
+        ]
+      }
+    ]
+  },
+  {
+    "id": "taxi-passenger",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": {
+      "a": {
+        "archetype": [
+          "taxi"
+        ]
+      }
+    },
+    "texts": [
+      "{a}さん、夜勤明けに{room}へ戻り、靴を脱ぐなり畳に倒れた。今夜の客の話を、寝言でつぶやいている",
+      "{a}さんが、朝のドアの前で缶コーヒーを飲んでいる。乗せた客の人生を、ひとりで噛みしめているようだ"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": 5
+      },
+      {
+        "type": "book",
+        "next": [
+          {
+            "id": "taxi-regular-fare",
+            "weight": 5
+          },
+          {
+            "id": "taxi-empty-night",
+            "weight": 5
+          }
+        ],
+        "afterMinutes": [
+          1440,
+          4320
+        ]
+      }
+    ]
+  },
+  {
+    "id": "taxi-regular-fare",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": {
+      "a": {
+        "archetype": [
+          "taxi"
+        ]
+      }
+    },
+    "texts": [
+      "{a}さんの車に、毎週同じ時間に乗ってくる客ができた。行き先はいつも同じ病院の前らしい",
+      "{a}さん、夜の客に「また頼むよ」と言われたらしい。帰り道の信号が、全部青だったそうだ"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": 12
+      },
+      {
+        "type": "book",
+        "next": [
+          {
+            "id": "taxi-raise"
+          }
+        ],
+        "afterMinutes": [
+          4320,
+          8640
+        ]
+      }
+    ]
+  },
+  {
+    "id": "taxi-raise",
+    "kind": "arc",
+    "trigger": "book",
+    "once": true,
+    "roles": {
+      "a": {
+        "archetype": [
+          "taxi"
+        ]
+      }
+    },
+    "texts": [
+      "{a}さんの指名が増えて、給料の袋が少し厚くなった。廊下に、ちょっといい缶コーヒーが置かれていた",
+      "{a}さん、新しい制服を着て出勤していった。ネクタイだけが前の会社のものだった"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": 30
+      },
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "money",
+        "delta": 20000
+      },
+      {
+        "type": "book",
+        "next": [
+          {
+            "id": "taxi-passenger"
+          }
+        ],
+        "afterMinutes": [
+          14400,
+          28800
+        ]
+      }
+    ]
+  },
+  {
+    "id": "taxi-empty-night",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": {
+      "a": {
+        "archetype": [
+          "taxi"
+        ]
+      }
+    },
+    "texts": [
+      "{a}さんが、客のつかない夜を過ごして戻ってきた。助手席は、朝まで空いたままだったそうだ",
+      "{a}さんの夜勤は、雨が降っているのに一度も手が挙がらなかった。ラジオの音が、いつもより小さい"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": -12
+      },
+      {
+        "type": "book",
+        "next": [
+          {
+            "id": "taxi-night-off",
+            "weight": 6
+          },
+          {
+            "id": "taxi-passenger",
+            "weight": 4
+          }
+        ],
+        "afterMinutes": [
+          2880,
+          7200
+        ]
+      }
+    ]
+  },
+  {
+    "id": "taxi-night-off",
+    "kind": "arc",
+    "trigger": "book",
+    "once": true,
+    "roles": {
+      "a": {
+        "archetype": [
+          "taxi"
+        ],
+        "inRoom": true
+      }
+    },
+    "texts": [
+      "{a}さんが、夜勤明けに倒れて入院した。{room}のドアに、大家の字で「しばらく留守」と貼り紙がある",
+      "{a}さん、運転席で気を失い、救急車で運ばれた。車庫の社員が、鍵を届けにきた"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": -20
+      },
+      {
+        "type": "away",
+        "role": "a",
+        "minutes": [
+          7200,
+          9000
+        ]
+      },
+      {
+        "type": "book",
+        "next": [
+          {
+            "id": "taxi-passenger"
+          }
+        ],
+        "afterMinutes": [
+          14400,
+          28800
+        ]
+      }
+    ]
+  },
+  {
+    "id": "guarantor-stamp",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": {
+      "a": {
+        "archetype": [
+          "guarantor"
+        ]
+      }
+    },
+    "texts": [
+      "{a}さんの机の上に、誰かの書類と判子が出ている。断る言葉を探して、三十分が過ぎたらしい",
+      "{a}さんが、知人に頼まれて判子を握ったまま固まっている。{room}の電気が、いつまでも消えない"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": -8
+      },
+      {
+        "type": "book",
+        "next": [
+          {
+            "id": "guarantor-saved",
+            "weight": 4
+          },
+          {
+            "id": "guarantor-notice",
+            "weight": 6
+          }
+        ],
+        "afterMinutes": [
+          1440,
+          4320
+        ]
+      }
+    ]
+  },
+  {
+    "id": "guarantor-saved",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": {
+      "a": {
+        "archetype": [
+          "guarantor"
+        ]
+      }
+    },
+    "texts": [
+      "借りた本人から、{a}さんに連絡が来た。少しずつだが、返していくと言っている",
+      "{a}さんの知人が、約束の日に約束のものを持ってきた。玄関で二人とも、しばらく何も言わなかった"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": 15
+      },
+      {
+        "type": "book",
+        "next": [
+          {
+            "id": "guarantor-free"
+          }
+        ],
+        "afterMinutes": [
+          4320,
+          8640
+        ]
+      }
+    ]
+  },
+  {
+    "id": "guarantor-free",
+    "kind": "arc",
+    "trigger": "book",
+    "once": true,
+    "roles": {
+      "a": {
+        "archetype": [
+          "guarantor"
+        ]
+      }
+    },
+    "texts": [
+      "{a}さんの肩の荷が下りた。その夜、{room}から久しぶりにテレビの笑い声が聞こえた",
+      "{a}さん、判子を引き出しの奥にしまった。「次は断る」と書いた紙を、その上に貼ったそうだ"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": 35
+      }
+    ]
+  },
+  {
+    "id": "guarantor-notice",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": {
+      "a": {
+        "archetype": [
+          "guarantor"
+        ]
+      }
+    },
+    "texts": [
+      "{a}さん宛に、見覚えのない名前の封筒が届いた。借りた本人とは、三日前から連絡がつかない",
+      "{a}さんのところに督促状が来た。自分の借金ではないのに、宛名は自分の名前だ"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": -18
+      },
+      {
+        "type": "book",
+        "next": [
+          {
+            "id": "guarantor-tea",
+            "weight": 6
+          },
+          {
+            "id": "guarantor-stamp",
+            "weight": 4
+          }
+        ],
+        "afterMinutes": [
+          2880,
+          7200
+        ]
+      }
+    ]
+  },
+  {
+    "id": "guarantor-tea",
+    "kind": "arc",
+    "trigger": "book",
+    "once": true,
+    "roles": {
+      "a": {
+        "archetype": [
+          "guarantor"
+        ]
+      }
+    },
+    "texts": [
+      "住人が{a}さんの部屋に集まって、お茶を飲みながら返済の段取りを紙に書いた。湯呑みが足りなくて、カップ麺の容器も並んだ",
+      "{a}さんを囲んで、住人たちが電卓を叩いた。誰かが持ってきたみかんだけが、すこし減った"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": -10
+      },
+      {
+        "type": "book",
+        "next": [
+          {
+            "id": "go-home"
+          }
+        ],
+        "afterMinutes": [
+          1440,
+          2880
+        ]
+      }
+    ]
+  },
+  {
+    "id": "konkatsu-profile",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": {
+      "a": {
+        "archetype": [
+          "konkatsu"
+        ]
+      }
+    },
+    "texts": [
+      "{a}さんが、写真館の袋を持って帰ってきた。{room}の鏡の前で、笑顔の練習が長く続いている",
+      "{a}さんの部屋から、お見合い用の自己紹介を読み上げる声がする。趣味の欄で、何度も止まっている"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": 5
+      },
+      {
+        "type": "book",
+        "next": [
+          {
+            "id": "konkatsu-date",
+            "weight": 5
+          },
+          {
+            "id": "konkatsu-ghost",
+            "weight": 5
+          }
+        ],
+        "afterMinutes": [
+          1440,
+          4320
+        ]
+      }
+    ]
+  },
+  {
+    "id": "konkatsu-date",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": {
+      "a": {
+        "archetype": [
+          "konkatsu"
+        ]
+      }
+    },
+    "texts": [
+      "{a}さんの見合いの日。ネクタイを三回結び直して出ていった。帰ってきた顔は、少しほぐれていた",
+      "{a}さん、見合いの帰りにお土産を持って帰ってきた。部屋ではなく廊下で、みんなに配った"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": 15
+      },
+      {
+        "type": "book",
+        "next": [
+          {
+            "id": "konkatsu-engaged"
+          }
+        ],
+        "afterMinutes": [
+          4320,
+          8640
+        ]
+      }
+    ]
+  },
+  {
+    "id": "konkatsu-engaged",
+    "kind": "arc",
+    "trigger": "book",
+    "once": true,
+    "roles": {
+      "a": {
+        "archetype": [
+          "konkatsu"
+        ]
+      }
+    },
+    "texts": [
+      "{a}さんの婚約が決まった。送別会の相談が、本人抜きで廊下で始まっている",
+      "{a}さん、指輪の箱を隠しそびれて住人に見つかった。全員が知らないふりをするのに苦労している"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": 40
+      },
+      {
+        "type": "book",
+        "next": [
+          {
+            "id": "farewell-party"
+          }
+        ],
+        "afterMinutes": [
+          1440,
+          2880
+        ]
+      }
+    ]
+  },
+  {
+    "id": "konkatsu-ghost",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": {
+      "a": {
+        "archetype": [
+          "konkatsu"
+        ]
+      }
+    },
+    "texts": [
+      "{a}さんの見合いの返事が来なかった。{room}に、未開封の菓子折りが積まれている",
+      "{a}さんが、見合いの結果の電話を一日中待っている。携帯の画面だけが何度も光った"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": -15
+      },
+      {
+        "type": "book",
+        "next": [
+          {
+            "id": "konkatsu-vent",
+            "weight": 6
+          },
+          {
+            "id": "konkatsu-profile",
+            "weight": 4
+          }
+        ],
+        "afterMinutes": [
+          2880,
+          7200
+        ]
+      }
+    ]
+  },
+  {
+    "id": "konkatsu-vent",
+    "kind": "arc",
+    "trigger": "book",
+    "once": true,
+    "roles": {
+      "a": {
+        "archetype": [
+          "konkatsu"
+        ],
+        "inRoom": true
+      }
+    },
+    "texts": [
+      "{a}さんの愚痴会が、夜に{room}で開かれた。みんなの話が全部、別の人の愚痴にすり替わった",
+      "{a}さんが住人相手に見合いの反省会をした。最後は誰かが持ってきた鍋で終わった"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": -6
+      },
+      {
+        "type": "party",
+        "bond": 6,
+        "mood": 4
+      },
+      {
+        "type": "book",
+        "next": [
+          {
+            "id": "konkatsu-profile"
+          }
+        ],
+        "afterMinutes": [
+          14400,
+          28800
+        ]
+      }
+    ],
+    "when": {
+      "hours": [
+        17,
+        23
+      ]
+    }
+  },
+  {
+    "id": "sento-closed",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": {
+      "a": {
+        "archetype": [
+          "sento"
+        ]
+      }
+    },
+    "texts": [
+      "{a}さんの実家の銭湯が、今日で店じまいになった。{room}の玄関に、桶がひとつ置いてある",
+      "{a}さんが、銭湯の暖簾を畳んで帰ってきた。手ぬぐいのにおいが、廊下にしばらく残った"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": -8
+      },
+      {
+        "type": "book",
+        "next": [
+          {
+            "id": "sento-reopen",
+            "weight": 5
+          },
+          {
+            "id": "sento-drift",
+            "weight": 5
+          }
+        ],
+        "afterMinutes": [
+          1440,
+          4320
+        ]
+      }
+    ]
+  },
+  {
+    "id": "sento-reopen",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": {
+      "a": {
+        "archetype": [
+          "sento"
+        ]
+      }
+    },
+    "texts": [
+      "{a}さんが、跡地の使い道を考えはじめた。{room}の机に、間取り図と鉛筆が広げられている",
+      "{a}さんは、常連だった住人に声をかけた。みんな「手伝う」とだけ言って、名前を書いた"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": 15
+      },
+      {
+        "type": "book",
+        "next": [
+          {
+            "id": "sento-festival"
+          }
+        ],
+        "afterMinutes": [
+          4320,
+          8640
+        ]
+      }
+    ]
+  },
+  {
+    "id": "sento-festival",
+    "kind": "arc",
+    "trigger": "book",
+    "once": true,
+    "when": {
+      "hours": [
+        17,
+        23
+      ]
+    },
+    "roles": {
+      "a": {
+        "archetype": [
+          "sento"
+        ],
+        "inRoom": true
+      }
+    },
+    "texts": [
+      "銭湯の跡地で、{a}さんたちの小さな祭りが開かれた。洗面器が太鼓の代わりに叩かれた",
+      "{a}さん、跡地に縁台を置いた。夕方になると、近所の人が黙って座りに来る"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": 35
+      },
+      {
+        "type": "party",
+        "bond": 8,
+        "mood": 8
+      }
+    ]
+  },
+  {
+    "id": "sento-drift",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": {
+      "a": {
+        "archetype": [
+          "sento"
+        ]
+      }
+    },
+    "texts": [
+      "{a}さんが昼まで寝ている。銭湯の朝の時間を、体がまだ覚えていて何度も目が覚めるそうだ",
+      "{a}さん、職探しの帰りに銭湯のあった道を遠回りして帰ってきた"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": -12
+      },
+      {
+        "type": "book",
+        "next": [
+          {
+            "id": "sento-demolish",
+            "weight": 6
+          },
+          {
+            "id": "sento-closed",
+            "weight": 4
+          }
+        ],
+        "afterMinutes": [
+          2880,
+          7200
+        ]
+      }
+    ]
+  },
+  {
+    "id": "sento-demolish",
+    "kind": "arc",
+    "trigger": "book",
+    "once": true,
+    "roles": {
+      "a": {
+        "archetype": [
+          "sento"
+        ]
+      }
+    },
+    "texts": [
+      "銭湯の建物が取り壊された。{a}さんは見に行かず、翌日からコンビニの夜勤に入ると言って部屋を片付けはじめた",
+      "{a}さんが、更地になった跡地の写真を一枚だけ撮ってきた。翌週からコンビニで夜勤を始めるそうだ"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": -25
+      },
+      {
+        "type": "changeJob",
+        "role": "a",
+        "archetype": "konbini"
+      }
+    ]
+  },
+  {
+    "id": "uranai-reading",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": {
+      "a": {
+        "archetype": [
+          "uranai"
+        ]
+      }
+    },
+    "texts": [
+      "{a}さんが、占いの卓の道具を部屋で広げている。水晶は、なぜか電気ポットの隣に置かれた",
+      "{a}さんの部屋から、カードを切る音がする。今夜の占いは、本人の財布の中身だった"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": 5
+      },
+      {
+        "type": "book",
+        "next": [
+          {
+            "id": "uranai-hit",
+            "weight": 5
+          },
+          {
+            "id": "uranai-miss",
+            "weight": 5
+          }
+        ],
+        "afterMinutes": [
+          1440,
+          4320
+        ]
+      }
+    ]
+  },
+  {
+    "id": "uranai-hit",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": {
+      "a": {
+        "archetype": [
+          "uranai"
+        ]
+      }
+    },
+    "texts": [
+      "{a}さんの占いが当たったと、近所で噂になった。{room}の前に、相談の人が一人立っていた",
+      "{a}さんが言い当てた日の夜、依頼人が手土産を持ってきた。本人は「たまたま」と言っている"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": 15
+      },
+      {
+        "type": "book",
+        "next": [
+          {
+            "id": "uranai-shop"
+          }
+        ],
+        "afterMinutes": [
+          4320,
+          8640
+        ]
+      }
+    ]
+  },
+  {
+    "id": "uranai-shop",
+    "kind": "arc",
+    "trigger": "book",
+    "once": true,
+    "roles": {
+      "a": {
+        "archetype": [
+          "uranai"
+        ]
+      }
+    },
+    "texts": [
+      "{a}さん、小さな占いの店を出せることになった。看板の字は、大家が書くことになった",
+      "{a}さんの占いに予約が入るようになった。カレンダーの空欄が、初めて埋まった"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": 40
+      },
+      {
+        "type": "book",
+        "next": [
+          {
+            "id": "farewell-party"
+          }
+        ],
+        "afterMinutes": [
+          1440,
+          2880
+        ]
+      }
+    ]
+  },
+  {
+    "id": "uranai-miss",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": {
+      "a": {
+        "archetype": [
+          "uranai"
+        ]
+      }
+    },
+    "texts": [
+      "{a}さんの占いが大外れした。カードには「吉」と出ていたが、依頼人は傘を持たずに雨に降られた",
+      "{a}さんが、自分の運勢だけ見ないことにしている。カードの束は、ずっと裏返しのままだ"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": -12
+      },
+      {
+        "type": "book",
+        "next": [
+          {
+            "id": "uranai-quit",
+            "weight": 6
+          },
+          {
+            "id": "uranai-reading",
+            "weight": 4
+          }
+        ],
+        "afterMinutes": [
+          2880,
+          7200
+        ]
+      }
+    ]
+  },
+  {
+    "id": "uranai-quit",
+    "kind": "arc",
+    "trigger": "book",
+    "once": true,
+    "roles": {
+      "a": {
+        "archetype": [
+          "uranai"
+        ]
+      }
+    },
+    "texts": [
+      "{a}さんが、卓を畳んで古道具屋に売りにいった。翌日から、コンビニの夜勤の面接に行くと言っている",
+      "{a}さん、占いの看板を下ろした。{room}の壁に、空いた釘だけが残った。次の仕事はコンビニの夜勤だそうだ"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": -20
+      },
+      {
+        "type": "changeJob",
+        "role": "a",
+        "archetype": "konbini"
+      }
+    ]
+  },
+  {
+    "id": "konbini-regular",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": {
+      "a": {
+        "archetype": [
+          "konbini"
+        ]
+      }
+    },
+    "texts": [
+      "{a}さんのレジに、毎晩同じ時間に来る客がいる。何も言わず、同じ缶コーヒーを置いていくそうだ",
+      "{a}さんの夜勤に、名前を覚えてくれた客ができた。{room}に帰る足取りが、朝から軽い"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": 8
+      },
+      {
+        "type": "book",
+        "next": [
+          {
+            "id": "konbini-manager",
+            "weight": 4
+          },
+          {
+            "id": "konbini-shift-cut",
+            "weight": 6
+          }
+        ],
+        "afterMinutes": [
+          1440,
+          4320
+        ]
+      }
+    ]
+  },
+  {
+    "id": "konbini-manager",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": {
+      "a": {
+        "archetype": [
+          "konbini"
+        ]
+      }
+    },
+    "texts": [
+      "{a}さん、店長に「社員にならないか」と言われたらしい。断る理由も受ける理由も、まだ決めかねている",
+      "{a}さんが、制服の襟を直しながら帰ってきた。店長の話が、まだ頭の中で回っているようだ"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": 12
+      },
+      {
+        "type": "book",
+        "next": [
+          {
+            "id": "konbini-promoted"
+          }
+        ],
+        "afterMinutes": [
+          4320,
+          8640
+        ]
+      }
+    ]
+  },
+  {
+    "id": "konbini-promoted",
+    "kind": "arc",
+    "trigger": "book",
+    "once": true,
+    "roles": {
+      "a": {
+        "archetype": [
+          "konbini"
+        ]
+      }
+    },
+    "texts": [
+      "{a}さんが、コンビニの社員になった。夜勤の帯はそのままだが、名札の色が変わった",
+      "{a}さん、社員証をもらった。首にかけたまま、廊下を一往復した"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": 30
+      },
+      {
+        "type": "say",
+        "role": "a",
+        "text": "名札が…青い…"
+      },
+      {
+        "type": "changeJob",
+        "role": "a",
+        "archetype": "salaryman"
+      }
+    ]
+  },
+  {
+    "id": "konbini-shift-cut",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": {
+      "a": {
+        "archetype": [
+          "konbini"
+        ]
+      }
+    },
+    "texts": [
+      "{a}さんのシフトが減らされた。壁のカレンダーの空欄が、急に目立つようになった",
+      "{a}さんが、店長から「来週は少なめで」と言われたらしい。夜の廊下を行ったり来たりしている"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": -12
+      },
+      {
+        "type": "book",
+        "next": [
+          {
+            "id": "konbini-leave",
+            "weight": 6
+          },
+          {
+            "id": "konbini-regular",
+            "weight": 4
+          }
+        ],
+        "afterMinutes": [
+          2880,
+          7200
+        ]
+      }
+    ]
+  },
+  {
+    "id": "konbini-leave",
+    "kind": "arc",
+    "trigger": "book",
+    "once": true,
+    "roles": {
+      "a": {
+        "archetype": [
+          "konbini"
+        ]
+      }
+    },
+    "texts": [
+      "{a}さん、店の更新をしないことにした。ユニフォームは洗って、きれいに畳まれていた",
+      "{a}さんがコンビニを辞めた。最後の日、常連の客がいつもの缶コーヒーを二本置いていった"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": -20
+      },
+      {
+        "type": "book",
+        "next": [
+          {
+            "id": "go-home"
+          }
+        ],
+        "afterMinutes": [
+          1440,
+          2880
+        ]
+      }
+    ]
+  },
+  {
+    "id": "oldman-old-friend",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": {
+      "a": {
+        "archetype": [
+          "oldman"
+        ]
+      }
+    },
+    "texts": [
+      "{a}さんの元に、昔の同僚から葉書が届いた。{room}のラジオの音が、いつもより大きい",
+      "{a}さんが、古い葉書を何度も読み返している。宛名の字は、昔から変わっていないらしい"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": 15
+      },
+      {
+        "type": "book",
+        "next": [
+          {
+            "id": "oldman-reunion"
+          }
+        ],
+        "afterMinutes": [
+          4320,
+          10080
+        ]
+      }
+    ]
+  },
+  {
+    "id": "oldman-reunion",
+    "kind": "arc",
+    "trigger": "book",
+    "once": true,
+    "roles": {
+      "a": {
+        "archetype": [
+          "oldman"
+        ]
+      }
+    },
+    "texts": [
+      "{a}さんを、旧友が訪ねてきた。二人で朝の散歩に出かけて、昼過ぎまで戻らなかった",
+      "{a}さんのところに、旧友が手土産を持って遊びに来た。廊下まで、昔の車掌の声が聞こえてきた"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": 30
+      },
+      {
+        "type": "say",
+        "role": "a",
+        "text": "あの頃は、よかったなあ"
+      },
+      {
+        "type": "book",
+        "next": [
+          {
+            "id": "oldman-fall-ill"
+          }
+        ],
+        "afterMinutes": [
+          28800,
+          43200
+        ]
+      }
+    ]
+  },
+  {
+    "id": "salaryman-overwork",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": {
+      "a": {
+        "archetype": [
+          "salaryman"
+        ]
+      }
+    },
+    "texts": [
+      "{a}さんの帰りが日に日に遅くなった。{room}の明かりが消えるより、廊下の足音が先に止まる",
+      "{a}さん、係長になってから朝が早くなった。ネクタイを結ぶ手が、少しだけ震えている"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": -15
+      },
+      {
+        "type": "book",
+        "next": [
+          {
+            "id": "salaryman-resign"
+          }
+        ],
+        "afterMinutes": [
+          7200,
+          14400
+        ]
+      }
+    ]
+  },
+  {
+    "id": "salaryman-resign",
+    "kind": "arc",
+    "trigger": "book",
+    "once": true,
+    "roles": {
+      "a": {
+        "archetype": [
+          "salaryman"
+        ]
+      }
+    },
+    "texts": [
+      "{a}さん、辞表を出した。翌週から、コンビニの夜勤に入るそうだ",
+      "{a}さんが会社を辞めた。スーツはクリーニングの袋に入れたまま、押入れの奥に入った"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": -10
+      },
+      {
+        "type": "say",
+        "role": "a",
+        "text": "ちょっと、休みます"
+      },
+      {
+        "type": "changeJob",
+        "role": "a",
+        "archetype": "konbini"
+      }
+    ]
+  },
+  {
+    "id": "pachinko-loan",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": {
+      "a": {
+        "archetype": [
+          "pachinko"
+        ]
+      }
+    },
+    "texts": [
+      "{a}さんが、知人に「すぐ返す」と言って借りに行った。{room}に戻る足取りが、行きより重かった",
+      "{a}さんの携帯が、夕方から何度も鳴っている。出るたびに、声が小さくなっていく"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": -10
+      },
+      {
+        "type": "book",
+        "next": [
+          {
+            "id": "pachinko-loan-end"
+          }
+        ],
+        "afterMinutes": [
+          7200,
+          14400
+        ]
+      }
+    ]
+  },
+  {
+    "id": "pachinko-loan-end",
+    "kind": "arc",
+    "trigger": "book",
+    "once": true,
+    "logKind": "move",
+    "roles": {
+      "a": {
+        "archetype": [
+          "pachinko"
+        ]
+      }
+    },
+    "texts": [
+      "{a}さんの借りたものが返せなくなった。夜のうちに荷物をまとめて、静かに出ていった",
+      "{a}さんの部屋の明かりが消えたまま、朝になった。ドアには「お世話になりました」の紙だけが貼ってある"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": -25
+      },
+      {
+        "type": "moveOut",
+        "role": "a"
+      }
+    ]
+  },
+  {
+    "id": "student-leave-form",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": {
+      "a": {
+        "archetype": [
+          "student"
+        ]
+      }
+    },
+    "texts": [
+      "{a}さんが、休学届の用紙を机に置いたまま眺めている。用紙には、まだ何も書かれていない",
+      "{a}さん、学生課の前で三十分立っていたらしい。帰りにコンビニで求人誌を買った"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": -8
+      },
+      {
+        "type": "book",
+        "next": [
+          {
+            "id": "student-leave-end"
+          }
+        ],
+        "afterMinutes": [
+          4320,
+          10080
+        ]
+      }
+    ]
+  },
+  {
+    "id": "student-leave-end",
+    "kind": "arc",
+    "trigger": "book",
+    "once": true,
+    "roles": {
+      "a": {
+        "archetype": [
+          "student"
+        ]
+      }
+    },
+    "texts": [
+      "{a}さんは、大学を辞めることにした。翌週からコンビニで夜勤を始めるそうだ",
+      "{a}さんが、学生証を引き出しにしまった。レジの研修は、来週から始まる"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": -5
+      },
+      {
+        "type": "say",
+        "role": "a",
+        "text": "八年も、長かったなあ"
+      },
+      {
+        "type": "changeJob",
+        "role": "a",
+        "archetype": "konbini"
+      }
+    ]
   }
 ]

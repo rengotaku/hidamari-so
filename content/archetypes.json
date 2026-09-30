@@ -9,6 +9,7 @@
     "shifts": [{ "days": { "every": 1, "on": [0] }, "start": 22, "end": 6, "label": "コンビニ夜勤", "pay": 11000 }],
     "hobbies": { "phone": 3, "tv": 2, "game": 2, "beer": 2, "stare": 1 },
     "traits": ["katazuke"],
+    "arc": "konbini-regular",
     "decor": { "required": ["hanger-rack", "calendar", "color-box"], "pool": ["cup-noodle", "photo-frame", "fan", "plant-pots"], "pick": [2, 3] }
   },
   {
@@ -148,5 +149,491 @@
     "traits": ["nebou", "jisui"],
     "arc": "senmon-term",
     "decor": {"required": ["low-desk", "book-tower", "calendar"], "pool": ["cup-noodle", "fan", "poster-idol"], "pick": [2, 3] }
+  },
+  {
+    "id": "yamikin",
+    "label": "闇金に借りている人（電話は出ない）",
+    "age": [
+      32,
+      54
+    ],
+    "sleep": [
+      2,
+      10
+    ],
+    "eat": "bento",
+    "startMoney": 4000,
+    "shifts": [
+      {
+        "days": {
+          "every": 2,
+          "on": [
+            1
+          ]
+        },
+        "start": 8,
+        "end": 17,
+        "label": "日雇い（手渡し）",
+        "pay": 9000
+      }
+    ],
+    "hobbies": {
+      "keiba": 4,
+      "phone": 3,
+      "beer": 2,
+      "tv": 2,
+      "stare": 2
+    },
+    "traits": [
+      "rusu",
+      "kinketsu",
+      "mie"
+    ],
+    "arc": "yamikin-notice",
+    "decor": {
+      "required": [
+        "notice-paper",
+        "magazine-pile",
+        "cup-noodle"
+      ],
+      "pool": [
+        "calendar",
+        "bottle-tower",
+        "clock-wall",
+        "laundry-pile"
+      ],
+      "pick": [
+        2,
+        3
+      ]
+    }
+  },
+  {
+    "id": "rakugo",
+    "label": "万年前座の落語家志望",
+    "age": [
+      24,
+      38
+    ],
+    "sleep": [
+      2,
+      9.5
+    ],
+    "eat": "ramen",
+    "startMoney": 7000,
+    "allowance": 10000,
+    "shifts": [
+      {
+        "days": {
+          "every": 2,
+          "on": [
+            0
+          ]
+        },
+        "start": 13,
+        "end": 22,
+        "label": "寄席の前座（雑用）",
+        "pay": 4000
+      },
+      {
+        "days": {
+          "every": 4,
+          "on": [
+            1
+          ]
+        },
+        "start": 8,
+        "end": 15,
+        "label": "引越しバイト",
+        "pay": 8000
+      }
+    ],
+    "hobbies": {
+      "radio": 3,
+      "stare": 2,
+      "phone": 2,
+      "nap": 2,
+      "beer": 2
+    },
+    "traits": [
+      "honki",
+      "hitorigoto"
+    ],
+    "arc": "rakugo-stage",
+    "decor": {
+      "required": [
+        "low-desk",
+        "book-tower",
+        "hanger-rack"
+      ],
+      "pool": [
+        "radio-old",
+        "calendar",
+        "cup-noodle",
+        "photo-frame"
+      ],
+      "pick": [
+        2,
+        3
+      ]
+    }
+  },
+  {
+    "id": "busybody",
+    "label": "世話焼きのおばちゃん",
+    "age": [
+      48,
+      65
+    ],
+    "sleep": [
+      23,
+      5.5
+    ],
+    "eat": "nimono",
+    "startMoney": 40000,
+    "allowance": 30000,
+    "shifts": [
+      {
+        "days": {
+          "every": 7,
+          "on": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        },
+        "start": 9,
+        "end": 15,
+        "label": "スーパーのパート",
+        "pay": 6000
+      }
+    ],
+    "hobbies": {
+      "tv": 3,
+      "radio": 2,
+      "plants": 2,
+      "phone": 2
+    },
+    "traits": [
+      "osekkai",
+      "hitorigoto"
+    ],
+    "arc": "busybody-stew",
+    "decor": {
+      "required": [
+        "tansu",
+        "calendar",
+        "plant-pots"
+      ],
+      "pool": [
+        "photo-frame",
+        "clock-wall",
+        "mini-fridge",
+        "fish-tank"
+      ],
+      "pick": [
+        2,
+        3
+      ]
+    }
+  },
+  {
+    "id": "taxi",
+    "label": "夜勤明けのタクシー運転手",
+    "age": [
+      42,
+      60
+    ],
+    "sleep": [
+      9,
+      16
+    ],
+    "eat": "bento",
+    "startMoney": 50000,
+    "shifts": [
+      {
+        "days": {
+          "every": 3,
+          "on": [
+            0,
+            1
+          ]
+        },
+        "start": 20,
+        "end": 7,
+        "label": "タクシー夜勤",
+        "pay": 14000
+      }
+    ],
+    "hobbies": {
+      "radio": 4,
+      "tv": 2,
+      "nap": 3,
+      "keiba": 2,
+      "beer": 2
+    },
+    "traits": [
+      "sake",
+      "hitorigoto"
+    ],
+    "arc": "taxi-passenger",
+    "decor": {
+      "required": [
+        "radio-old",
+        "hanger-rack",
+        "calendar"
+      ],
+      "pool": [
+        "bottle-tower",
+        "magazine-pile",
+        "clock-wall",
+        "photo-frame"
+      ],
+      "pick": [
+        2,
+        3
+      ]
+    }
+  },
+  {
+    "id": "guarantor",
+    "label": "断れない保証人のお人好し",
+    "age": [
+      33,
+      55
+    ],
+    "sleep": [
+      0.5,
+      6.5
+    ],
+    "eat": "bento",
+    "startMoney": 35000,
+    "shifts": [
+      {
+        "days": {
+          "every": 7,
+          "on": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        },
+        "start": 7.5,
+        "end": 19,
+        "label": "会社（事務）",
+        "pay": 11000
+      }
+    ],
+    "hobbies": {
+      "tv": 3,
+      "phone": 3,
+      "beer": 2,
+      "nap": 2,
+      "stare": 1
+    },
+    "traits": [
+      "kotowarenai",
+      "samishi"
+    ],
+    "arc": "guarantor-stamp",
+    "decor": {
+      "required": [
+        "hanger-rack",
+        "calendar",
+        "notice-paper"
+      ],
+      "pool": [
+        "tansu",
+        "photo-frame",
+        "magazine-pile",
+        "mini-fridge"
+      ],
+      "pick": [
+        2,
+        3
+      ]
+    }
+  },
+  {
+    "id": "konkatsu",
+    "label": "婚活中の公務員",
+    "age": [
+      30,
+      42
+    ],
+    "sleep": [
+      23,
+      6.5
+    ],
+    "eat": "cook",
+    "startMoney": 80000,
+    "shifts": [
+      {
+        "days": {
+          "every": 7,
+          "on": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        },
+        "start": 7.5,
+        "end": 19,
+        "label": "役所",
+        "pay": 13000
+      }
+    ],
+    "hobbies": {
+      "phone": 4,
+      "tv": 2,
+      "plants": 2,
+      "study": 2,
+      "beer": 1
+    },
+    "traits": [
+      "mie",
+      "samishi"
+    ],
+    "arc": "konkatsu-profile",
+    "decor": {
+      "required": [
+        "hanger-rack",
+        "color-box",
+        "calendar"
+      ],
+      "pool": [
+        "plant-pots",
+        "photo-frame",
+        "fan",
+        "mini-fridge",
+        "book-tower"
+      ],
+      "pick": [
+        2,
+        3
+      ]
+    }
+  },
+  {
+    "id": "sento",
+    "label": "銭湯の跡継ぎ（実家は廃業）",
+    "age": [
+      25,
+      38
+    ],
+    "sleep": [
+      0.5,
+      8
+    ],
+    "eat": "ramen",
+    "startMoney": 20000,
+    "allowance": 12000,
+    "shifts": [
+      {
+        "days": {
+          "every": 3,
+          "on": [
+            0
+          ]
+        },
+        "start": 10,
+        "end": 19,
+        "label": "実家の片付けの手伝い",
+        "pay": 6000
+      }
+    ],
+    "hobbies": {
+      "nap": 3,
+      "phone": 3,
+      "stare": 3,
+      "game": 1,
+      "beer": 2
+    },
+    "traits": [
+      "samishi",
+      "engi"
+    ],
+    "arc": "sento-closed",
+    "decor": {
+      "required": [
+        "cardboard-stack",
+        "tansu",
+        "clock-wall"
+      ],
+      "pool": [
+        "fan",
+        "photo-frame",
+        "bottle-tower",
+        "laundry-pile"
+      ],
+      "pick": [
+        2,
+        3
+      ]
+    }
+  },
+  {
+    "id": "uranai",
+    "label": "路上の占い師（自分の運勢は見ない）",
+    "age": [
+      29,
+      52
+    ],
+    "sleep": [
+      3,
+      11
+    ],
+    "eat": "ramen",
+    "startMoney": 25000,
+    "shifts": [
+      {
+        "days": {
+          "every": 2,
+          "on": [
+            1
+          ]
+        },
+        "start": 18,
+        "end": 23,
+        "label": "路上の占い",
+        "pay": 5000
+      }
+    ],
+    "hobbies": {
+      "radio": 2,
+      "draw": 2,
+      "phone": 3,
+      "tv": 2,
+      "stare": 3,
+      "plants": 1
+    },
+    "traits": [
+      "engi",
+      "hitorigoto"
+    ],
+    "arc": "uranai-reading",
+    "decor": {
+      "required": [
+        "kamidana",
+        "low-desk",
+        "pennant"
+      ],
+      "pool": [
+        "fish-tank",
+        "plant-pots",
+        "clock-wall",
+        "photo-frame"
+      ],
+      "pick": [
+        2,
+        3
+      ]
+    }
   }
 ]
