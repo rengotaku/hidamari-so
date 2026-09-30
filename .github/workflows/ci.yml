@@ -47,3 +47,51 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  deploy:
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+    steps:
+      - name: Check Cloudflare secrets
+        id: secrets
+        run: |
+          if [ -n "$CLOUDFLARE_API_TOKEN" ] && [ -n "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID が未登録のため、Cloudflare Pages へのデプロイをスキップしました"
+          fi
+
+      - uses: actions/checkout@v6
+        if: steps.secrets.outputs.configured == 'true'
+
+      - name: Use Node.js
+        if: steps.secrets.outputs.configured == 'true'
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .node-version
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Compose shared-react-ui
+        if: steps.secrets.outputs.configured == 'true'
+        run: make compose-ui
+
+      - name: Install dependencies
+        if: steps.secrets.outputs.configured == 'true'
+        run: npm ci
+
+      - name: Build
+        if: steps.secrets.outputs.configured == 'true'
+        run: npm run build
+
+      - name: Deploy to Cloudflare Pages
+        if: steps.secrets.outputs.configured == 'true'
+        run: npx wrangler pages deploy dist --project-name=hidamari-so --branch=main
