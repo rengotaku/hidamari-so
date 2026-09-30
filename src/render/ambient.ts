@@ -17,10 +17,14 @@ export interface Walker {
 
 export interface Ambient {
   walkers: Walker[];
-  cat: { x: number; tx: number };
+  /** dir は向き（1 = 右、-1 = 左）。最後に歩いた方向を向いたまま止まる */
+  cat: { x: number; tx: number; dir: 1 | -1 };
 }
 
-export const createAmbient = (): Ambient => ({ walkers: [], cat: { x: 34, tx: 34 } });
+export const createAmbient = (): Ambient => ({
+  walkers: [],
+  cat: { x: 34, tx: 34, dir: 1 },
+});
 
 const HAIR = [
   "#2a211c",
@@ -91,9 +95,11 @@ export function updateAmbient(
   const cat = { ...a.cat };
   if (Math.abs(cat.tx - cat.x) < 0.5) {
     if (chance(rng, 0.02 * gameMinutes)) cat.tx = pick(rng, CAT_SPOTS);
-  } else
-    cat.x +=
-      Math.sign(cat.tx - cat.x) * Math.min(Math.abs(cat.tx - cat.x), 3 * gameMinutes);
+  } else {
+    const d = Math.sign(cat.tx - cat.x);
+    cat.dir = d < 0 ? -1 : 1;
+    cat.x += d * Math.min(Math.abs(cat.tx - cat.x), 3 * gameMinutes);
+  }
   return { walkers, cat };
 }
 
