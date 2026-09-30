@@ -104,3 +104,72 @@ describe("render: 季節", () => {
     expect(p1.p).toBeLessThanOrEqual(1);
   });
 });
+
+describe("雪かき役は屋外を歩いている住人と重ならない", () => {
+  /** fillRect のとき fillStyle が color だった回数を数える偽 Canvas */
+  function countColor(state: GameState, color: string): number {
+    let n = 0;
+    const target: Record<string, unknown> = {};
+    const ctx = new Proxy(target, {
+      get(_t, prop: string) {
+        if (prop === "createRadialGradient")
+          return () => ({ addColorStop: () => undefined });
+        if (prop === "fillRect")
+          return () => {
+            if (target.fillStyle === color) n++;
+          };
+        if (
+          ["strokeRect", "beginPath", "moveTo", "quadraticCurveTo", "stroke"].includes(
+            prop
+          )
+        )
+          return () => undefined;
+        return target[prop];
+      },
+      set(t, prop: string, value) {
+        t[prop] = value;
+        return true;
+      },
+    }) as unknown as CanvasRenderingContext2D;
+    drawScene(ctx, state, createAmbient(), 4000, null);
+    return n;
+  }
+
+  function walkingFirst(base: GameState): GameState {
+    const res = base.res.map((r, i) =>
+      i === 0
+        ? {
+            ...r,
+            look: { ...r.look, hair: "#123456" },
+            at: "walking" as const,
+            x: 150,
+            y: 182,
+          }
+        : { ...r, look: { ...r.look, hair: "#654321" } }
+    );
+    return { ...base, res };
+  }
+
+  it("冬の朝に住人 0 番が歩いていても、その人は 1 回だけ描かれる", () => {
+    const winter = walkingFirst(at("winter", 1, 7.5, "snow"));
+    expect(shovelerAt(winter)).not.toBeNull();
+    const summer = walkingFirst(at("summer", 1, 7.5, "sunny"));
+    const once = countColor(summer, "#123456");
+    expect(once).toBeGreaterThan(0);
+    expect(countColor(winter, "#123456")).toBe(once);
+  });
+
+  it("全員が歩いているときは雪かき役を出さない（二重に描かない）", () => {
+    const base = at("winter", 1, 7.5, "snow");
+    const res = base.res.map((r) => ({
+      ...r,
+      look: { ...r.look, hair: "#123456" },
+      at: "walking" as const,
+      x: 150,
+      y: 182,
+    }));
+    const all = { ...base, res };
+    const summer = { ...all, t: at("summer", 1, 7.5, "sunny").t };
+    expect(countColor(all, "#123456")).toBe(countColor(summer, "#123456"));
+  });
+});

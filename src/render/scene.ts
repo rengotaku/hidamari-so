@@ -221,7 +221,12 @@ export function drawScene(
   drawAging(ctx, aging);
   drawSeasonFront(ctx, s, now, n);
   const shoveler = shovelerAt(s);
-  const first = sv.res[0];
+  // 雪かき役は、その時間に屋外を歩いていない住人のうち id が最小の人。いなければ出さない
+  const first = sv.res
+    .filter((r) => r.at !== "walking")
+    .reduce<
+      (typeof sv.res)[number] | undefined
+    >((m, r) => (m && m.id <= r.id ? m : r), undefined);
   if (shoveler && first)
     drawPerson(
       ctx,
