@@ -128,9 +128,9 @@ export function GameScreen({ seed, storage, now = systemNow }: Props) {
 
   const selected = state.res.find((r) => r.id === selectedId) ?? null;
   const departed = state.departed.find((d) => d.id === departedId) ?? null;
-  // 大写し中の日誌は、その部屋の住人の出来事だけ
+  // 大写し中の日誌は、その部屋で起きた出来事だけ
   const logRoom = zoom.phase === "zooming" || zoom.phase === "closeup" ? zoom.room : null;
-  const log = logRoom === null ? state.log : roomLog(state.log, state, logRoom);
+  const log = logRoom === null ? state.log : roomLog(state.log, logRoom);
 
   // 返事待ちの間は背景をすべて外す（aside は main の中）。ダイアログは header / main の外にある
   const pending = state.buyout.phase === "pending";
