@@ -1,7 +1,15 @@
 import { describe, it, expect } from "vitest";
 import { createRng, newGame } from "@/sim";
 import { createAmbient, drawScene } from "@/render";
-import { MOVING_BOX_ID, decorSchema, defaultContent, flatRects, orderedBoxes } from ".";
+import {
+  MOVING_BOX_ID,
+  NO_ACTS,
+  boxesFor,
+  decorSchema,
+  defaultContent,
+  flatRects,
+  orderedBoxes,
+} from ".";
 
 /** fillRect の呼び出し（色と矩形）を記録するだけの偽 Canvas */
 function recordingCtx() {
@@ -107,5 +115,86 @@ describe("追加: 2.5D 定義と平面の対応", () => {
       decorSchema.safeParse({ ...def, boxes: [], rects: [[0, 0, 1, 1, "#000000"]] })
         .success
     ).toBe(false);
+  });
+});
+
+describe("#36: 行動中に色が変わる部品（recolorDuringAct）", () => {
+  const light = defaultContent.decor["streaming-set"]!;
+  const count = (boxes: readonly (readonly unknown[])[], c: string) =>
+    boxes.filter((b) => b[6] === c).length;
+
+  it("1: streaming-set の recolorDuringAct は {stream, #bbbbbb, #ffffff} で、検証を通る", () => {
+    expect(light.recolorDuringAct).toEqual({
+      act: "stream",
+      from: "#bbbbbb",
+      to: "#ffffff",
+    });
+    expect(decorSchema.safeParse(light).success).toBe(true);
+  });
+
+  it("2: from がどの箱の色にも無いと検証が落ち、メッセージに recolorDuringAct.from が含まれる", () => {
+    const r = decorSchema.safeParse({
+      ...light,
+      recolorDuringAct: { act: "stream", from: "#123456", to: "#ffffff" },
+    });
+    expect(r.success).toBe(false);
+    if (!r.success)
+      expect(
+        r.error.issues.some((i) => i.message.includes("recolorDuringAct.from"))
+      ).toBe(true);
+  });
+
+  it("3: from を大文字で書いても検証を通り、#bbbbbb の箱 4 つが #ffffff になる", () => {
+    const def = decorSchema.parse({
+      ...light,
+      recolorDuringAct: { act: "stream", from: "#BBBBBB", to: "#ffffff" },
+    });
+    const out = boxesFor(def, new Set(["stream"]));
+    expect(count(out, "#ffffff")).toBe(4);
+    expect(count(out, "#bbbbbb")).toBe(0);
+  });
+
+  it("4: 箱のはみ出しと from の誤記を同時に入れると、issue が 2 つとも報告される", () => {
+    const r = decorSchema.safeParse({
+      ...light,
+      h: 13,
+      recolorDuringAct: { act: "stream", from: "#123456", to: "#ffffff" },
+    });
+    expect(r.success).toBe(false);
+    if (!r.success) {
+      const msgs = r.error.issues.map((i) => i.message);
+      expect(msgs.some((m) => m.includes("recolorDuringAct.from"))).toBe(true);
+      expect(msgs.some((m) => m.includes("枠を出ている"))).toBe(true);
+    }
+  });
+
+  it("5: act に 'no-such-act' を書くと検証が落ちる", () => {
+    expect(
+      decorSchema.safeParse({
+        ...light,
+        recolorDuringAct: { act: "no-such-act", from: "#bbbbbb", to: "#ffffff" },
+      }).success
+    ).toBe(false);
+  });
+
+  it("6: boxesFor(def, {stream}) は #bbbbbb の 4 箱だけを #ffffff にし、boxesFor(def) は orderedBoxes と同じ。def.boxes は変わらない", () => {
+    const before = structuredClone(light.boxes);
+    const on = boxesFor(light, new Set(["stream"]));
+    expect(count(on, "#ffffff")).toBe(4);
+    expect(count(on, "#bbbbbb")).toBe(0);
+    expect(count(on, "#555555")).toBe(1);
+    expect(boxesFor(light)).toEqual(orderedBoxes(light));
+    expect(boxesFor(light, NO_ACTS)).toEqual(orderedBoxes(light));
+    expect(boxesFor(light, new Set(["phone"]))).toEqual(orderedBoxes(light));
+    expect(light.boxes).toEqual(before);
+  });
+
+  it("7: flatRects を引数 1 つで呼ぶと、変更前と同じ結果になる", () => {
+    expect(flatRects(light)).toEqual(
+      orderedBoxes(light).map(([x, , z, w, , h, c]) => [x, light.h - z - h, w, h, c])
+    );
+    expect(
+      flatRects(light, new Set(["stream"])).filter((r) => r[4] === "#ffffff")
+    ).toHaveLength(4);
   });
 });

@@ -186,10 +186,21 @@ export const decorSchema = z
       .min(1),
     /** この行動をしている間は描かない（弾いているギターなど） */
     hideDuringAct: z.enum(ACT_IDS).optional(),
+    /** この行動をしている間は、from の色の箱を to の色にする（配信中に点くライトなど。1 部品に 1 組） */
+    recolorDuringAct: z
+      .strictObject({ act: z.enum(ACT_IDS), from: color, to: color })
+      .optional(),
     /** 同じ部品を並べて描くときの 1 つごとのずれ（段ボール用） */
     step: z.tuple([z.number().int(), z.number().int()]).optional(),
   })
   .superRefine((p, ctx) => {
+    // はみ出し検査は最初の 1 件で return するので、from の検査をその前に置く（同時の誤りも報告する）
+    const from = p.recolorDuringAct?.from.toLowerCase();
+    if (from !== undefined && !p.boxes.some((b) => b[6].toLowerCase() === from))
+      ctx.addIssue({
+        code: "custom",
+        message: `recolorDuringAct.from ${p.recolorDuringAct?.from} の色の箱が無い`,
+      });
     for (const [x, y, z0, w, d, h] of p.boxes)
       if (x + w > p.w || y + d > p.d || z0 + h > p.h) {
         ctx.addIssue({

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createRng, newGame, type GameState } from "@/sim";
 import { createAmbient, drawScene } from "@/render";
+import { defaultContent } from "@/content";
 
 /** 塗った矩形を色ごとに数えるだけの偽 Canvas */
 function fakeCtx() {
@@ -81,5 +82,35 @@ describe("追加: 装飾と大家の描画", () => {
     escort.landlord.phase = "escort";
     escort.landlord.escort = structuredClone(base.res[0]!);
     expect(draw(escort).length).toBeGreaterThan(draw(walking).length);
+  });
+});
+
+describe("#36: 全体図の行動中の色替えと隠し", () => {
+  /** 部屋 1 つを、装飾 items・住人の行動 act で描いて、矩形の色を数える */
+  const fillsWith = (items: string[], act: "stream" | "phone" | "guitar") => {
+    const s = structuredClone(newGame(createRng(2)));
+    s.t = 12 * 60;
+    const room = s.res[0]!.room;
+    const r = s.res[0]!;
+    r.at = room;
+    r.act = act;
+    s.decor[room] = { items, boxes: 0 };
+    return draw(s);
+  };
+  const n = (fills: string[], c: string) => fills.filter((f) => f === c).length;
+
+  it("8: stream の方が #ffffff が 4 多く、#bbbbbb が 4 少ない（phone と比べる）", () => {
+    const stream = fillsWith(["streaming-set"], "stream");
+    const phone = fillsWith(["streaming-set"], "phone");
+    expect(n(stream, "#ffffff") - n(phone, "#ffffff")).toBe(4);
+    expect(n(phone, "#bbbbbb") - n(stream, "#bbbbbb")).toBe(4);
+  });
+
+  it("10: guitar の hideDuringAct は今までどおり効く（弾いている間は描かれない）", () => {
+    const guitar = defaultContent.decor["guitar"]!;
+    const extra = (act: "phone" | "guitar") =>
+      fillsWith(["guitar"], act).length - fillsWith([], act).length;
+    expect(extra("phone")).toBe(guitar.boxes.length);
+    expect(extra("guitar")).toBe(0);
   });
 });
