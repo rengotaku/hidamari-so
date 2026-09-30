@@ -1,10 +1,30 @@
-import { SCENE_H, SCENE_W, hourOf, roomRect, ROOM_COUNT, type GameState } from "@/sim";
+import { defaultContent } from "@/content";
+import type { TownLook, TownSlot } from "@/content/schema";
+import {
+  SCENE_H,
+  SCENE_W,
+  agingOf,
+  buildingAge,
+  hourOf,
+  roomRect,
+  ROOM_COUNT,
+  townLooks,
+  type GameState,
+} from "@/sim";
 import type { Ambient } from "./ambient";
 import { BG, STARS } from "./background";
 import { P, mix, shade } from "./palette";
 import { drawCat, drawPerson } from "./person";
 import { drawRoom, roomLit } from "./room";
+import {
+  drawSeasonBack,
+  drawSeasonFront,
+  seasonLook,
+  seasonPhase,
+  shovelerAt,
+} from "./season";
 import { currentSky, nightness } from "./sky";
+import { drawAging, drawTown, signBoard } from "./town";
 
 const W = SCENE_W;
 const H = SCENE_H;
@@ -14,9 +34,11 @@ function drawSkyAndTown(
   s: GameState,
   now: number,
   sky: string,
-  n: number
+  n: number,
+  looks: Record<TownSlot, TownLook>
 ): void {
   const h = hourOf(s.t);
+  const wet = s.weather === "rain" || s.weather === "snow";
   P(ctx, 0, 0, W, H, sky);
   const hz = mix(
     sky,
@@ -28,14 +50,14 @@ function drawSkyAndTown(
     P(ctx, 0, 110 + k * 12, W, 12, hz);
   }
   ctx.globalAlpha = 1;
-  if (n > 0.3 && s.weather !== "rain") {
+  if (n > 0.3 && !wet) {
     for (const st of STARS) {
       ctx.globalAlpha = (n - 0.3) * (0.5 + 0.5 * Math.sin(now / 700 + st[2] * 20));
       P(ctx, st[0], st[1], 1, 1, "#ffffff");
     }
     ctx.globalAlpha = 1;
   }
-  if (n > 0.5 && s.weather !== "rain") {
+  if (n > 0.5 && !wet) {
     P(ctx, 58, 18, 7, 7, "#f4efd0");
     P(ctx, 57, 19, 1, 5, "#f4efd0");
     P(ctx, 65, 19, 1, 5, "#f4efd0");
@@ -63,14 +85,17 @@ function drawSkyAndTown(
       P(ctx, cx + 6, cy - 4, 20, 4, cc);
     }
   }
-  ctx.strokeStyle = "#1e1c22";
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(0, 22.5);
-  ctx.quadraticCurveTo(160, 40, 320, 24.5);
-  ctx.moveTo(0, 27.5);
-  ctx.quadraticCurveTo(160, 45, 320, 29.5);
-  ctx.stroke();
+  // 電線（電柱が地中化されると無くなる）
+  if (looks.pole === "pole") {
+    ctx.strokeStyle = "#1e1c22";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, 22.5);
+    ctx.quadraticCurveTo(160, 40, 320, 24.5);
+    ctx.moveTo(0, 27.5);
+    ctx.quadraticCurveTo(160, 45, 320, 29.5);
+    ctx.stroke();
+  }
   if (h >= 5 && h < 8) {
     P(ctx, 210, 30, 4, 3, "#1a1a1f");
     P(ctx, 213, 29, 2, 2, "#1a1a1f");
@@ -87,7 +112,12 @@ function drawSkyAndTown(
   }
 }
 
-function drawBuildingShell(ctx: CanvasRenderingContext2D, s: GameState, n: number): void {
+function drawBuildingShell(
+  ctx: CanvasRenderingContext2D,
+  s: GameState,
+  n: number,
+  signColor: string
+): void {
   const roof = "#65747c";
   for (let r = 0; r < 14; r++) P(ctx, 28 - r, 56 + r, 228 + 2 * r, 1, roof);
   for (let xx = 20; xx < 266; xx += 5) P(ctx, xx, 58, 1, 11, shade(roof, -18));
@@ -102,7 +132,7 @@ function drawBuildingShell(ctx: CanvasRenderingContext2D, s: GameState, n: numbe
   P(ctx, 120, 50, 1, 6, "#3b2f2a");
   P(ctx, 164, 50, 1, 6, "#3b2f2a");
   P(ctx, 111, 39, 62, 13, "#3b2f2a");
-  P(ctx, 112, 40, 60, 11, "#dccfae");
+  P(ctx, 112, 40, 60, 11, signColor);
   const siding = "#8a785c";
   for (const q of [
     [24, 4],
@@ -176,12 +206,51 @@ export function drawScene(
   const n = nightness(h);
   const sky = currentSky(s);
   const frame = Math.floor(now / 260) % 2;
-  drawSkyAndTown(ctx, s, now, sky, n);
-  drawBuildingShell(ctx, s, n);
+  const { season } = seasonPhase(s);
+  const looks = townLooks(defaultContent, s);
+  const aging = agingOf(buildingAge(s.t, s.t0));
+  // 衣替え: 描くときだけ季節の服にした見た目を使う（状態は書き換えない）
+  const sv: GameState = {
+    ...s,
+    res: s.res.map((r) => ({ ...r, look: seasonLook(r.look, season) })),
+  };
+  drawSkyAndTown(ctx, s, now, sky, n, looks);
+  drawTown(ctx, looks, n);
+  drawSeasonBack(ctx, s, sky, n);
+  drawBuildingShell(ctx, s, n, signBoard(aging));
+  drawAging(ctx, aging);
+  drawSeasonFront(ctx, s, now, n);
+  const shoveler = shovelerAt(s);
+  // 雪かき役は、その時間に屋外を歩いていない住人のうち id が最小の人。いなければ出さない
+  const first = sv.res
+    .filter((r) => r.at !== "walking")
+    .reduce<
+      (typeof sv.res)[number] | undefined
+    >((m, r) => (m && m.id <= r.id ? m : r), undefined);
+  if (shoveler && first)
+    drawPerson(
+      ctx,
+      first.look,
+      shoveler.x,
+      181,
+      "walk",
+      Math.floor(now / 260) % 2,
+      false,
+      "shovel"
+    );
   drawCat(ctx, ambient.cat.x, 178, frame);
   const walkFr = Math.floor(now / 180) % 2;
   for (const w of ambient.walkers) {
-    drawPerson(ctx, w.look, w.x, w.y, "walk", walkFr, w.dir < 0, w.prop);
+    drawPerson(
+      ctx,
+      seasonLook(w.look, season),
+      w.x,
+      w.y,
+      "walk",
+      walkFr,
+      w.dir < 0,
+      w.prop
+    );
     if (w.dog) {
       const dx = Math.round(w.x + (w.dir < 0 ? -8 : 8));
       const dy = Math.round(w.y);
@@ -191,7 +260,7 @@ export function drawScene(
       P(ctx, dx + 2, dy - 1, 1, 1, "#8a7a6a");
     }
   }
-  for (const r of s.res) {
+  for (const r of sv.res) {
     if (r.at !== "walking") continue;
     const prop =
       r.outPurpose === "sento"
@@ -213,14 +282,14 @@ export function drawScene(
   const lits: number[] = [];
   for (let i = 0; i < ROOM_COUNT; i++) {
     if (roomLit(s, i, n)) lits.push(i);
-    else drawRoom(ctx, s, i, now, sky, false);
+    else drawRoom(ctx, sv, i, now, sky, false);
   }
   if (n > 0) {
     ctx.fillStyle = `rgba(12,14,38,${(n * 0.55).toFixed(3)})`;
     ctx.fillRect(0, 0, W, H);
   }
   for (const i of lits) {
-    drawRoom(ctx, s, i, now, sky, true);
+    drawRoom(ctx, sv, i, now, sky, true);
     if (n > 0.3) {
       const rr = roomRect(i);
       P(ctx, rr.x + 7, rr.y + 9, 18, 13, mix("#f2d38a", sky, 0.35));

@@ -1,0 +1,77 @@
+[
+  {
+    "id": "season-spring",
+    "kind": "daily",
+    "trigger": "season-start",
+    "when": { "season": ["spring"] },
+    "texts": [
+      "表の桜のつぼみがふくらんできた",
+      "桜がちらほら咲きはじめた。通りが少し明るい"
+    ]
+  },
+  {
+    "id": "season-tsuyu",
+    "kind": "daily",
+    "trigger": "season-start",
+    "when": { "season": ["tsuyu"] },
+    "roles": { "a": { "inRoom": true } },
+    "texts": [
+      "梅雨入り。{a}さんの部屋の洗濯物が、乾かないまま三日たった",
+      "じめじめした日が続く。廊下に傘が増えた"
+    ]
+  },
+  {
+    "id": "season-summer",
+    "kind": "daily",
+    "trigger": "season-start",
+    "when": { "season": ["summer"] },
+    "texts": [
+      "入道雲が出た。どこかで蝉が鳴きはじめた",
+      "日が高い。窓という窓が開け放されている"
+    ]
+  },
+  {
+    "id": "season-autumn",
+    "kind": "daily",
+    "trigger": "season-start",
+    "when": { "season": ["autumn"] },
+    "texts": [
+      "桜の葉が色づいて、歩道に落ちはじめた",
+      "朝の風が涼しい。羽織るものを探す人が増えた"
+    ]
+  },
+  {
+    "id": "season-winter",
+    "kind": "daily",
+    "trigger": "season-start",
+    "when": { "season": ["winter"] },
+    "texts": [
+      "空気が冷たくなった。そろそろ布団を厚くする頃だ",
+      "吐く息が白い。桜の枝がすっかり裸になった"
+    ]
+  },
+  {
+    "id": "first-snow",
+    "kind": "daily",
+    "trigger": "day-start",
+    "when": { "season": ["winter"], "weather": ["snow"] },
+    "roles": { "a": {} },
+    "cooldownDays": 14,
+    "weight": 3,
+    "texts": [
+      "初雪。{a}さんだけが半袖だった",
+      "雪が降った。{a}さんは窓からしばらく動かなかった"
+    ]
+  },
+  {
+    "id": "snow-shovel",
+    "kind": "daily",
+    "trigger": "day-start",
+    "when": { "season": ["winter"], "weather": ["snow"] },
+    "roles": { "a": {} },
+    "cooldownDays": 3,
+    "texts": [
+      "雪が積もった。{a}さんは、朝になったら玄関の前をどけると言っていた"
+    ]
+  }
+]

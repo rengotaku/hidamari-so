@@ -156,6 +156,7 @@ export function newGame(rng: Rng, content: Content = defaultContent): GameState 
     bonds: [],
     booked: [],
     story: { last: {}, done: [] },
+    town: {},
   };
   const c: Ctx = { s, rng, quiet: true, content };
   drawArchetypes(rng, content, INITIAL_ROOMS.length).forEach((arch, i) => {

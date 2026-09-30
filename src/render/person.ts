@@ -88,6 +88,10 @@ export function drawPerson(
     P(ctx, hx - 1, hy - 1, 4, 2, "#f0cf3a");
   } else if (prop === "bag") {
     P(ctx, hx, hy, 3, 3, "#f2f2ec");
+  } else if (prop === "shovel") {
+    const sx = flip ? cx - 6 : cx + 4;
+    P(ctx, sx, hy - 6, 1, 9, "#8a6a45");
+    P(ctx, flip ? sx - 2 : sx, hy + 3, 3, 2, "#9aa4ad");
   }
 }
 

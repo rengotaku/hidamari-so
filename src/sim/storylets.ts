@@ -7,10 +7,11 @@ import type {
   Storylet,
   Trigger,
 } from "@/content/schema";
-import { hourOf, inWin } from "./clock";
+import { dayOf, hourOf, inWin } from "./clock";
 import { archOf, getRes, isAwake, pushLog, say, type Ctx } from "./context";
 import { roomNo, roomRect } from "./layout";
 import { chance, clamp, kanji, randi, type Rng } from "./random";
+import { seasonOf } from "./season";
 import type { Bond, LogEntry, Resident, RoleRef, Variant } from "./types";
 
 /**
@@ -111,6 +112,7 @@ function storyOk(c: Ctx, st: Storylet): boolean {
   if (st.when.hours && !inWin(hourOf(s.t), st.when.hours[0], st.when.hours[1]))
     return false;
   if (st.when.weather && !st.when.weather.includes(s.weather)) return false;
+  if (st.when.season && !st.when.season.includes(seasonOf(dayOf(s.t)))) return false;
   return true;
 }
 
@@ -176,6 +178,8 @@ export function storyletById(content: Content, id: string): Storylet | undefined
 /** 日誌の 1 行の本文を組み立てる。日付の見出し・定義が見つからない行は null */
 export function composeEntry(content: Content, e: LogEntry): string | null {
   if (e.kind === "day") return null;
+  if (e.kind === "town")
+    return content.town.find((t) => t.id === e.changeId)?.stages[e.stage]?.log ?? null;
   const st = storyletById(content, e.storyletId);
   if (!st) return null;
   const template = st.texts[e.variant.text] ?? st.texts[0]!;

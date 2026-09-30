@@ -13,8 +13,9 @@ function line(e: LogEntry, i: number) {
     );
   const text = composeEntry(defaultContent, e);
   if (text === null) return null;
+  const id = e.kind === "town" ? e.changeId : e.storyletId;
   return (
-    <p key={`${e.t}-${e.storyletId}-${i}`} className={`ent ${e.kind}`}>
+    <p key={`${e.t}-${id}-${i}`} className={`ent ${e.kind}`}>
       <span className="ts">{formatClockShort(e.t)}</span>
       {text}
     </p>

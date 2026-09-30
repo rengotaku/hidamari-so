@@ -1,0 +1,35 @@
+[
+  {
+    "id": "east-lot",
+    "slot": "east",
+    "startYear": 1,
+    "chance": 0.25,
+    "stages": [
+      { "look": "lot" },
+      {
+        "look": "fence",
+        "afterDays": 0,
+        "log": "隣の空き地に白い囲いが立った。工事の看板が出ている"
+      },
+      {
+        "look": "mansion",
+        "afterDays": 6,
+        "log": "隣の空き地にマンションが建った。夜になると窓があかるい"
+      }
+    ]
+  },
+  {
+    "id": "pole-underground",
+    "slot": "pole",
+    "startYear": 2,
+    "chance": 0.2,
+    "stages": [
+      { "look": "pole" },
+      {
+        "look": "underground",
+        "afterDays": 2,
+        "log": "通りの電柱がなくなって、空が広くなった"
+      }
+    ]
+  }
+]

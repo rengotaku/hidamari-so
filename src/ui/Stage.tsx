@@ -1,6 +1,6 @@
 import type { RefObject } from "react";
 import { bubbleAnchor, toScene } from "@/render";
-import { SCENE_H, SCENE_W, type GameState } from "@/sim";
+import { SCENE_H, SCENE_W, agingOf, buildingAge, type GameState } from "@/sim";
 
 const pct = (v: number, lo: number, hi: number): number => Math.max(lo, Math.min(hi, v));
 
@@ -34,7 +34,12 @@ export function Stage({ canvasRef, state, onPick }: Props) {
           }}
         />
         <div className="overlay" aria-hidden="true">
-          <div className="sign">ひだまり荘</div>
+          <div
+            className="sign"
+            style={{ opacity: 1 - 0.6 * agingOf(buildingAge(state.t, state.t0)).sign }}
+          >
+            ひだまり荘
+          </div>
           {state.res.map((r) => {
             if (!r.bubble || r.bubble.until <= state.t) return null;
             const p = bubbleAnchor(r);

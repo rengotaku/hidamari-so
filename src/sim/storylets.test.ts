@@ -36,7 +36,8 @@ function collect(content: Content, seed: number, days: number, id = "fake") {
     const before = s.t;
     s = step(s, 60, rng, { content });
     for (const e of s.log)
-      if (e.kind !== "day" && e.storyletId === id && e.t > before) fired.push(e);
+      if (e.kind !== "day" && e.kind !== "town" && e.storyletId === id && e.t > before)
+        fired.push(e);
   }
   return { fired, state: s };
 }
@@ -209,7 +210,10 @@ function runWith(content: Content, seed: number, days: number): GameState {
 }
 
 const entriesOf = (s: GameState, id: string): StoryletEntry[] =>
-  s.log.filter((e): e is StoryletEntry => e.kind !== "day" && e.storyletId === id);
+  s.log.filter(
+    (e): e is StoryletEntry =>
+      e.kind !== "day" && e.kind !== "town" && e.storyletId === id
+  );
 
 describe("追加: 結果の適用", () => {
   it("book で予約した続きの出来事が、予約した日数のあとに同じ人へ起きる", () => {
