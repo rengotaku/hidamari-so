@@ -21,7 +21,7 @@ last_verified: 2026-10-01
 | 保存 | `src/save/` | localStorage への読み書き、古い保存の補完、留守中の進行 | `schema.ts`（保存の検証）、`storage.ts`（保存・読み込み・`catchUp`）、`migrate.ts`（版の移行と `fillHouse`）、`away.ts`（タブが隠れていた時間の計測） |
 | 描画 | `src/render/` | `GameState` を読んで Canvas に描く | `view.ts`（`drawStage`: 全体図・ズーム・フェード・大写しの切り替え）、`scene.ts`（全体図）、`closeup.ts`（2.5D の大写し）、`decor.ts`（全体図の装飾）、`person.ts`、`room.ts`、`season.ts`、`town.ts`、`night.ts`、`collector.ts`、`hit.ts`（押した場所の判定） |
 | 画面 | `src/ui/` | React の 1 画面と、ゲームループ | `GameScreen.tsx`（画面の組み立て）、`engine.ts`（`GameEngine`: 状態・乱数・速さを持つ入れ物）、`useGameLoop.ts`（フレームごとの進行・描画・保存）、`zoom.ts`（大写しの状態遷移）、`Stage.tsx`、`Journal.tsx`、`Profile.tsx`、`BuyoutDialog.tsx`、`SpeedControl.tsx` |
-| PWA | `src/pwa/`、`vite.config.ts` | manifest と service worker の登録 | `manifest.ts`、`register.ts` |
+| PWA | `src/pwa/`、`vite.config.ts` | manifest と service worker の登録。新しい版は、読み込み途中で混ざらないよう待機させ、タブが非表示から表示に戻った瞬間に `SKIP_WAITING` で有効にして 1 回だけ再読み込みする（画面に UI は出さない。保存から続きが始まる） | `manifest.ts`、`register.ts` |
 
 `src/components/ui/` は、雛形から引き継いだ共通の UI 部品です。`src/` 以下のほかのファイルからは参照されていません（削除してよいかどうかは未確認です）。
 
@@ -90,7 +90,8 @@ localStorage の 1 つのキー（`hidamari-so-save`）に、`schemaVersion`・`
 | 大写しの遷移の長さ | `src/ui/zoom.ts`（`ZOOM_IN_MS`、`FADE_MS`） |
 | 画面のレイアウト（ヘッダ・側面） | `src/ui/GameScreen.tsx`、`src/ui/game.css` |
 | 買収提案のダイアログと結末の画面 | `src/ui/BuyoutDialog.tsx`、`src/ui/buyout.css` |
-| PWA の名前・アイコン・更新の挙動 | `src/pwa/manifest.ts`、`vite.config.ts` |
+| PWA の名前・アイコン | `src/pwa/manifest.ts` |
+| PWA の更新の挙動（待機させる設定 / 表示に戻ったときの入れ替え） | `vite.config.ts`（`skipWaiting` / `clientsClaim`）、`src/pwa/register.ts` |
 | 公開（Cloudflare Pages）の設定 | `.github/workflows/ci.yml`、`wrangler.toml`、`public/_headers` |
 
 ## 経緯（why）は docs/adr/ を見る
