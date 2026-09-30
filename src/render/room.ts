@@ -2,7 +2,7 @@ import { ACTS, roomRect, type GameState, type Resident } from "@/sim";
 import { P, shade } from "./palette";
 import { drawBackDecor, drawFloorDecor } from "./decor";
 import { drawLying, drawPerson } from "./person";
-import { drawWindowSeason } from "./season";
+import { drawWindowSeason, shovelingResident } from "./season";
 
 export const STAINS: number[][][] = [0, 1, 2, 3, 4, 5].map((i) => [
   [8 + ((i * 17) % 40), 3, 5, 3],
@@ -31,8 +31,11 @@ export const LANDLORD_LOOK = {
   long: false,
 };
 
-export const roomOccupants = (s: GameState, i: number): Resident[] =>
-  s.res.filter((r) => r.at === i).sort((a, b) => a.x - b.x);
+/** 部屋にいる人。雪かきで屋外に出ている人は、部屋では描かない（同じ人を 2 回描かない） */
+export const roomOccupants = (s: GameState, i: number): Resident[] => {
+  const shoveler = shovelingResident(s);
+  return s.res.filter((r) => r.at === i && r !== shoveler).sort((a, b) => a.x - b.x);
+};
 
 /** 夜で、誰かが起きている部屋は明かりがつく */
 export function roomLit(s: GameState, i: number, night: number): boolean {

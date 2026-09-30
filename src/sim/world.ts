@@ -36,6 +36,7 @@ function onDay(c: Ctx): void {
   const { s } = c;
   const sd = seasonDay(dayOf(s.t));
   s.weather = drawWeather(c.rng, sd.season);
+  s.snowDays = sd.season === "winter" ? s.snowDays + (s.weather === "snow" ? 1 : 0) : 0;
   pushLog(c, { t: s.t, kind: "day" });
   advanceTown(c);
   if (sd.index === 0) fireTrigger(c, "season-start");

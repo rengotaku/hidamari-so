@@ -153,6 +153,7 @@ export function newGame(rng: Rng, content: Content = defaultContent): GameState 
     t: START_T,
     t0: START_T,
     weather: "sunny",
+    snowDays: 0,
     res: [],
     rooms: [null, null, null, null, null, null],
     log: [],
