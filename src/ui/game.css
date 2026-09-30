@@ -279,3 +279,21 @@ body {
     font-size: 9px;
   }
 }
+/* キーボード用の部屋の選択領域: 透明で、マウスは素通し。フォーカスしたときだけ枠が出る */
+.picker {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.picker .pick {
+  position: absolute;
+  pointer-events: none;
+  outline: none;
+}
+.picker .pick.closeup {
+  inset: 0;
+}
+.picker .pick:focus-visible {
+  outline: 2px solid var(--g-bulb);
+  outline-offset: -2px;
+}

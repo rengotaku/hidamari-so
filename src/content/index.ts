@@ -14,6 +14,7 @@ import {
 } from "./schema";
 
 export * from "./schema";
+export * from "./decor25";
 
 export interface RawContent {
   archetypes: unknown;
