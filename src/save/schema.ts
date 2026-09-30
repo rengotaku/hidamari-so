@@ -103,17 +103,28 @@ const logEntry = z.union([
   storyletEntry,
 ]);
 
-const landlord = z.object({
-  phase: z.enum(["idle", "up", "clearing", "escort", "down"]),
-  room: int.min(-1).max(5),
-  x: finite,
-  y: finite,
-  dir: z.union([z.literal(1), z.literal(-1)]),
-  path: z.array(point),
-  pi: nonNegInt,
-  until: finite,
-  escort: resident.nullable(),
-});
+const landlord = z
+  .object({
+    phase: z.enum(["idle", "up", "clearing", "escort", "down"]),
+    room: int.min(-1).max(5),
+    x: finite,
+    y: finite,
+    dir: z.union([z.literal(1), z.literal(-1)]),
+    path: z.array(point),
+    pi: nonNegInt,
+    until: finite,
+    escort: resident.nullable(),
+  })
+  // 手すき（idle）のときだけ部屋を持たない。それ以外は向かう部屋がある
+  .refine(
+    (l) => (l.phase === "idle") === (l.room === -1),
+    "大家の phase と room が食い違う"
+  )
+  // 住人を連れているのは escort のときだけ
+  .refine(
+    (l) => (l.phase === "escort") === (l.escort !== null),
+    "大家の phase と escort が食い違う"
+  );
 
 const departed = z.object({
   id: nonNegInt,
@@ -180,7 +191,15 @@ const gameState = z
       .default({ phase: "none", voice: null }),
   })
   // lastHour は経過時間から決まる値。食い違う保存は、1 時間ごとの処理が延々と回るので拒否する
-  .refine((s) => s.lastHour === Math.floor(s.t / 60), "lastHour が t と一致しない");
+  .refine((s) => s.lastHour === Math.floor(s.t / 60), "lastHour が t と一致しない")
+  // 連れている住人の行き先は、片付け済みの空室。住人のいる部屋や片付け前の部屋に入れると、住人が重なる・装飾が残る
+  .refine(
+    (s) =>
+      s.landlord.escort === null ||
+      (!s.res.some((r) => r.room === s.landlord.room) &&
+        s.vacancies.some((v) => v.room === s.landlord.room && v.cleared)),
+    "escort の行き先が片付け済みの空室でない"
+  );
 
 /** 時間の速さ。0 = 停止 */
 export const SPEEDS = [0, 1, 4, 15] as const;
