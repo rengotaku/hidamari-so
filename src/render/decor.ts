@@ -1,14 +1,21 @@
-import { defaultContent, MOVING_BOX_ID, type Decor, type DecorSlot } from "@/content";
+import {
+  defaultContent,
+  flatRects,
+  MOVING_BOX_ID,
+  type Decor,
+  type DecorSlot,
+} from "@/content";
 import type { GameState } from "@/sim";
 import { P } from "./palette";
 
 /**
- * 装飾の描画。何を飾るかは content/decor.json（色つきの矩形の並び）が決め、
- * ここは「置き場所の区画に順に並べる」だけを担う。部品ごとの描き分けはコードに置かない。
+ * 全体図の装飾の描画。何を飾るかは content/decor.json（2.5D の箱の並び）が決め、
+ * ここは箱を平面に落とした矩形（flatRects）を「置き場所の区画に順に並べる」だけを担う。
+ * 部品ごとの描き分けはコードに置かない。大写しの描画は closeup.ts（同じ定義から箱を立てる）。
  * 区画は [左端 x, 底の y]（部屋の左上が原点）。底の y に部品の左下を合わせる。
  * 区画の数は content の DECOR_CAPACITY と同じ（超えた部品は描かない）。
  */
-const CELLS: Record<DecorSlot, Array<[number, number]>> = {
+export const CELLS: Record<DecorSlot, Array<[number, number]>> = {
   wall: [
     [29, 22],
     [35, 24],
@@ -36,7 +43,7 @@ const CELLS: Record<DecorSlot, Array<[number, number]>> = {
 };
 
 /** 段ボールを並べ始める位置（左端 x, 底の y） */
-const BOX_BASE: [number, number] = [50, 46];
+export const BOX_BASE: [number, number] = [50, 46];
 
 function drawPart(
   ctx: CanvasRenderingContext2D,
@@ -47,11 +54,11 @@ function drawPart(
 ): void {
   const ox = left + (def.step?.[0] ?? 0) * index;
   const oy = base - def.h + (def.step?.[1] ?? 0) * index;
-  for (const [x, y, w, h, c] of def.rects) P(ctx, ox + x, oy + y, w, h, c);
+  for (const [x, y, w, h, c] of flatRects(def)) P(ctx, ox + x, oy + y, w, h, c);
 }
 
 /** 置き場所ごとに、飾られている順で区画を割り当てる */
-function placed(
+export function placed(
   s: GameState,
   room: number,
   slots: readonly DecorSlot[],

@@ -56,12 +56,12 @@ describe("F1: decor.json と全 archetype をスキーマで検証する", () =>
 });
 
 describe("追加: 装飾の部品の検証", () => {
-  it("矩形が部品の枠を出ている・色が不正な部品は通らない", () => {
+  it("箱が部品の枠を出ている・色が不正な部品は通らない", () => {
     const ok = decorJson[0]!;
     expect(decorSchema.safeParse({ ...ok, w: 1 }).success).toBe(false);
-    expect(decorSchema.safeParse({ ...ok, rects: [[0, 0, 1, 1, "red"]] }).success).toBe(
-      false
-    );
+    expect(
+      decorSchema.safeParse({ ...ok, boxes: [[0, 0, 0, 1, 1, 1, "red"]] }).success
+    ).toBe(false);
     expect(decorSchema.safeParse({ ...ok, slot: "sky" }).success).toBe(false);
   });
 

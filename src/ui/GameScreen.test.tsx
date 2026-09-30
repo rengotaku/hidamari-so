@@ -25,6 +25,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
 
@@ -124,9 +125,12 @@ describe("追加: 住人を押すとプロフィールが言葉だけで出る",
       s.rooms[2] = null;
     }
     saveGame(localStorage, s, 1, NOW);
+    // 部屋を押すと大写し（#8）になり、遷移の途中の押下は無視される。遷移を即座にして順に押す
+    vi.stubGlobal("matchMedia", (q: string) => ({ matches: true, media: q }));
     render(<GameScreen seed={1} storage={localStorage} now={() => NOW} />);
     clickRoom(screen.getByRole("img"), 1);
     expect(screen.queryByRole("region", { name: "住人のプロフィール" })).not.toBeNull();
+    clickRoom(screen.getByRole("img"), 1); // 大写しから全体図に戻る
     clickRoom(screen.getByRole("img"), 2);
     expect(screen.queryByRole("region", { name: "住人のプロフィール" })).toBeNull();
   });

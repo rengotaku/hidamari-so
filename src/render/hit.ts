@@ -55,3 +55,17 @@ export function toScene(
 ): { x: number; y: number } {
   return { x: (offsetX / width) * SCENE_W, y: (offsetY / height) * SCENE_H };
 }
+
+/** 場面の座標が部屋の中なら、その部屋番号（通りや屋根は null） */
+export function roomAt(x: number, y: number): number | null {
+  for (let i = 0; i < ROOM_COUNT; i++) {
+    const rr = roomRect(i);
+    if (x >= rr.x && x < rr.x + rr.w && y >= rr.y && y < rr.y + rr.h) return i;
+  }
+  return null;
+}
+
+/** キーボードで部屋を開いたときの住人: 部屋の持ち主（いなければ部屋にいる人。空室で誰もいなければ null） */
+export function residentOfRoom(s: GameState, room: number): number | null {
+  return s.rooms[room] ?? s.res.find((r) => r.at === room)?.id ?? null;
+}

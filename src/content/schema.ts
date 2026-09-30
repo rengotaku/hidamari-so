@@ -158,20 +158,30 @@ export type DecorSlot = (typeof DECOR_SLOTS)[number];
 const color = z.string().regex(/^#[0-9a-fA-F]{6}$/, "色は #rrggbb");
 
 /**
- * 装飾の部品。ドット絵を「色つきの矩形の並び」で持つ。
- * 矩形は [x, y, w, h, 色]（部品の左上が原点。w × h の枠からはみ出さない）。
- * 置き場所（slot）の区画に、左下を合わせて描く。
+ * 装飾の部品。大写しの 2.5D の形を正として、「箱の並び」で持つ（全体図の平面はここから導く: decor25.ts）。
+ * 箱は [x, y, z, 幅, 奥行き, 高さ, 色]（x は左から・y は奥の壁から手前へ・z は床から上へ。
+ * 部品の枠 w × d × h からはみ出さない）。全体図では置き場所の区画に、正面の左下を合わせて描く。
  */
 export const decorSchema = z
   .strictObject({
     id,
     name: nonEmpty,
     slot: z.enum(DECOR_SLOTS),
+    /** 幅・奥行き・高さ（全体図のドット数と同じ単位） */
     w: posInt,
+    d: posInt,
     h: posInt,
-    rects: z
+    boxes: z
       .array(
-        z.tuple([z.number().int().min(0), z.number().int().min(0), posInt, posInt, color])
+        z.tuple([
+          z.number().int().min(0),
+          z.number().int().min(0),
+          z.number().int().min(0),
+          posInt,
+          posInt,
+          posInt,
+          color,
+        ])
       )
       .min(1),
     /** この行動をしている間は描かない（弾いているギターなど） */
@@ -179,10 +189,13 @@ export const decorSchema = z
     /** 同じ部品を並べて描くときの 1 つごとのずれ（段ボール用） */
     step: z.tuple([z.number().int(), z.number().int()]).optional(),
   })
-  .superRefine((d, ctx) => {
-    for (const [x, y, w, h] of d.rects)
-      if (x + w > d.w || y + h > d.h) {
-        ctx.addIssue({ code: "custom", message: `矩形が ${d.w}x${d.h} の枠を出ている` });
+  .superRefine((p, ctx) => {
+    for (const [x, y, z0, w, d, h] of p.boxes)
+      if (x + w > p.w || y + d > p.d || z0 + h > p.h) {
+        ctx.addIssue({
+          code: "custom",
+          message: `箱が ${p.w}x${p.d}x${p.h} の枠を出ている`,
+        });
         return;
       }
   });

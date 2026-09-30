@@ -1,0 +1,303 @@
+<title>部屋へ寄る試作</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap">
+<style>
+/* layout: 上に操作（移り方A/B・スロー）、中央に 320x200 のドット絵画面を1つ。押すと部屋へ寄り、もう一度押すと戻る */
+:root{
+  --bg:#1d1b24; --panel:#28252e; --line:#403a48; --ink:#eee4cf; --muted:#a9a091; --accent:#6fb3a6; --bulb:#e7b25a;
+  --f-pixel:"DotGothic16","MS Gothic",monospace;
+  color-scheme:dark;
+}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-pixel);overflow:hidden}
+.app{height:100%;display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:10px;padding-inline:16px;padding-block:12px;max-width:1100px;margin:0 auto;box-sizing:border-box}
+header{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;justify-content:space-between}
+h1{font-weight:400;font-size:clamp(18px,2.4vw,26px);margin:0;letter-spacing:.06em}
+.ctl{display:flex;flex-wrap:wrap;gap:10px;align-items:center;font-size:13px}
+.seg{display:flex}
+.seg button{font:inherit;font-size:13px;background:var(--panel);color:var(--ink);border:2px solid var(--line);margin-left:-2px;padding:5px 12px;cursor:pointer}
+.seg button:first-child{margin-left:0}
+.seg button[aria-pressed="true"]{background:var(--accent);color:#14201e;border-color:var(--accent);position:relative}
+button:focus-visible,input:focus-visible{outline:2px solid var(--bulb);outline-offset:2px}
+label{display:flex;gap:6px;align-items:center;color:var(--muted);cursor:pointer}
+input{accent-color:var(--accent)}
+.stageWrap{container-type:size;min-height:0;display:flex;align-items:center;justify-content:center}
+.stage{position:relative;width:min(100cqw,160cqh);aspect-ratio:320/200;max-width:100%;border:4px solid #0d0c11;box-shadow:0 0 0 2px var(--line);background:#0d0c11}
+canvas{display:block;width:100%;height:100%;image-rendering:crisp-edges;image-rendering:pixelated;cursor:pointer}
+.bubble{position:absolute;transform:translate(-50%,-100%);background:#fbf8ec;color:#26222c;font-size:clamp(10px,1.5vw,15px);padding:2px 7px;border:2px solid #26222c;white-space:nowrap;pointer-events:none}
+.bubble[hidden]{display:none}
+footer{color:var(--muted);font-size:12px;line-height:1.6;min-height:3.2em}
+.reroll{font:inherit;font-size:13px;background:transparent;color:var(--bulb);border:2px solid var(--bulb);padding:5px 12px;cursor:pointer}
+.reroll:disabled{opacity:.35;cursor:not-allowed}
+#parts{color:var(--ink)}
+footer b{color:var(--ink);font-weight:400}
+@media (prefers-reduced-motion: reduce){.bubble{transition:none}}
+</style>
+
+<div class="app">
+  <header>
+    <h1>部屋へ寄る（移り方の試作）</h1>
+    <div class="ctl">
+      <div class="seg" role="group" aria-label="移り方">
+        <button type="button" id="mA" aria-pressed="true">A: 壁が開く</button>
+        <button type="button" id="mB" aria-pressed="false">B: ズームして切り替え</button>
+      </div>
+      <label for="slow"><input type="checkbox" id="slow"> スロー再生</label>
+      <button type="button" id="reroll" class="reroll" disabled>この部屋を作り直す（抽選）</button>
+    </div>
+  </header>
+  <div class="stageWrap">
+    <div class="stage">
+      <canvas id="cv" width="320" height="200" aria-label="アパートの断面図。部屋を押すと大きく見える"></canvas>
+      <div class="bubble" id="bub" hidden></div>
+    </div>
+  </div>
+  <footer><b>部屋を押すと寄る。大写しの画面をもう一度押すと全体に戻る。</b> 大写しでは「作り直す」で部屋と住人を部品から抽選し直せる。<span id="combo"></span><br><span id="parts"></span></footer>
+</div>
+
+<script>
+(function(){
+'use strict';
+const W=320,H=200;
+const cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+const bub=document.getElementById('bub');
+const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+let g=ctx; // 描画先（全体図はオフスクリーンに描く）
+const P=(x,y,w,h,c)=>{g.fillStyle=c;g.fillRect(Math.round(x),Math.round(y),Math.max(1,Math.round(w)),Math.max(1,Math.round(h)));};
+const lerp=(a,b,t)=>a+(b-a)*t;
+const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+function shade(c,f){const n=parseInt(c.slice(1),16);const h=v=>Math.max(0,Math.min(255,Math.round(v*f))).toString(16).padStart(2,'0');return '#'+h(n>>16)+h((n>>8)&255)+h(n&255);}
+
+/* ---------- 部品の在庫（ここを増やすほど組み合わせが増える） ---------- */
+const POOLS={
+  wall:[['#c9b68f','黄ばんだ土壁'],['#d8cfbf','白い壁紙'],['#b9c4b0','うぐいす色の壁'],['#c7a9a0','くすんだ桃色の壁'],['#a9b8c8','水色の壁紙']],
+  pattern:['無地','縦じま','水玉','しみだらけ'],
+  floor:[['tatami','畳'],['wood','板の間'],['carpet','じゅうたん']],
+  curtain:['#b85c4a','#6c8fb0','#c9b04a','#7fa07a','#a07ab0','#8a8a8a'],
+  curtainPat:['無地','チェック','花柄'],
+  wallDecor:['なし','ポスター','カレンダー','時計','神棚','賞状','ペナント','鏡'],
+  floorLeft:['なし','本棚','観葉植物','段ボールの山','ギター','ハンガーラック'],
+  floorRight:['テレビ','ラジカセ','水槽','ゴミ袋の山','扇風機'],
+  table:['なし','缶ビール','カップ麺','参考書','鍋','一輪挿し','灰皿'],
+  blanket:['#c96b6b','#5f86b5','#7fa66a','#d9a24a','#9b7bb8','#d88aa0'],
+  blanketPat:['無地','しま','花柄'],
+  clutter:[0,1,2,3],
+  light:['昼','夕方','夜（蛍光灯）','夜（電気スタンド）','夜（消灯）'],
+  hairStyle:['短髪','長髪','坊主','おだんご','パーマ','はげ'],
+  hair:['#2a211c','#3a2a20','#6b4a2b','#1c1c24','#8a5a2b','#b58a4a','#d8d4cc'],
+  skin:['#f0c9a0','#e6b88f','#d9a57c','#f3d2b1'],
+  clothes:['Tシャツ','ジャージ','スーツ','はんてん','ランニング'],
+  clothColor:['#c65b4a','#4f7fb0','#6f9a5a','#d9c26a','#8a6fb0','#e0e0d8','#d98a4a','#4a4a55','#3f8f8a'],
+  pose:['立つ','座る','寝る'],
+  face:['ふつう','眠そう','困り顔','酔い顔','にやけ']
+};
+const COMBOS=Object.entries(POOLS).reduce((n,[k,v])=>n*(k==='wallDecor'?v.length*v.length:v.length),1);
+function genRoom(){
+  return{wall:pick(POOLS.wall),pattern:pick(POOLS.pattern),floor:pick(POOLS.floor),carpet:pick(['#8a4a4a','#4a6a8a','#7a6a3a','#5a7a5a']),
+    curtain:pick(POOLS.curtain),curtainPat:pick(POOLS.curtainPat),decor:[pick(POOLS.wallDecor),pick(POOLS.wallDecor)],
+    left:pick(POOLS.floorLeft),right:pick(POOLS.floorRight),table:pick(POOLS.table),blanket:pick(POOLS.blanket),blanketPat:pick(POOLS.blanketPat),
+    clutter:pick(POOLS.clutter),light:pick(POOLS.light),
+    who:{hairStyle:pick(POOLS.hairStyle),hair:pick(POOLS.hair),skin:pick(POOLS.skin),clothes:pick(POOLS.clothes),cloth:pick(POOLS.clothColor),pants:pick(['#3b3f5a','#4a3d33','#2e2e36','#6a6a72','#35506a']),pose:pick(POOLS.pose),face:pick(POOLS.face)}};
+}
+const LINES={ふつう:['今日も特に何もなかった','家賃…来週でいいかな'],眠そう:['あと5分…','（あくび）'],困り顔:['財布どこいった…','また大家さんに怒られる'],酔い顔:['くぅ〜っ、もう1本！','俺はまだ本気出してない'],にやけ:['ふふ…既読ついた','今日はいい日だ']};
+const ROOMS=[0,1,2,3,4,5].map(i=>i===2?null:genRoom());
+const roomRect=i=>{const c=i%3;return{x:28+c*77,y:i<3?122:70,w:74,h:48};};
+
+/* ---------- 人物（部品の組み合わせ） ---------- */
+function person(w,cx,fy,s,fr,headOnly){
+  const pose=w.pose==='寝る'?'立つ':w.pose, sit=pose==='座る', top=fy-(sit?11:14)*s;
+  const S=(x,y,a,b,c)=>P(cx+x*s,top+y*s,a*s,b*s,c);
+  const suit=w.clothes==='スーツ',jersey=w.clothes==='ジャージ',hanten=w.clothes==='はんてん',run=w.clothes==='ランニング';
+  const top1=suit?'#33374a':hanten?'#7a4a3a':run?'#f2efe6':w.cloth;
+  if(w.hairStyle==='長髪')S(-3,1,7,7,w.hair);
+  if(w.hairStyle==='おだんご')S(-1,-2,3,2,w.hair);
+  S(-2,1,5,5,w.skin);
+  const hs=w.hairStyle;
+  if(hs==='短髪'||hs==='長髪'||hs==='おだんご'){S(-2,0,5,1,w.hair);S(-3,1,7,1,w.hair);S(-3,2,1,2,w.hair);S(3,2,1,2,w.hair);}
+  if(hs==='坊主')S(-2,1,5,1,shade(w.hair,1.4));
+  if(hs==='パーマ'){S(-3,-1,7,2,w.hair);S(-4,0,9,2,w.hair);S(-4,2,1,2,w.hair);S(4,2,1,2,w.hair);}
+  if(hs==='はげ'){S(-3,2,1,2,w.hair);S(3,2,1,2,w.hair);}
+  const E='#2a1f1a',blink=fr===3;
+  if(w.face==='眠そう'||blink){S(-1.5,3.3,1.5,.35,E);S(.5,3.3,1.5,.35,E);}
+  else if(w.face==='酔い顔'||w.face==='にやけ'){S(-1.5,3,1,.4,E);S(-1,2.7,.5,.4,E);S(.5,3,1,.4,E);S(1,2.7,.5,.4,E);}
+  else{S(-1,3,1,1,E);S(1,3,1,1,E);}
+  if(w.face==='困り顔'){S(-1.5,2.2,1,.35,E);S(1,2.2,1,.35,E);S(-.5,4.8,2,.35,E);}
+  if(w.face==='にやけ')S(-.5,4.6,2,.4,E);
+  if(w.face==='酔い顔'){S(-2,4,1,.7,'#e88a8a');S(2,4,1,.7,'#e88a8a');S(0,4.6,1,.5,'#8a3a3a');}
+  if(headOnly)return;
+  const bh=sit?3:4;
+  S(-2,6,5,bh,top1);S(-3,6,1,bh-1,run?w.skin:top1);S(3,6,1,bh-1,run?w.skin:top1);
+  if(suit){S(-.5,6,2,2,'#f2efe6');S(0,6,1,3,'#c44a3a');}
+  if(jersey){S(-3,6,.4,bh-1,'#f2efe6');S(3.6,6,.4,bh-1,'#f2efe6');}
+  if(hanten){S(-2,6.5,5,.4,'#e0c070');S(-2,8,5,.4,'#e0c070');}
+  S(-3,5+bh,1,1,w.skin);S(3,5+bh,1,1,w.skin);
+  const pants=jersey?w.cloth:w.pants;
+  if(sit){S(-2,9,7,2,pants);S(5,10,1,1,'#2a2522');}
+  else{const a=fr%2?.3:0;S(-2,10,2,3,pants);S(1+a,10,2,3,pants);S(-2,13,2,1,'#2a2522');S(1+a,13,2,1,'#2a2522');}
+}
+
+/* ---------- 全体図 ---------- */
+function flatRoom(i,fr){
+  const {x,y}=roomRect(i),r=ROOMS[i];
+  const wall=r?r.wall[0]:'#c9b68f';
+  P(x,y,74,48,wall);P(x,y,74,2,shade(wall,.78));
+  P(x+6,y+8,20,15,'#6b4b32');P(x+7,y+9,18,13,'#9cc7e8');P(x+16,y+9,1,13,'#6b4b32');
+  if(r){P(x+7,y+9,4,13,r.curtain);P(x+21,y+9,4,13,r.curtain);}else{P(x+10,y+11,12,9,'#f4f0e4');P(x+12,y+13,8,1,'#c44a3a');}
+  P(x+59,y+12,12,28,'#6e5035');P(x+60,y+13,10,26,'#8c6a48');
+  const fl=r?r.floor[0]:'tatami';
+  P(x,y+38,74,10,fl==='tatami'?'#b7ae6b':fl==='wood'?'#a0784e':r.carpet);
+  if(fl==='tatami')for(const k of [18,37,56])P(x+k,y+38,1,10,'#9f9656');
+  if(r){P(x+3,y+37,25,3,'#ece6d8');P(x+13,y+35,13,2,r.blanket);P(x+46,y+27,11,10,'#8d8a84');P(x+31,y+33,15,2,'#7b4f2e');person(r.who,x+38,y+45,1,fr);}
+}
+function overview(fr){
+  P(0,0,W,H,'#9cc7e8');
+  for(let k=0;k<5;k++){g.globalAlpha=.25+k*.15;P(0,110+k*12,W,12,'#c8d8e0');}g.globalAlpha=1;
+  for(const b of [[-6,34,60],[260,30,50],[292,34,70]])P(b[0],172-b[2],b[1],b[2],'#5d6a78');
+  for(let r=0;r<14;r++)P(28-r,56+r,228+2*r,1,'#65747c');for(let xx=20;xx<266;xx+=5)P(xx,58,1,11,'#535f66');
+  P(111,39,62,13,'#3b2f2a');P(112,40,60,11,'#dccfae');
+  g.fillStyle='#3b2f2a';g.font='9px "DotGothic16",monospace';g.textAlign='center';g.textBaseline='middle';g.fillText('ひだまり荘',142,46);
+  for(const q of [[24,4],[256,4],[102,3],[179,3]])P(q[0],70,q[1],100,'#8a785c');
+  P(24,118,236,4,'#5a4636');P(22,170,240,4,'#7c7871');
+  P(0,174,W,8,'#8f8a82');P(0,183,W,17,'#4a4a50');for(let k=0;k<W;k+=20)P(k+4,192,10,1,'#c9c6b8');
+  P(260,118,22,3,'#6d5646');for(let s=0;s<=24;s++)P(279+s,120+s*52/24,2,2,'#7a5040');
+  for(let i=0;i<6;i++)flatRoom(i,fr);
+}
+
+/* ---------- 2.5D の部屋 ---------- */
+function proj(m){
+  const bL=lerp(0,72,m),bR=lerp(320,248,m),bT=lerp(0,16,m),bF=lerp(160,112,m);
+  const fL=lerp(0,-26,m),fR=lerp(320,346,m),fF=lerp(200,206,m);
+  const wh=bF-bT,bw=bR-bL,fw=fR-fL;
+  return (x,d,z)=>{const L=lerp(bL,fL,d),R=lerp(bR,fR,d),s=lerp(1,fw/bw,d);return[L+(R-L)*x,lerp(bF,fF,d)-z*wh*s,s];};
+}
+function poly(pts,c){g.fillStyle=c;g.beginPath();pts.forEach((p,k)=>k?g.lineTo(Math.round(p[0]),Math.round(p[1])):g.moveTo(Math.round(p[0]),Math.round(p[1])));g.closePath();g.fill();}
+function box(pr,x0,x1,d0,d1,z0,z1,c){
+  const v=pr,cx=(x0+x1)/2;
+  if(cx<.5)poly([v(x1,d0,z0),v(x1,d1,z0),v(x1,d1,z1),v(x1,d0,z1)],shade(c,.72));else poly([v(x0,d0,z0),v(x0,d1,z0),v(x0,d1,z1),v(x0,d0,z1)],shade(c,.72));
+  poly([v(x0,d1,z0),v(x1,d1,z0),v(x1,d1,z1),v(x0,d1,z1)],shade(c,.86));
+  poly([v(x0,d0,z1),v(x1,d0,z1),v(x1,d1,z1),v(x0,d1,z1)],c);
+}
+const wr=(pr,x0,x1,z0,z1,c)=>poly([pr(x0,0,z0),pr(x1,0,z0),pr(x1,0,z1),pr(x0,0,z1)],c);
+function wallDecor(pr,kind,x){
+  if(kind==='ポスター'){wr(pr,x,x+.12,.5,.82,'#e6d06a');wr(pr,x+.02,x+.1,.56,.7,'#5a3a1a');}
+  if(kind==='カレンダー'){wr(pr,x,x+.1,.5,.78,'#f4f0e4');wr(pr,x,x+.1,.72,.78,'#c44a3a');for(let k=0;k<3;k++)wr(pr,x+.015,x+.085,.54+k*.05,.555+k*.05,'#999999');}
+  if(kind==='時計'){const c=pr(x+.05,0,.72);P(c[0]-6,c[1]-6,12,12,'#6b4b32');P(c[0]-5,c[1]-5,10,10,'#f4f0e4');P(c[0],c[1]-4,1,4,'#222222');P(c[0],c[1],3,1,'#222222');}
+  if(kind==='神棚'){wr(pr,x-.02,x+.14,.86,.88,'#8b6a4a');wr(pr,x+.02,x+.1,.88,.95,'#c9a86a');}
+  if(kind==='賞状'){wr(pr,x,x+.14,.55,.75,'#6b4b32');wr(pr,x+.01,x+.13,.57,.73,'#f4f0e4');wr(pr,x+.03,x+.11,.62,.63,'#c44a3a');}
+  if(kind==='ペナント'){poly([pr(x,0,.8),pr(x+.14,0,.74),pr(x,0,.68)],'#4f7fb0');}
+  if(kind==='鏡'){wr(pr,x,x+.08,.45,.8,'#8b6a4a');wr(pr,x+.01,x+.07,.47,.78,'#cfe3ec');}
+}
+function room25(i,m,fr){
+  const r=ROOMS[i],pr=proj(m);
+  P(0,0,W,H,'#2a2530');
+  const wall=r?r.wall[0]:'#c9b68f';
+  poly([pr(0,0,0),pr(0,0,1.2),pr(0,1,1.2),pr(0,1,0)],shade(wall,.9));
+  poly([pr(1,0,0),pr(1,0,1.2),pr(1,1,1.2),pr(1,1,0)],shade(wall,.86));
+  const fl=r?r.floor[0]:'tatami',fc=fl==='tatami'?'#b7ae6b':fl==='wood'?'#a0784e':r.carpet;
+  poly([pr(0,0,0),pr(1,0,0),pr(1,1,0),pr(0,1,0)],fc);
+  if(fl==='tatami'){for(const x of [1/3,2/3])poly([pr(x-.004,0,0),pr(x+.004,0,0),pr(x+.004,1,0),pr(x-.004,1,0)],'#9f9656');poly([pr(0,.494,0),pr(1,.494,0),pr(1,.506,0),pr(0,.506,0)],'#9f9656');}
+  if(fl==='wood')for(let x=.1;x<1;x+=.1)poly([pr(x-.003,0,0),pr(x+.003,0,0),pr(x+.003,1,0),pr(x-.003,1,0)],'#8a6440');
+  if(fl==='carpet')poly([pr(.03,.03,0),pr(.97,.03,0),pr(.97,.97,0),pr(.03,.97,0)],shade(fc,1.12));
+  wr(pr,0,1,0,1,wall);
+  if(r){if(r.pattern==='縦じま')for(let k=.04;k<1;k+=.08)wr(pr,k,k+.012,0,.95,shade(wall,.93));
+    if(r.pattern==='水玉')for(let a=.05;a<1;a+=.1)for(let b=.1;b<.95;b+=.14){const p=pr(a+(Math.round(b*7)%2)*.05,0,b);P(p[0],p[1],2,2,shade(wall,.9));}
+    if(r.pattern==='しみだらけ')for(const q of [[.4,.9,.08],[.7,.85,.05],[.15,.3,.06],[.85,.4,.07]])wr(pr,q[0],q[0]+q[2],q[1]-.06,q[1],shade(wall,.8));}
+  wr(pr,0,1,.96,1,shade(wall,.78));
+  wr(pr,.08,.36,.42,.82,'#6b4b32');
+  const skyc=r&&r.light==='昼'?'#9cc7e8':r&&r.light==='夕方'?'#e9a27a':r?'#1c2344':'#9cc7e8';
+  wr(pr,.095,.345,.44,.8,skyc);wr(pr,.218,.226,.44,.8,'#6b4b32');
+  if(r){const cc=r.curtain;wr(pr,.095,.15,.44,.8,cc);wr(pr,.29,.345,.44,.8,cc);
+    if(r.curtainPat==='チェック')for(const x of [.095,.29])for(let z=.46;z<.8;z+=.06)wr(pr,x,x+.055,z,z+.02,shade(cc,.8));
+    if(r.curtainPat==='花柄')for(const x of [.1,.3])for(let z=.5;z<.8;z+=.1){const p=pr(x+.02,0,z);P(p[0],p[1],2,2,'#f4f0e4');}}
+  poly([pr(1,.08,0),pr(1,.4,0),pr(1,.4,.72),pr(1,.08,.72)],'#6e5035');
+  poly([pr(1,.1,0),pr(1,.38,0),pr(1,.38,.7),pr(1,.1,.7)],'#8c6a48');
+  const lamp2=pr(.5,.45,.9),on=r&&r.light==='夜（蛍光灯）';
+  P(lamp2[0],0,1,lamp2[1],'#444444');P(lamp2[0]-14*lamp2[2],lamp2[1],28*lamp2[2],4*lamp2[2],on?'#fff6d8':'#cfcabb');
+  if(!r){wr(pr,.14,.3,.5,.74,'#f4f0e4');wr(pr,.16,.28,.66,.7,'#c44a3a');return;}
+  wallDecor(pr,r.decor[0],.42);wallDecor(pr,r.decor[1],.64);
+  const R=r.right;
+  if(R==='テレビ'){box(pr,.72,.9,.08,.26,0,.3,'#8d8a84');const sc=pr(.81,.26,.15);P(sc[0]-9*sc[2],sc[1]-7*sc[2],18*sc[2],13*sc[2],fr%2?'#8fd3ff':'#c9f0ff');}
+  if(R==='ラジカセ'){box(pr,.74,.9,.1,.2,0,.12,'#555a60');const p=pr(.78,.2,.06);P(p[0],p[1]-3,6,6,'#222222');P(p[0]+12,p[1]-3,6,6,'#222222');}
+  if(R==='水槽'){box(pr,.72,.9,.08,.2,0,.12,'#6a4f36');box(pr,.73,.89,.09,.19,.12,.28,'#9fd0e0');const p=pr(.8,.19,.2);P(p[0]+(fr%2)*3,p[1],4,2,'#e39a45');}
+  if(R==='ゴミ袋の山'){for(const q of [[.74,.12],[.84,.14],[.79,.22]])box(pr,q[0],q[0]+.1,q[1],q[1]+.08,0,.12,'#e6e6e0');}
+  if(R==='扇風機'){box(pr,.8,.84,.12,.16,0,.2,'#dddddd');const p=pr(.82,.14,.28);P(p[0]-8,p[1]-8,16,16,'#8fb8d0');P(p[0]-1+(fr%2)*2,p[1]-7,2,14,'#e8f4fa');}
+  const L=r.left;
+  if(L==='本棚'){box(pr,.02,.2,.04,.14,0,.55,'#8b6a4a');for(let k=0;k<3;k++){const p=pr(.04,.14,.1+k*.16);P(p[0],p[1]-6,24,5,['#4a6fa8','#a84a4a','#6f9a5a'][k]);}}
+  if(L==='観葉植物'){box(pr,.06,.14,.05,.12,0,.12,'#a0522d');const p=pr(.1,.08,.2);P(p[0]-8,p[1]-12,16,14,'#6b8f3a');P(p[0]-4,p[1]-16,8,6,'#7fa64a');}
+  if(L==='段ボールの山'){box(pr,.04,.2,.05,.16,0,.14,'#c49a5e');box(pr,.06,.18,.06,.15,.14,.26,'#b88c52');}
+  if(L==='ギター'){box(pr,.12,.14,.05,.07,0,.5,'#5a3a1a');box(pr,.06,.2,.04,.09,0,.2,'#a8642e');}
+  if(L==='ハンガーラック'){box(pr,.02,.2,.06,.08,.5,.52,'#777777');for(let k=0;k<3;k++)box(pr,.04+k*.05,.08+k*.05,.06,.08,.25,.5,['#3a3f52','#c65b4a','#e0e0d8'][k]);}
+  box(pr,.05,.42,.34,.78,0,.04,'#ece6d8');box(pr,.05,.14,.36,.5,.04,.07,'#f4f0e6');
+  const w=r.who,lie=w.pose==='寝る';
+  if(lie){const hp=pr(.1,.43,.07);person({...w,pose:'立つ',face:w.face==='酔い顔'?'酔い顔':'眠そう'},hp[0]+4,hp[1]+hp[2]*1.6*14-hp[2]*1.6*5,hp[2]*1.6,3,true);}
+  box(pr,.16,.41,.42,.76,.04,lie?.1:.07,r.blanket);
+  if(r.blanketPat==='しま')for(let x=.2;x<.4;x+=.05)poly([pr(x,.42,.071),pr(x+.02,.42,.071),pr(x+.02,.76,.071),pr(x,.76,.071)],shade(r.blanket,.8));
+  if(r.blanketPat==='花柄')for(const q of [[.22,.5],[.32,.62],[.26,.7]]){const p=pr(q[0],q[1],.08);P(p[0],p[1],3,3,'#f4f0e4');}
+  box(pr,.47,.69,.5,.7,.13,.16,'#946340');
+  for(const [lx,ld] of [[.49,.52],[.67,.52],[.49,.68],[.67,.68]])box(pr,lx-.01,lx+.01,ld-.01,ld+.01,0,.13,'#5a3a22');
+  const T=r.table;
+  if(T==='缶ビール')for(let k=0;k<3;k++)box(pr,.52+k*.04,.545+k*.04,.56,.58,.16,.23,'#d8c24a');
+  if(T==='カップ麺'){box(pr,.55,.6,.57,.62,.16,.22,'#f2efe6');const p=pr(.575,.6,.26);P(p[0],p[1]-(fr%2)*2,1,3,'#dddddd');}
+  if(T==='参考書')box(pr,.52,.62,.55,.64,.16,.18,'#4a6fa8');
+  if(T==='鍋'){box(pr,.53,.64,.55,.66,.16,.21,'#3a3a40');const p=pr(.58,.6,.26);P(p[0]-2,p[1]-(fr%2)*2,1,3,'#e8e8e8');P(p[0]+3,p[1]-2+(fr%2)*2,1,3,'#e8e8e8');}
+  if(T==='一輪挿し'){box(pr,.57,.59,.58,.6,.16,.24,'#6fb3a6');const p=pr(.58,.59,.27);P(p[0]-2,p[1]-2,4,4,'#e88a9a');}
+  if(T==='灰皿'){box(pr,.56,.62,.57,.62,.16,.17,'#8a8a8a');const p=pr(.58,.6,.18);P(p[0],p[1]-4-(fr%2),1,3,'#bbbbbb');}
+  const CL=[[.8,.74,'#e6e6e0',.08],[.3,.86,'#c9c24a',.06],[.44,.9,'#d86a6a',.02],[.9,.6,'#e6e6e0',.08]];
+  for(let k=0;k<r.clutter;k++){const q=CL[k];box(pr,q[0],q[0]+.08,q[1],q[1]+.05,0,q[3],q[2]);}
+  if(!lie){const pp=pr(.58,.82,0);person(w,pp[0],pp[1],pp[2]*2.4,fr);}
+  const Lt=r.light;
+  if(Lt==='夕方'){g.fillStyle='rgba(255,150,80,0.12)';g.fillRect(0,0,W,H);}
+  if(Lt==='夜（蛍光灯）'){g.fillStyle='rgba(220,235,255,0.06)';g.fillRect(0,0,W,H);}
+  if(Lt==='夜（電気スタンド）'){g.fillStyle='rgba(10,12,35,0.45)';g.fillRect(0,0,W,H);const p=pr(.6,.6,.3);const gr=g.createRadialGradient(p[0],p[1],2,p[0],p[1],90);gr.addColorStop(0,'rgba(255,200,120,0.35)');gr.addColorStop(1,'rgba(255,200,120,0)');g.fillStyle=gr;g.fillRect(0,0,W,H);}
+  if(Lt==='夜（消灯）'){g.fillStyle='rgba(10,12,35,0.62)';g.fillRect(0,0,W,H);}
+}
+
+/* ---------- 遷移 ---------- */
+const off=document.createElement('canvas');off.width=W;off.height=H;const octx=off.getContext('2d');
+let mode='A',state='overview',room=-1,t0=0;
+const DUR={zoom:520,morph:620};
+const dur=k=>DUR[k]*(document.getElementById('slow').checked?3.5:1)*(reduce?.01:1);
+function drawZoom(k){const r=roomRect(room);ctx.imageSmoothingEnabled=false;ctx.drawImage(off,lerp(0,r.x,k),lerp(0,r.y,k),lerp(W,r.w,k),lerp(H,r.h,k),0,0,W,H);}
+const reroll=document.getElementById('reroll'),partsEl=document.getElementById('parts'),comboEl=document.getElementById('combo');
+comboEl.textContent=`いまの部品数だと、部屋と住人の見た目の組み合わせは約${Math.round(COMBOS/1e12).toLocaleString('ja-JP')}兆通り（部品を1種足すたびに掛け算で増える）。`;
+function showParts(){
+  const r=room>=0?ROOMS[room]:null;
+  if(state!=='room'||!r){partsEl.textContent='';reroll.disabled=true;return;}
+  reroll.disabled=false;const w=r.who;
+  partsEl.textContent=`この部屋: ${r.wall[1]}（${r.pattern}）・${r.floor[1]}・カーテン${r.curtainPat}・壁に「${r.decor.filter(d=>d!=='なし').join('」「')||'なにもない'}」・${r.left!=='なし'?r.left+'・':''}${r.right}・卓上に${r.table}・散らかり${r.clutter}・${r.light}／住人: ${w.hairStyle}・${w.clothes}・${w.pose}・${w.face}`;
+}
+function frame(now){
+  const fr=Math.floor(now/400)%4;
+  g=octx;overview(fr);g=ctx;
+  const el=now-t0;
+  if(state==='overview'){ctx.drawImage(off,0,0);bub.hidden=true;}
+  else if(state==='in'||state==='out'){
+    const total=dur('zoom')+dur('morph');let e=state==='in'?el:total-el;e=Math.max(0,Math.min(total,e));
+    if(e<=dur('zoom'))drawZoom(ease(e/dur('zoom')));
+    else{const k=ease((e-dur('zoom'))/dur('morph'));
+      if(mode==='A')room25(room,k,fr);
+      else{room25(room,1,fr);ctx.globalAlpha=1-k;drawZoom(1);ctx.globalAlpha=1;}}
+    bub.hidden=true;
+    if(el>=total){if(state==='in')state='room';else{state='overview';room=-1;}showParts();}
+  }else if(state==='room'){
+    room25(room,1,fr);
+    const r=ROOMS[room];
+    if(r){const pr=proj(1),lie=r.who.pose==='寝る',p=lie?pr(.1,.44,.2):pr(.58,.82,0),hy=lie?p[1]-6:p[1]-(r.who.pose==='座る'?11:14)*p[2]*2.4-4;
+      const L=r.lineText||(r.lineText=pick(LINES[r.who.face]));bub.textContent=lie?'Zzz…':L;bub.style.left=Math.min(88,Math.max(12,p[0]/W*100))+'%';bub.style.top=(hy/H*100)+'%';bub.hidden=false;}
+    else bub.hidden=true;
+  }
+  requestAnimationFrame(frame);
+}
+function hit(e){const b=cv.getBoundingClientRect();return[(e.clientX-b.left)/b.width*W,(e.clientY-b.top)/b.height*H];}
+cv.addEventListener('click',e=>{
+  if(state==='overview'){const [x,y]=hit(e);for(let i=0;i<6;i++){const r=roomRect(i);if(x>=r.x&&x<r.x+r.w&&y>=r.y&&y<r.y+r.h){room=i;state='in';t0=performance.now();return;}}}
+  else if(state==='room'){state='out';t0=performance.now();showParts();}
+});
+reroll.addEventListener('click',()=>{if(state==='room'&&ROOMS[room]){ROOMS[room]=genRoom();showParts();}});
+for(const [id,m] of [['mA','A'],['mB','B']])document.getElementById(id).addEventListener('click',()=>{mode=m;document.getElementById('mA').setAttribute('aria-pressed',String(m==='A'));document.getElementById('mB').setAttribute('aria-pressed',String(m==='B'));});
+requestAnimationFrame(frame);
+})();
+</script>

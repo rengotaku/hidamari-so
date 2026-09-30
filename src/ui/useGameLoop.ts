@@ -1,8 +1,9 @@
 import { useEffect, type RefObject } from "react";
-import { drawScene } from "@/render";
+import { drawStage, type Scratch } from "@/render";
 import { createAwayTracker, type KeyValueStorage } from "@/save";
-import { MIN_PER_SEC } from "@/sim";
+import { MIN_PER_SEC, SCENE_H, SCENE_W } from "@/sim";
 import type { GameEngine } from "./engine";
+import { advance, prefersReducedMotion, viewFrame, type ZoomState } from "./zoom";
 
 const UI_INTERVAL_S = 0.3;
 const SAVE_INTERVAL_S = 5;
@@ -11,6 +12,9 @@ interface Options {
   engine: GameEngine;
   canvasRef: RefObject<HTMLCanvasElement | null>;
   selectedIdRef: RefObject<number | null>;
+  /** 部屋の大写しの状態（全体図 / ズーム中 / 大写し / 戻り中）。遷移が終わったら onZoom で知らせる */
+  zoomRef: RefObject<ZoomState>;
+  onZoom: (z: ZoomState) => void;
   storage: KeyValueStorage;
   now: () => number;
   /** 画面の文字（時計・日誌・プロフィール）を最新の状態に合わせる */
@@ -25,6 +29,8 @@ export function useGameLoop({
   engine,
   canvasRef,
   selectedIdRef,
+  zoomRef,
+  onZoom,
   storage,
   now,
   onUi,
@@ -36,6 +42,17 @@ export function useGameLoop({
     let last: number | null = null;
     let uiAcc = 0;
     let saveAcc = 0;
+    let scratch: Scratch | null = null;
+    // 寄り・フェードの間だけ使う全体図の下絵。作れない環境では null のまま（直接描く）
+    const scratchFor = (): Scratch | null => {
+      if (scratch || typeof document === "undefined") return scratch;
+      const canvas = document.createElement("canvas");
+      canvas.width = SCENE_W;
+      canvas.height = SCENE_H;
+      const sctx = canvas.getContext("2d");
+      if (sctx) scratch = { canvas, ctx: sctx };
+      return scratch;
+    };
 
     const frame = (t: number) => {
       // 非表示の間は進めない。戻ったときに一度だけ追いつく
@@ -45,8 +62,21 @@ export function useGameLoop({
       }
       const dt = last === null ? 0 : Math.min(0.25, (t - last) / 1000);
       last = t;
+      // 大写し中も時間は止めない（遷移や表示の切り替えに関係なく、毎フレーム進める）
       engine.tick(dt * MIN_PER_SEC);
-      if (ctx) drawScene(ctx, engine.state, engine.ambient, t, selectedIdRef.current);
+      const z = advance(zoomRef.current, t, prefersReducedMotion());
+      if (z !== zoomRef.current) onZoom(z);
+      const vf = viewFrame(z, t);
+      if (ctx)
+        drawStage(
+          ctx,
+          engine.state,
+          engine.ambient,
+          t,
+          selectedIdRef.current,
+          vf,
+          vf.kind === "zoom" || vf.kind === "fade" ? scratchFor() : null
+        );
       uiAcc += dt;
       if (uiAcc > UI_INTERVAL_S) {
         uiAcc = 0;
@@ -86,5 +116,5 @@ export function useGameLoop({
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("pagehide", onPageHide);
     };
-  }, [engine, canvasRef, selectedIdRef, storage, now, onUi]);
+  }, [engine, canvasRef, selectedIdRef, zoomRef, onZoom, storage, now, onUi]);
 }
