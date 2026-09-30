@@ -2,6 +2,7 @@ import {
   defaultContent,
   flatRects,
   MOVING_BOX_ID,
+  NO_ACTS,
   type Decor,
   type DecorSlot,
 } from "@/content";
@@ -50,11 +51,12 @@ function drawPart(
   def: Decor,
   left: number,
   base: number,
-  index = 0
+  index = 0,
+  acts: ReadonlySet<string> = NO_ACTS
 ): void {
   const ox = left + (def.step?.[0] ?? 0) * index;
   const oy = base - def.h + (def.step?.[1] ?? 0) * index;
-  for (const [x, y, w, h, c] of flatRects(def)) P(ctx, ox + x, oy + y, w, h, c);
+  for (const [x, y, w, h, c] of flatRects(def, acts)) P(ctx, ox + x, oy + y, w, h, c);
 }
 
 /** 置き場所ごとに、飾られている順で区画を割り当てる */
@@ -91,7 +93,14 @@ export function drawBackDecor(
   acts: ReadonlySet<string>
 ): void {
   for (const { def, cell } of placed(s, room, ["wall", "window", "ceiling"], acts))
-    drawPart(ctx, def, x + cell[0], y + cell[1], 0);
+    drawPart(
+      ctx,
+      def,
+      x + cell[0],
+      y + cell[1],
+      0,
+      def.slot === "window" ? NO_ACTS : acts
+    );
 }
 
 /** 窓辺の装飾だけを描き直す（夜に明かりのついた部屋は、窓を塗り直すので） */
@@ -116,7 +125,7 @@ export function drawFloorDecor(
   acts: ReadonlySet<string>
 ): void {
   for (const { def, cell } of placed(s, room, ["floor"], acts))
-    drawPart(ctx, def, x + cell[0], y + cell[1], 0);
+    drawPart(ctx, def, x + cell[0], y + cell[1], 0, acts);
   const box = defaultContent.decor[MOVING_BOX_ID];
   const n = s.decor[room]?.boxes ?? 0;
   if (box)

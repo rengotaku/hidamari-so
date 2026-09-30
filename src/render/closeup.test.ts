@@ -242,3 +242,41 @@ describe("追加: 画面の組み立て（drawStage）", () => {
     }
   });
 });
+
+describe("#36: 大写しの行動中の色替え", () => {
+  it("9: stream の方が #ffffff が 4 多く、#bbbbbb が 4 少ない（phone と比べる）", () => {
+    const fillsWith = (act: "stream" | "phone") => {
+      const s = at(newGame(createRng(9)), 12);
+      const room = s.res[0]!.room;
+      const r = s.res[0]!;
+      r.at = room;
+      r.act = act;
+      s.decor[room] = { items: ["streaming-set"], boxes: 0 };
+      const fills: string[] = [];
+      let style = "";
+      const target: Record<string, unknown> = {};
+      const ctx = new Proxy(target, {
+        get(t, prop: string) {
+          if (prop === "createRadialGradient")
+            return () => ({ addColorStop: () => undefined });
+          if (prop === "fill") return () => fills.push(style);
+          if (prop === "fillRect") return () => fills.push(style);
+          if (typeof t[prop] === "undefined") return () => undefined;
+          return t[prop];
+        },
+        set(t, prop: string, value) {
+          t[prop] = value;
+          if (prop === "fillStyle") style = String(value);
+          return true;
+        },
+      }) as unknown as CanvasRenderingContext2D;
+      drawCloseup(ctx, s, room, 0);
+      return fills;
+    };
+    const n = (f: string[], c: string) => f.filter((x) => x === c).length;
+    const stream = fillsWith("stream");
+    const phone = fillsWith("phone");
+    expect(n(stream, "#ffffff") - n(phone, "#ffffff")).toBe(4);
+    expect(n(phone, "#bbbbbb") - n(stream, "#bbbbbb")).toBe(4);
+  });
+});

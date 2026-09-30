@@ -1,4 +1,4 @@
-import { defaultContent, MOVING_BOX_ID, orderedBoxes, type Decor } from "@/content";
+import { boxesFor, defaultContent, MOVING_BOX_ID, NO_ACTS, type Decor } from "@/content";
 import {
   ACTS,
   SCENE_H,
@@ -121,9 +121,10 @@ function drawPart(
   def: Decor,
   x0: number,
   d0: number,
-  z0: number
+  z0: number,
+  acts: ReadonlySet<string> = NO_ACTS
 ): void {
-  for (const [bx, by, bz, bw, bd, bh, c] of orderedBoxes(def))
+  for (const [bx, by, bz, bw, bd, bh, c] of boxesFor(def, acts))
     box(
       ctx,
       x0 + bx * KX,
@@ -344,7 +345,14 @@ function drawDecorBack(
   acts: ReadonlySet<string>
 ): void {
   for (const { def, cell } of placed(s, room, ["wall", "window", "ceiling"], acts))
-    drawPart(ctx, def, cell[0] * KX, 0, (38 - cell[1]) * KZ);
+    drawPart(
+      ctx,
+      def,
+      cell[0] * KX,
+      0,
+      (38 - cell[1]) * KZ,
+      def.slot === "window" ? NO_ACTS : acts
+    );
 }
 
 function drawDecorFloor(
@@ -354,7 +362,7 @@ function drawDecorFloor(
   acts: ReadonlySet<string>
 ): void {
   for (const { def, cell } of placed(s, room, ["floor"], acts))
-    drawPart(ctx, def, cell[0] * KX, 0.03, 0);
+    drawPart(ctx, def, cell[0] * KX, 0.03, 0, acts);
   const boxDef = defaultContent.decor[MOVING_BOX_ID];
   const n = s.decor[room]?.boxes ?? 0;
   if (boxDef)
