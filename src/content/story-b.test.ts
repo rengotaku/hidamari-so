@@ -2,8 +2,14 @@ import { describe, it, expect } from "vitest";
 import { defaultContent } from "@/content";
 import { createRng, newGame, step } from "@/sim";
 
-/** #7-B 着手前の出来事の件数（content/storylets/*.json の合計。着手時に数えた値） */
-const BASE_STORYLETS = 163;
+/** #7-B 着手前の出来事の件数（origin/main の content/storylets/*.json の合計から #24 の新規 8 ファイルを除いた値。#25 の 19 件を含む） */
+const BASE_STORYLETS = 182;
+/** #24 で足した出来事（新規 8 ファイル）の id */
+const newFiles = import.meta.glob<{ id: string }[]>(
+  "../../content/storylets/{neighbors,seasonal,love-trouble,work,mishaps,partings,chains-a,chains-b}.json",
+  { import: "default", eager: true }
+);
+const newIds = new Set(Object.values(newFiles).flatMap((l) => l.map((s) => s.id)));
 const storyletIds = new Set(defaultContent.storylets.map((s) => s.id));
 const drawn = Object.values(defaultContent.archetypes).filter(
   (a) => !a.tags.includes("arc-only")
@@ -57,6 +63,15 @@ describe("E3: シード 1〜10 を 60 日進めたときの出来事の種類数
       expect(kinds.size, `seed ${seed}`).toBeGreaterThanOrEqual(40);
       for (const k of kinds) union.add(k);
     }
+    expect(union.size).toBeGreaterThanOrEqual(120);
+  });
+});
+
+describe("E3b(追加): 新規の出来事が実際に起きる", () => {
+  it("新規 8 ファイルの出来事のうち、10 シードの 60 日の和集合で 120 種類以上が起きる", () => {
+    const union = new Set<string>();
+    for (let seed = 1; seed <= 10; seed++)
+      for (const id of played(seed, 60)) if (newIds.has(id)) union.add(id);
     expect(union.size).toBeGreaterThanOrEqual(120);
   });
 });
