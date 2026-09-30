@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { defaultContent, type Storylet } from "@/content";
+import {
+  COLLECTOR_PREFIX,
+  defaultContent,
+  storyletSchema,
+  type Storylet,
+} from "@/content";
 import { createRng, newGame, step, composeEntry } from "@/sim";
 import type { GameState, StoryletEntry } from "@/sim";
 
@@ -277,5 +282,35 @@ describe("追加: 片付く筋と連れて行かれる筋が両立する", () =>
         expect(ids.has(id), `seed ${seed} ${id}`).toBe(false);
     }
     expect(checked).toBeGreaterThan(0);
+  });
+});
+
+describe("C8: 取り立て屋が去る言い回し（visitorGone）", () => {
+  const base = {
+    id: "collector-x",
+    kind: "happening",
+    trigger: "hour",
+    roles: { a: {} },
+    texts: ["{a}さんのところに来た", "{a}さんのところから去った"],
+  };
+  it("7. visitorGone に範囲外の番号を書くと、検証が落ちる", () => {
+    expect(storyletSchema.safeParse({ ...base, visitorGone: [1] }).success).toBe(true);
+    expect(storyletSchema.safeParse({ ...base, visitorGone: [2] }).success).toBe(false);
+    expect(storyletSchema.safeParse({ ...base, visitorGone: [-1] }).success).toBe(false);
+  });
+  it("8. collector- 以外の出来事に visitorGone を書くと、検証が落ちる", () => {
+    expect(
+      storyletSchema.safeParse({ ...base, id: "debt-x", visitorGone: [0] }).success
+    ).toBe(false);
+  });
+  it("9. 回帰: 去ったことを語る言い回しは、すべて visitorGone に入っている", () => {
+    const GONE = /下りていった|帰っていった|立ち去|置いていった|挟まっていた/;
+    for (const st of defaultContent.storylets.filter((s) =>
+      s.id.startsWith(COLLECTOR_PREFIX)
+    )) {
+      st.texts.forEach((text, i) => {
+        if (GONE.test(text)) expect(st.visitorGone ?? [], `${st.id}[${i}]`).toContain(i);
+      });
+    }
   });
 });
