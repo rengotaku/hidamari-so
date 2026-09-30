@@ -1,3 +1,4 @@
+import { COLLECTOR_PREFIX, defaultContent, type Content } from "@/content";
 import {
   roomRect,
   type GameState,
@@ -11,9 +12,9 @@ import { drawPerson } from "./person";
  * 取り立て屋（来訪者）の描画。住人ではなく、出来事の日誌から「いま来ている」ことを導くだけで、
  * 状態は書き換えない（夜の場面 night.ts と同じ、読み取り専用の派生）。
  * id が COLLECTOR_PREFIX で始まる出来事が起きてから VISIT_MIN 分のあいだ、その部屋の前に黒い背広の人影が出る。
+ * 「下りていった」など去ったことを語る言い回し（storylet の visitorGone）が直近の来訪なら、人影は出さない。
  * 連れて行く場面は描かない（画面外。結果は日誌にだけ残る）。
  */
-export const COLLECTOR_PREFIX = "collector-";
 /** 出来事から、人影が消えるまでの分 */
 export const VISIT_MIN = 60;
 /** そのうち、階段を上がる・歩いてくる時間（残りはドアの前に立っている） */
@@ -81,13 +82,25 @@ function along(path: readonly Point[], f: number): { p: Point; dir: 1 | -1 } {
   return { p: path[path.length - 1]!, dir: -1 };
 }
 
-/** いま来ている取り立て屋。いなければ null（直近の出来事 1 件だけを見る） */
-export function collectorVisit(s: GameState): CollectorVisit | null {
+/** その来訪の言い回しは、男がもう去っていることを語っているか（範囲外の番号は 0 番として扱う） */
+function visitorGone(content: Content, e: StoryletEntry): boolean {
+  const st = content.storylets.find((x) => x.id === e.storyletId);
+  if (!st) return false;
+  const i = e.variant.text < st.texts.length ? e.variant.text : 0;
+  return st.visitorGone?.includes(i) ?? false;
+}
+
+/** いま来ている取り立て屋。いなければ null（直近の出来事 1 件だけを見る。去っていればさかのぼらない） */
+export function collectorVisit(
+  s: GameState,
+  content: Content = defaultContent
+): CollectorVisit | null {
   for (const e of s.log) {
     if (s.t - e.t >= VISIT_MIN) return null;
     if (!("storyletId" in e) || !e.storyletId.startsWith(COLLECTOR_PREFIX)) continue;
     const ref = (e as StoryletEntry).roles.a;
     if (!ref || e.t > s.t) continue;
+    if (visitorGone(content, e as StoryletEntry)) return null;
     const { p, dir } = along(approach(ref.room), (s.t - e.t) / ARRIVE_MIN);
     return {
       room: ref.room,

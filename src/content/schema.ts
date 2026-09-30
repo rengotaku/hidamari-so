@@ -374,6 +374,9 @@ const NEEDS_A: Trigger[] = [
   "rent-late",
 ];
 
+/** 取り立て屋（来訪者）の出来事の id の接頭辞。render/collector.ts が人影を出す条件に使う（content が render に依存しない向き） */
+export const COLLECTOR_PREFIX = "collector-";
+
 export const storyletSchema = z
   .strictObject({
     id,
@@ -409,6 +412,8 @@ export const storyletSchema = z
       .optional(),
     /** 日誌の行の見た目（noise は騒がしい話） */
     logKind: z.enum(["move", "noise"]).optional(),
+    /** 取り立て屋がもう去っている言い回しの番号（texts の添字）。collector- の出来事だけ。その間、ドアの前の人影は出ない */
+    visitorGone: z.array(z.number().int().min(0)).optional(),
     effects: z.array(effect).default([]),
   })
   .superRefine((st, ctx) => {
@@ -418,6 +423,12 @@ export const storyletSchema = z
     const texts = [...st.texts, ...Object.values(st.choices ?? {}).flat()];
     if (texts.some((t) => /[0-9０-９]/.test(t)))
       add("本文に数字を書かない（数は漢数字か numbers で）");
+    if (st.visitorGone) {
+      if (!st.id.startsWith(COLLECTOR_PREFIX))
+        add(`visitorGone は ${COLLECTOR_PREFIX} で始まる出来事だけ`);
+      if (st.visitorGone.some((i) => i >= st.texts.length))
+        add("visitorGone の番号が texts の範囲外");
+    }
     if (st.trigger === "act-end" && !st.act) add("act-end には act が要る");
     if (st.trigger !== "act-end" && st.act) add("act は act-end のときだけ");
     if (NEEDS_A.includes(st.trigger) && !st.roles.a)
