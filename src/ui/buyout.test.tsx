@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { render, screen, fireEvent, cleanup, within } from "@testing-library/react";
+import { render, screen, fireEvent, cleanup, within, act } from "@testing-library/react";
 import { createRng, newGame, step, type GameState } from "@/sim";
 import { SAVE_KEY, loadGame, saveGame } from "@/save";
 import { GameScreen } from "@/ui/GameScreen";
@@ -128,5 +128,90 @@ describe("追加: 出ていった住人", () => {
     expect(profile.textContent).toContain("ひだまり荘を出ていった");
     expect(profile.textContent).toContain("最後の出来事");
     expect(choiceButtons(container).length).toBe(0);
+  });
+});
+
+/**
+ * 記念日の 1 時間前の保存を開き、部屋の選択肢にフォーカスを置いてから、フレームを回して pending まで進める。
+ * フォーカスを置いた部屋の選択肢を返す
+ */
+function openUntilPending(): { container: HTMLElement; room: HTMLElement } {
+  const rng = createRng(31337);
+  let next = step(newGame(rng), 40 * DAY, rng);
+  let prev = structuredClone(next);
+  let prevRng = rng.getState();
+  while (next.buyout.phase !== "pending") {
+    prev = structuredClone(next);
+    prevRng = rng.getState();
+    next = step(next, 60, rng);
+  }
+  saveGame(localStorage, prev, prevRng, NOW);
+  // jsdom は inert によるフォーカス外しを実装しないので、ブラウザと同じく inert が付いた時点で body へ外す
+  // jsdom は inert を実装しない。ブラウザと同じく、inert が付いた時点でその中のフォーカスを body へ外し、
+  // inert の中の要素への focus() は効かないようにする（React が commit 後にフォーカスを戻そうとしても戻らない）
+  const setAttribute = Element.prototype.setAttribute;
+  vi.spyOn(Element.prototype, "setAttribute").mockImplementation(function (
+    this: Element,
+    name: string,
+    value: string
+  ) {
+    setAttribute.call(this, name, value);
+    const active = document.activeElement;
+    if (name === "inert" && active instanceof HTMLElement && this.contains(active))
+      active.blur();
+  });
+  const focus = HTMLElement.prototype.focus;
+  vi.spyOn(HTMLElement.prototype, "focus").mockImplementation(function (
+    this: HTMLElement
+  ) {
+    if (!this.closest("[inert]")) focus.call(this);
+  });
+  const frames: FrameRequestCallback[] = [];
+  vi.spyOn(window, "requestAnimationFrame").mockImplementation((cb) => frames.push(cb));
+  const { container } = open();
+  const room = screen.getAllByRole("option")[0] as HTMLElement;
+  act(() => room.focus());
+  expect(document.activeElement).toBe(room);
+  let t = 0;
+  for (let i = 0; i < 400 && !screen.queryByRole("dialog"); i++) {
+    t += 250;
+    const cb = frames.shift()!;
+    act(() => cb(t));
+  }
+  return { container, room };
+}
+
+describe("ダイアログのフォーカスと背景の inert（#37 事前設計）", () => {
+  it("1: pending の保存を開くと、フォーカスがダイアログ内にあり、「売る」ではない", () => {
+    saveAfter(54);
+    open();
+    const dialog = screen.getByRole("dialog", { name: "築五十年の記念日" });
+    const active = document.activeElement as HTMLElement;
+    expect(dialog.contains(active)).toBe(true);
+    expect(active.textContent).not.toBe("売る");
+  });
+
+  it("2: 部屋の選択肢にフォーカスしてから pending まで進めると、フォーカスがダイアログへ移る", () => {
+    const { room } = openUntilPending();
+    const dialog = screen.getByRole("dialog", { name: "築五十年の記念日" });
+    expect(dialog.contains(document.activeElement)).toBe(true);
+    expect(document.activeElement).not.toBe(room);
+  });
+
+  it("3: pending のあいだ header と main は inert で、ダイアログには inert な祖先が無い", () => {
+    saveAfter(54);
+    const { container } = open();
+    expect(container.querySelector("header")!.hasAttribute("inert")).toBe(true);
+    expect(container.querySelector("main")!.hasAttribute("inert")).toBe(true);
+    const dialog = screen.getByRole("dialog", { name: "築五十年の記念日" });
+    expect(dialog.closest("[inert]")).toBeNull();
+  });
+
+  it("4: 「断る」を押すと inert が外れ、フォーカスが元の部屋の選択肢に戻る", () => {
+    const { container, room } = openUntilPending();
+    fireEvent.click(screen.getByRole("button", { name: "断る" }));
+    expect(container.querySelector("[inert]")).toBeNull();
+    expect(document.activeElement).not.toBe(document.body);
+    expect(document.activeElement).toBe(room);
   });
 });

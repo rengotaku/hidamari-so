@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { render, screen, fireEvent, within, cleanup, act } from "@testing-library/react";
-import { SAVE_KEY, loadGame } from "@/save";
+import { SAVE_KEY, loadGame, saveGame } from "@/save";
+import { createRng, newGame, step } from "@/sim";
 import { GameEngine, MAX_TICK_MINUTES } from "@/ui/engine";
 import { GameScreen } from "@/ui/GameScreen";
 
@@ -168,5 +169,38 @@ describe("追加: 時間の速さ", () => {
     const t0 = e.state.t;
     e.tick(2);
     expect(e.state.t - t0).toBe(2);
+  });
+});
+
+describe("速さの変更は押した直後に保存される（#37 事前設計）", () => {
+  const NOW = 1000;
+  const openScreen = () =>
+    render(<GameScreen seed={7} storage={localStorage} now={() => NOW} />);
+
+  it("T1: 「停止」を押した直後に loadGame().speed === 0（定期保存は走らない）", () => {
+    open().save(localStorage, NOW);
+    expect(loadGame(localStorage)!.speed).toBe(1);
+    openScreen();
+    fireEvent.click(screen.getByRole("button", { name: "停止" }));
+    expect(loadGame(localStorage)!.speed).toBe(0);
+  });
+
+  it("T2: 「15倍」を押したあと GameEngine.open で開き直すと speed が 15", () => {
+    open().save(localStorage, NOW);
+    openScreen();
+    fireEvent.click(screen.getByRole("button", { name: "15倍" }));
+    expect(GameEngine.open(localStorage, 7, NOW).speed).toBe(15);
+  });
+
+  it("T3: 返事待ちの間に速さボタンを押しても、保存の speed は 0、t も変わらない", () => {
+    const rng = createRng(31337);
+    const s = step(newGame(rng), 54 * 1440, rng);
+    expect(s.buyout.phase).toBe("pending");
+    saveGame(localStorage, s, rng.getState(), NOW, 0);
+    openScreen();
+    fireEvent.click(screen.getByRole("button", { name: "15倍" }));
+    const saved = loadGame(localStorage)!;
+    expect(saved.speed).toBe(0);
+    expect(saved.state.t).toBe(s.t);
   });
 });

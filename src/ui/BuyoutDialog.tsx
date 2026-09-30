@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { defaultContent } from "@/content";
 import {
   composeEntry,
@@ -31,7 +32,31 @@ export function BuyoutDialog({
   state: GameState;
   onChoose: (choice: BuyoutChoice) => void;
 }) {
-  if (state.buyout.phase !== "pending") return null;
+  const pending = state.buyout.phase === "pending";
+  const dialogRef = useRef<HTMLDivElement>(null);
+  // 直近にフォーカスのあった（ダイアログの外の）要素。返事待ちになる commit では同じ commit で背景に inert が付き、
+  // ブラウザはフォーカスを body へ外す。effect で activeElement を読むのでは遅いので、focusin で追っておく
+  const lastFocused = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    const onFocusIn = (e: FocusEvent) => {
+      const t = e.target;
+      if (t instanceof HTMLElement && !dialogRef.current?.contains(t))
+        lastFocused.current = t;
+    };
+    document.addEventListener("focusin", onFocusIn);
+    return () => document.removeEventListener("focusin", onFocusIn);
+  }, []);
+  // 表示時にダイアログ本体へフォーカスを移す。「売る」には置かない（Enter の押し間違いで取り消せない選択に進むため）。
+  // 閉じたあと（背景の inert が外れたあとの cleanup）は、控えておいた要素へ戻す
+  useEffect(() => {
+    if (!pending) return;
+    const before = lastFocused.current;
+    dialogRef.current?.focus();
+    return () => {
+      if (before && before !== document.body && before.isConnected) before.focus();
+    };
+  }, [pending]);
+  if (!pending) return null;
   const voice = state.buyout.voice
     ? composeEntry(defaultContent, state.buyout.voice)
     : null;
@@ -39,6 +64,8 @@ export function BuyoutDialog({
     <div className="veil">
       <div
         className="dialog"
+        ref={dialogRef}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-label="築五十年の記念日"

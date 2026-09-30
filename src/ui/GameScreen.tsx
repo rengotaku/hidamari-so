@@ -65,6 +65,8 @@ export function GameScreen({ seed, storage, now = systemNow }: Props) {
   }, [engine]);
   const onSpeed = (s: Speed) => {
     engine.setSpeed(s);
+    // 次の定期保存（5 秒ごと）を待たずに、速さの選択を残す
+    engine.save(store, now());
     setSpeedState(engine.speed);
   };
   useGameLoop({
@@ -130,14 +132,17 @@ export function GameScreen({ seed, storage, now = systemNow }: Props) {
   const logRoom = zoom.phase === "zooming" || zoom.phase === "closeup" ? zoom.room : null;
   const log = logRoom === null ? state.log : roomLog(state.log, state, logRoom);
 
+  // 返事待ちの間は背景をすべて外す（aside は main の中）。ダイアログは header / main の外にある
+  const pending = state.buyout.phase === "pending";
+
   return (
     <div className="game">
-      <header className="top">
+      <header className="top" inert={pending}>
         <span className="clock">{formatClock(state.t)}</span>
         <span className="age">築{buildingAge(state.t, state.t0)}年</span>
         <SpeedControl speed={speed} onChange={onSpeed} />
       </header>
-      <main className="main">
+      <main className="main" inert={pending}>
         <Stage
           canvasRef={canvasRef}
           state={state}
