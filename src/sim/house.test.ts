@@ -155,14 +155,64 @@ describe("F3: 退去のあと、大家が片付けて部屋が募集中になる
     expect(composeEntry(content, e!)).toContain(String(roomNo(room)));
   });
 
-  it("追加: 大家は日中(8〜19 時)にしか動かない", () => {
-    const { s: s0, rng } = fresh(12);
-    const left = fireOn(s0, rng, "leave", s0.res[0]!.id);
-    const done = until(left, rng, (x) => x.vacancies.every((v) => v.cleared), 3, 10)!;
-    const [e] = entries(done, "room-cleared");
-    const h = (e!.t / 60) % 24;
-    expect(h).toBeGreaterThanOrEqual(8);
-    expect(h).toBeLessThan(21);
+  it("追加: 大家は夜中の退去でも動き出さず、日中(8〜19 時)になってから動く", () => {
+    const hourOfT = (t: number) => (t / 60) % 24;
+    // 動き出し(idle でなくなった瞬間)の時刻を返す。上限は 1 日半
+    const startOf = (from: GameState, rng: SeededRng) => {
+      let cur = from;
+      for (let i = 0; i < 36 * 60; i++) {
+        cur = go(cur, rng, 1);
+        if (cur.landlord.phase !== "idle") return cur;
+      }
+      return null;
+    };
+    // 退去を起こす時刻: 夜中の 0〜7 時と 20〜23 時、それに日中の 12 時
+    for (const [seed, hour] of [
+      [12, 0],
+      [13, 3],
+      [14, 6.5],
+      [15, 20],
+      [16, 22.5],
+      [17, 12],
+    ] as const) {
+      const { s: s0, rng } = fresh(seed);
+      // 開始(17 時)から、退去させたい時刻まで進める
+      let s = s0;
+      while (Math.abs(hourOfT(s.t) - hour) > 1e-6) s = go(s, rng, 0.5);
+      const vacatedHour = hourOfT(s.t);
+      const left = fireOn(s, rng, "leave", s.res[0]!.id);
+      // 片付けに向かう動き出し
+      const up = startOf(left, rng);
+      expect(up, `退去 ${vacatedHour} 時`).not.toBeNull();
+      expect(up!.landlord.phase).toBe("up");
+      const h = hourOfT(up!.t);
+      expect(h, `退去 ${vacatedHour} 時の動き出し`).toBeGreaterThanOrEqual(8);
+      expect(h).toBeLessThan(19 + 1 / 60);
+      // 夜中の退去なら、動き出しは必ず退去より後(同じ夜のうちに動いていない)
+      if (hour < 8 || hour >= 19) expect(up!.t - left.t).toBeGreaterThan(30);
+    }
+    // 入居の日が夜中に来ていても、連れてくるのは日中になってから
+    for (const hour of [1, 5, 21]) {
+      const { s: s0, rng } = fresh(18);
+      const left = fireOn(s0, rng, "leave", s0.res[0]!.id);
+      const cleared = until(
+        left,
+        rng,
+        (x) => x.vacancies.every((v) => v.cleared),
+        3,
+        10
+      )!;
+      let s = cleared;
+      while (Math.abs(hourOfT(s.t) - hour) > 1e-6 || s.landlord.phase !== "idle")
+        s = go(s, rng, 0.5);
+      s = { ...s, vacancies: s.vacancies.map((v) => ({ ...v, moveInAt: s.t })) };
+      const esc = startOf(s, rng);
+      expect(esc, `入居日 ${hour} 時`).not.toBeNull();
+      expect(esc!.landlord.phase).toBe("escort");
+      const h = hourOfT(esc!.t);
+      expect(h).toBeGreaterThanOrEqual(8);
+      expect(h).toBeLessThan(19 + 1 / 60);
+    }
   });
 });
 
