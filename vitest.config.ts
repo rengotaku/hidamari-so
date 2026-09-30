@@ -13,6 +13,9 @@ export default defineConfig({
     globals: true,
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],
+    // 複数のシードで日数ぶんのシミュレーションを回すテストがある。出来事が増えるほど重くなり、
+    // CI のようにカバレッジ計測と並列実行が重なる環境では、ローカルの数倍かかるため余裕を持たせる
+    testTimeout: 30_000,
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "json-summary", "html"],
