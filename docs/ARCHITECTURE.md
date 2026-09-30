@@ -32,7 +32,7 @@ last_verified: 2026-10-01
 1. `src/main.tsx` が `App` を描き、`GameScreen` が `GameEngine.open` で保存を開く。
 2. `loadOrNew`（`src/save/storage.ts`）が localStorage の保存を読む。`migrateSave` で古い版を最新まで移し、`fillHouse` で後から足した項目を補い、`saveEnvelope`（zod）で検証する。保存が無い・壊れている・未来の版のときは、シードから `newGame` で新しいゲームを始める。売って結末を迎えた保存も、開き直すと新しいゲームになる。
 3. 保存があれば、`savedAt` から現在までの実時間を留守時間として `catchUp` で進める（quiet で吹き出しを出さない）。
-4. `useGameLoop` が `requestAnimationFrame` ごとに `engine.tick` を呼び、Canvas を描き、0.3 秒ごとに画面の文字を更新し、5 秒ごとに保存する。タブが隠れた時点で保存し、戻ったら隠れていた時間ぶんを `engine.resume` で進める。
+4. `useGameLoop` が `requestAnimationFrame` ごとに `engine.tick` を呼び、Canvas を描き、0.3 秒ごとに画面の文字を更新し、5 秒ごとに保存する。タブが隠れた時点で保存し、戻ったら隠れていた時間ぶんを `engine.resume` で進める。速さボタンを押したときと、買収の返事を選んだときも、その場で保存する。返事待ちの間は `GameScreen` が `header` と `main` を `inert` にし、ダイアログ（`BuyoutDialog`）が本体へフォーカスを受け取って、閉じたあと表示前の要素へ戻す。
 
 ### 時間の進み方
 
