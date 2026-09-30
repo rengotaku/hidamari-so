@@ -1,8 +1,8 @@
 ---
 adr: 0007
 title: PWA の新しい版は、古い画面がすべて閉じた次回の起動で有効にする（pwa, service worker, update）
-status: accepted
-superseded_by: null
+status: superseded
+superseded_by: 0008
 date: 2026-10-01
 issues: [1, 6, 21]
 tags: [pwa, service-worker, update, cloudflare-pages]
@@ -10,6 +10,8 @@ description: service worker の skipWaiting と clientsClaim を無効にし、�
 ---
 
 # ADR 0007: PWA の新しい版は、古い画面がすべて閉じた次回の起動で有効にする
+
+> 「次回の起動まで入れ替えない」の部分は ADR 0008 に置き換えられた。`skipWaiting: false` / `clientsClaim: false` の設定と、更新の通知 UI を置かない方針は引き続き有効。
 
 ## 背景
 
