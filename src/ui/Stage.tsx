@@ -1,7 +1,8 @@
 import type { RefObject } from "react";
-import { bubbleAnchor, closeupBubbleAnchor, toScene } from "@/render";
+import { toScene } from "@/render";
 import { SCENE_H, SCENE_W, agingOf, buildingAge, type GameState } from "@/sim";
 import { RoomPicker } from "./RoomPicker";
+import type { VisibleBubbles } from "./bubbles";
 import type { ZoomState } from "./zoom";
 
 const pct = (v: number, lo: number, hi: number): number => Math.max(lo, Math.min(hi, v));
@@ -10,25 +11,23 @@ interface Props {
   canvasRef: RefObject<HTMLCanvasElement | null>;
   state: GameState;
   zoom: ZoomState;
+  /** 画面に出す吹き出し（住人の id → セリフと位置）。出すかどうかはゲームのループ側で決める（bubbles.ts） */
+  bubbles: VisibleBubbles;
   onPick: (sceneX: number, sceneY: number) => void;
   onEnterRoom: (room: number) => void;
   onBack: () => void;
 }
 
-/** 吹き出しの位置（場面の座標）。全体図では建物の断面、大写しではその部屋の中。遷移中は出さない */
-function anchorFor(
-  state: GameState,
-  zoom: ZoomState,
-  r: GameState["res"][number]
-): { x: number; y: number } | null {
-  if (zoom.phase === "overview") return bubbleAnchor(r);
-  if (zoom.phase === "closeup" && zoom.room !== null && r.at === zoom.room)
-    return closeupBubbleAnchor(state, zoom.room, r);
-  return null;
-}
-
 /** 建物断面（部屋を押すと大写し）の Canvas と、その上に重ねる吹き出し・キーボード用の部屋の選択領域 */
-export function Stage({ canvasRef, state, zoom, onPick, onEnterRoom, onBack }: Props) {
+export function Stage({
+  canvasRef,
+  state,
+  zoom,
+  bubbles,
+  onPick,
+  onEnterRoom,
+  onBack,
+}: Props) {
   return (
     <div className="stageWrap">
       <div className="stage" data-view={zoom.phase}>
@@ -60,23 +59,18 @@ export function Stage({ canvasRef, state, zoom, onPick, onEnterRoom, onBack }: P
               ひだまり荘
             </div>
           )}
-          {state.res.map((r) => {
-            if (!r.bubble || r.bubble.until <= state.t) return null;
-            const p = anchorFor(state, zoom, r);
-            if (!p) return null;
-            return (
-              <div
-                key={r.id}
-                className="bubble"
-                style={{
-                  left: `${pct((p.x / SCENE_W) * 100, 10, 90)}%`,
-                  top: `${(p.y / SCENE_H) * 100}%`,
-                }}
-              >
-                {r.bubble.text}
-              </div>
-            );
-          })}
+          {[...bubbles].map(([id, { text, pos }]) => (
+            <div
+              key={id}
+              className="bubble"
+              style={{
+                left: `${pct((pos.x / SCENE_W) * 100, 10, 90)}%`,
+                top: `${(pos.y / SCENE_H) * 100}%`,
+              }}
+            >
+              {text}
+            </div>
+          ))}
         </div>
       </div>
     </div>
