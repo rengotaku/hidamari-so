@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { defaultContent, storyletSchema, type Content } from "@/content";
+import { defaultContent, parseContent, storyletSchema, type Content } from "@/content";
 import {
   composeEntry,
   createRng,
@@ -9,6 +9,7 @@ import {
   step,
   type GameState,
   type LogEntry,
+  type Variant,
 } from "@/sim";
 import { loadGame, saveGame } from "@/save";
 
@@ -343,5 +344,141 @@ describe("追加: スキーマの拒否", () => {
     ["未知の条件", { roles: { a: { color: "red" } } }],
   ])("%s は拒否される", (_name, patch) => {
     expect(storyletSchema.safeParse({ ...ok, ...patch }).success).toBe(false);
+  });
+});
+
+describe("追加: レビュー指摘の反映", () => {
+  it("chance 0 の予約出来事は、予約が来ても起きない（chance 1 なら起きる）", () => {
+    const mk = (chance: number) =>
+      fakeContentOf([
+        {
+          id: "first",
+          once: true,
+          effects: [{ type: "book", next: [{ id: "second" }], afterMinutes: [60, 60] }],
+        },
+        { id: "second", trigger: "book", chance },
+      ]);
+    expect(entriesOf(runWith(mk(0), 31, 3), "second").length).toBe(0);
+    expect(entriesOf(runWith(mk(1), 31, 3), "second").length).toBe(1);
+  });
+
+  it("book の重みは 0 以上で、合計が正でなければ拒否する", () => {
+    const base = {
+      id: "x",
+      kind: "daily",
+      trigger: "hour",
+      roles: { a: {} },
+      texts: ["{a}さん"],
+    };
+    const book = (weights: number[]) => ({
+      ...base,
+      effects: [
+        {
+          type: "book",
+          afterMinutes: [1, 2],
+          next: weights.map((weight) => ({ id: "y", weight })),
+        },
+      ],
+    });
+    expect(storyletSchema.safeParse(book([1, 2])).success).toBe(true);
+    expect(storyletSchema.safeParse(book([-1, 2])).success).toBe(false);
+    expect(storyletSchema.safeParse(book([0, 0])).success).toBe(false);
+    expect(storyletSchema.safeParse(book([Number.POSITIVE_INFINITY])).success).toBe(
+      false
+    );
+    expect(storyletSchema.safeParse(book([Number.NaN])).success).toBe(false);
+  });
+
+  it("constructor などの継承名は、種類・癖・差し込みの参照として存在しない扱いになる", () => {
+    const raw = (over: object) => ({
+      archetypes: Object.values(defaultContent.archetypes),
+      traits: Object.values(defaultContent.traits),
+      storylets: [
+        {
+          id: "x",
+          kind: "daily",
+          trigger: "hour",
+          roles: { a: {} },
+          texts: ["{a}さん"],
+          ...over,
+        },
+      ],
+    });
+    expect(() =>
+      parseContent(raw({ roles: { a: { archetype: ["constructor"] } } }))
+    ).toThrow();
+    expect(() =>
+      parseContent(
+        raw({ effects: [{ type: "changeJob", role: "a", archetype: "constructor" }] })
+      )
+    ).toThrow();
+    expect(
+      storyletSchema.safeParse({
+        ...raw({}).storylets[0],
+        texts: ["{a}さんの{constructor}"],
+      }).success
+    ).toBe(false);
+  });
+
+  it("実行時も、継承名の種類への changeJob は無視される", () => {
+    const content = fakeContentOf([
+      {
+        id: "bad",
+        once: true,
+        effects: [{ type: "changeJob", role: "a", archetype: "constructor" }],
+      },
+    ]);
+    const s = runWith(content, 32, 3);
+    for (const r of s.res)
+      expect(Object.hasOwn(defaultContent.archetypes, r.job)).toBe(true);
+  });
+
+  it("moveOut のあとの bond は、出ていった住人との関係を作り直さない", () => {
+    const content = fakeContentOf([
+      {
+        id: "goodbye",
+        once: true,
+        roles: { a: {}, b: {} },
+        texts: ["{a}さんと{b}さん"],
+        effects: [
+          { type: "moveOut", role: "a" },
+          { type: "bond", delta: 10 },
+          { type: "romance", stage: "dating" },
+          { type: "adjust", role: "a", stat: "mood", delta: 5 },
+        ],
+      },
+    ]);
+    const s = runWith(content, 33, 4);
+    const [e] = entriesOf(s, "goodbye");
+    expect(e).toBeDefined();
+    expect(s.res.some((r) => r.id === e!.roles.a!.id)).toBe(false);
+    expect(s.bonds).toEqual([]);
+  });
+
+  it("variant に無い差し込みがあっても、undefined や NaN の出ない本文になる", () => {
+    const content = fakeContentOf([
+      {
+        id: "grown",
+        numbers: { n: [3, 9] },
+        choices: { thing: ["みかん", "りんご"] },
+        texts: ["{a}さんが{n}個の{thing}を配った"],
+      },
+    ]);
+    const st = content.storylets[0]!;
+    const base = {
+      t: 1,
+      kind: "" as const,
+      storyletId: st.id,
+      roles: { a: { id: 1, sei: "田中", room: 0 } },
+    };
+    const variants: Variant[] = [
+      { text: 0, slots: {} },
+      { text: 99, slots: { n: "x", thing: 99 } },
+      { text: 0, slots: { n: Number.NaN, thing: -1 } },
+    ];
+    for (const variant of variants) {
+      const text = composeEntry(content, { ...base, variant })!;
+      expect(text).toBe("田中さんが三個のみかんを配った");
+    }
   });
 });

@@ -101,7 +101,7 @@ function roleOk(c: Ctx, r: Resident, cond: RoleCond | undefined, a?: Resident): 
 function storyOk(c: Ctx, st: Storylet): boolean {
   const { s } = c;
   if (st.once && s.story.done.includes(st.id)) return false;
-  const last = s.story.last[st.id];
+  const last = Object.hasOwn(s.story.last, st.id) ? s.story.last[st.id] : undefined;
   if (
     last !== undefined &&
     st.cooldownDays !== undefined &&
@@ -183,9 +183,15 @@ export function composeEntry(content: Content, e: LogEntry): string | null {
     if (name === "a" || name === "b") return e.roles[name]?.sei ?? "";
     if (name === "room") return e.roles.a ? String(roomNo(e.roles.a.room)) : "";
     const slot = e.variant.slots[name];
-    if (st.numbers && name in st.numbers) return kanji(Number(slot));
-    if (st.choices && name in st.choices) return st.choices[name]![Number(slot)] ?? "";
-    return slot === undefined ? "" : String(slot);
+    // 定義の後から足された差し込みなど、slots に値が無いときは定義から決定的に補う
+    const range =
+      st.numbers && Object.hasOwn(st.numbers, name) ? st.numbers[name] : undefined;
+    if (range)
+      return kanji(typeof slot === "number" && Number.isFinite(slot) ? slot : range[0]);
+    const list =
+      st.choices && Object.hasOwn(st.choices, name) ? st.choices[name] : undefined;
+    if (list) return (typeof slot === "number" ? list[slot] : undefined) ?? list[0]!;
+    return typeof slot === "string" ? slot : "";
   });
 }
 
@@ -215,7 +221,19 @@ function fire(
   });
   s.story.last[st.id] = s.t;
   if (st.once && !s.story.done.includes(st.id)) s.story.done.push(st.id);
-  for (const e of st.effects) applyEffect(c, e, b);
+  // 途中で退去した住人には、以降の効果を適用しない
+  const gone = new Set<Resident>();
+  for (const e of st.effects) {
+    const involved =
+      "role" in e
+        ? [b[e.role]]
+        : e.type === "bond" || e.type === "romance"
+          ? [b.a, b.b]
+          : [];
+    if (involved.some((r) => r && gone.has(r))) continue;
+    if (e.type === "moveOut" && b[e.role]) gone.add(b[e.role]!);
+    applyEffect(c, e, b);
+  }
 }
 
 function applyEffect(c: Ctx, e: Effect, b: Bindings): void {
@@ -273,7 +291,7 @@ function applyEffect(c: Ctx, e: Effect, b: Bindings): void {
     }
     case "changeJob": {
       const r = b[e.role];
-      if (!r || !(e.archetype in c.content.archetypes)) return;
+      if (!r || !Object.hasOwn(c.content.archetypes, e.archetype)) return;
       r.job = e.archetype;
       bookArc(c, r);
       return;
@@ -379,8 +397,9 @@ export function processBooked(c: Ctx): void {
     if (b) fixed.b = b;
     if (st.once && s.story.done.includes(st.id)) continue;
     const bs = storyOk(c, st) ? bindingsFor(c, st, fixed) : [];
-    if (bs.length > 0) fire(c, st, bs[0]!);
-    else if (k.tries < MAX_BOOK_TRIES)
+    if (bs.length > 0) {
+      if (st.chance >= 1 || chance(c.rng, st.chance)) fire(c, st, bs[0]!);
+    } else if (k.tries < MAX_BOOK_TRIES)
       s.booked.push({ ...k, at: s.t + 60, tries: k.tries + 1 });
   }
 }

@@ -26,7 +26,8 @@ function indexById<T extends { id: string }>(
 ): Record<string, T> {
   const out: Record<string, T> = {};
   for (const it of items) {
-    if (it.id in out) throw new Error(`${kind} の id が重複している: ${it.id}`);
+    if (Object.hasOwn(out, it.id))
+      throw new Error(`${kind} の id が重複している: ${it.id}`);
     out[it.id] = it;
   }
   return out;

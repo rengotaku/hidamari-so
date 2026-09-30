@@ -175,7 +175,18 @@ const effect = z.discriminatedUnion("type", [
   }),
   z.strictObject({
     type: z.literal("book"),
-    next: z.array(z.strictObject({ id, weight: finite.optional() })).min(1),
+    next: z
+      .array(
+        z.strictObject({
+          id,
+          weight: finite.refine((n) => n >= 0, "重みは 0 以上").optional(),
+        })
+      )
+      .min(1)
+      .refine(
+        (l) => l.reduce((sum, n) => sum + (n.weight ?? 1), 0) > 0,
+        "重みの合計が 0"
+      ),
     afterMinutes: intRange,
   }),
   z.strictObject({ type: z.literal("moveOut"), role }),
@@ -204,7 +215,10 @@ export function undeclaredPlaceholders(st: {
         if (st.trigger !== "noise") bad.add(name);
       } else if (name === "shift") {
         if (st.trigger !== "late") bad.add(name);
-      } else if (!(name in (st.numbers ?? {})) && !(name in (st.choices ?? {}))) {
+      } else if (
+        !Object.hasOwn(st.numbers ?? {}, name) &&
+        !Object.hasOwn(st.choices ?? {}, name)
+      ) {
         bad.add(name);
       }
     }
@@ -299,11 +313,11 @@ export function contentErrors(c: Content): string[] {
   const story = new Set(c.storylets.map((s) => s.id));
   const arch = (where: string, ids: string[] | undefined) => {
     for (const x of ids ?? [])
-      if (!(x in c.archetypes)) errs.push(`${where}: 未知の archetype ${x}`);
+      if (!Object.hasOwn(c.archetypes, x)) errs.push(`${where}: 未知の archetype ${x}`);
   };
   const trait = (where: string, ids: string[] | undefined) => {
     for (const x of ids ?? [])
-      if (!(x in c.traits)) errs.push(`${where}: 未知の trait ${x}`);
+      if (!Object.hasOwn(c.traits, x)) errs.push(`${where}: 未知の trait ${x}`);
   };
   for (const a of Object.values(c.archetypes)) {
     trait(`archetype ${a.id}`, a.traits);
