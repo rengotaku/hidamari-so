@@ -126,6 +126,11 @@ const gameState = z
   // lastHour は経過時間から決まる値。食い違う保存は、1 時間ごとの処理が延々と回るので拒否する
   .refine((s) => s.lastHour === Math.floor(s.t / 60), "lastHour が t と一致しない");
 
+/** 時間の速さ。0 = 停止 */
+export const SPEEDS = [0, 1, 4, 15] as const;
+export type Speed = (typeof SPEEDS)[number];
+const speed = z.union([z.literal(0), z.literal(1), z.literal(4), z.literal(15)]);
+
 /** localStorage に入れる 1 件分。schemaVersion が違えば読まずに捨てる */
 export const saveEnvelope = z.object({
   schemaVersion: z.literal(SCHEMA_VERSION),
@@ -133,5 +138,7 @@ export const saveEnvelope = z.object({
   savedAt: finite,
   /** 乱数の内部状態。続きから再開できるようにする */
   rngState: finite,
+  /** 時間の速さ。無い保存（速さ導入前）は 1 倍で始める。版は上げない */
+  speed: speed.optional(),
   state: gameState,
 });

@@ -45,13 +45,14 @@ function clickRoom(canvas: HTMLElement, room: number) {
   fireEvent.click(canvas, { clientX: 28 + col * 77 + 37, clientY: y + 24 });
 }
 
-/** 日付・時刻・築年数・年齢・部屋番号は数字を許す。それ以外に数字が残ったら NG */
+/** 日付・時刻・築年数・年齢・部屋番号・速さの倍率は数字を許す。それ以外に数字が残ったら NG */
 function digitsOutsideAllowed(text: string): string[] {
   const stripped = text
     .replace(/\d+日目?/g, "")
     .replace(/\d{1,2}:\d{2}/g, "")
     .replace(/築\d+年/g, "")
     .replace(/\d+歳/g, "")
+    .replace(/\d+倍/g, "") // 時間の速さのボタン（1倍・4倍・15倍）
     .replace(/[12]0[1-3]/g, "");
   return stripped.match(/[0-9０-９]+/g) ?? [];
 }
@@ -78,15 +79,25 @@ describe("A6: 画面に数値を出さない", () => {
     seedSave();
     render(<GameScreen seed={1} storage={localStorage} now={() => NOW} />);
     const header = screen.getByRole("banner");
-    expect(header.textContent).toMatch(/^\d+日目 \d{2}:\d{2}築\d+年$/);
+    // 時間の速さのボタン（#14）は別枠。日付・時刻・築年数の並びだけを見る
+    const text = [...header.children]
+      .filter((el) => !el.classList.contains("speed"))
+      .map((el) => el.textContent)
+      .join("");
+    expect(text).toMatch(/^\d+日目 \d{2}:\d{2}築\d+年$/);
   });
 
-  it("追加: 操作ボタン・入力欄が無い", () => {
+  it("追加: 操作は時間の速さの 4 ボタンだけで、入力欄が無い", () => {
     seedSave();
     const { container } = render(
       <GameScreen seed={1} storage={localStorage} now={() => NOW} />
     );
-    expect(screen.queryAllByRole("button")).toEqual([]);
+    expect(screen.getAllByRole("button").map((b) => b.textContent)).toEqual([
+      "停止",
+      "1倍",
+      "4倍",
+      "15倍",
+    ]);
     expect(container.querySelector("input, select, textarea")).toBeNull();
   });
 });

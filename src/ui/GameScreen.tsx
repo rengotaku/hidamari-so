@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { hitTest } from "@/render";
-import type { KeyValueStorage } from "@/save";
+import type { KeyValueStorage, Speed } from "@/save";
 import { buildingAge, formatClock } from "@/sim";
 import { GameEngine, defaultStorage } from "./engine";
 import { Journal } from "./Journal";
 import { Profile } from "./Profile";
+import { SpeedControl } from "./SpeedControl";
 import { Stage } from "./Stage";
 import { useGameLoop } from "./useGameLoop";
 import "./game.css";
@@ -21,7 +22,7 @@ const systemNow = (): number => Date.now();
 
 /**
  * 1 画面のゲーム。上に日付・時刻と築年数、左（スマホは上）に建物、右（スマホは下）に住人のプロフィールと日誌。
- * 数値（気分・所持金・評判など）は画面に出さない。操作ボタンも置かない。
+ * 数値（気分・所持金・評判など）は画面に出さない。操作は時間の速さの切り替えだけ。
  */
 export function GameScreen({ seed, storage, now = systemNow }: Props) {
   const [store] = useState<KeyValueStorage>(() => storage ?? defaultStorage());
@@ -29,6 +30,7 @@ export function GameScreen({ seed, storage, now = systemNow }: Props) {
     GameEngine.open(store, seed ?? now() % 2147483647, now())
   );
   const [state, setState] = useState(engine.state);
+  const [speed, setSpeedState] = useState<Speed>(engine.speed);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const selectedIdRef = useRef<number | null>(null);
@@ -37,7 +39,14 @@ export function GameScreen({ seed, storage, now = systemNow }: Props) {
     selectedIdRef.current = selectedId;
   }, [selectedId]);
 
-  const onUi = useCallback(() => setState(engine.state), [engine]);
+  const onUi = useCallback(() => {
+    setState(engine.state);
+    setSpeedState(engine.speed);
+  }, [engine]);
+  const onSpeed = (s: Speed) => {
+    engine.setSpeed(s);
+    setSpeedState(engine.speed);
+  };
   useGameLoop({ engine, canvasRef, selectedIdRef, storage: store, now, onUi });
 
   const onPick = (x: number, y: number) => {
@@ -53,6 +62,7 @@ export function GameScreen({ seed, storage, now = systemNow }: Props) {
       <header className="top">
         <span className="clock">{formatClock(state.t)}</span>
         <span className="age">築{buildingAge(state.t, state.t0)}年</span>
+        <SpeedControl speed={speed} onChange={onSpeed} />
       </header>
       <main className="main">
         <Stage canvasRef={canvasRef} state={state} onPick={onPick} />

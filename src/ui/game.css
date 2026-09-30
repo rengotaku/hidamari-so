@@ -50,6 +50,30 @@ body {
   letter-spacing: 0.06em;
   font-variant-numeric: tabular-nums;
 }
+.top .speed {
+  display: flex;
+  margin-left: auto;
+}
+.top .speed button {
+  font: inherit;
+  font-size: 13px;
+  letter-spacing: 0;
+  background: var(--g-panel);
+  color: var(--g-ink);
+  border: 2px solid var(--g-line);
+  margin-left: -2px;
+  padding: 2px 10px;
+  cursor: pointer;
+}
+.top .speed button:first-child {
+  margin-left: 0;
+}
+.top .speed button[aria-pressed="true"] {
+  background: var(--g-accent);
+  color: #14201e;
+  border-color: var(--g-accent);
+  position: relative;
+}
 .top .age {
   color: var(--g-muted);
 }

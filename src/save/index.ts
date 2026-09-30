@@ -1,6 +1,8 @@
 export {
   SAVE_KEY,
   SCHEMA_VERSION,
+  SPEEDS,
+  type Speed,
   MAX_CATCHUP_MINUTES,
   saveGame,
   loadGame,
