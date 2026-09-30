@@ -1,0 +1,121 @@
+[
+  {
+    "id": "opening",
+    "kind": "daily",
+    "trigger": "opening",
+    "once": true,
+    "logKind": "move",
+    "texts": ["今日からこのアパートの大家になった。住人は四人、空室が二つ"]
+  },
+  {
+    "id": "rain-buckets",
+    "kind": "daily",
+    "trigger": "day-start",
+    "when": { "weather": ["rain"] },
+    "roles": { "a": { "floor": 2 } },
+    "texts": ["雨。二階の住人がバケツを並べはじめた"]
+  },
+  {
+    "id": "parcel-notice",
+    "kind": "daily",
+    "trigger": "hour",
+    "cooldownDays": 2,
+    "roles": { "a": { "out": true } },
+    "texts": ["{a}さん宛の不在票が、また増えた"]
+  },
+  {
+    "id": "garbage-old",
+    "kind": "daily",
+    "trigger": "hour",
+    "cooldownDays": 3,
+    "when": { "hours": [6, 10] },
+    "roles": { "a": { "notTag": ["old"] }, "b": { "tag": ["old"], "inRoom": true } },
+    "texts": ["燃えないゴミが火曜に出ていた。{b}さんが犯人を捜している（たぶん{a}さん）"],
+    "effects": [{ "type": "say", "role": "b", "text": "誰だ、これ出したのは" }]
+  },
+  {
+    "id": "garbage-plain",
+    "kind": "daily",
+    "trigger": "hour",
+    "cooldownDays": 3,
+    "when": { "hours": [6, 10] },
+    "roles": { "a": { "notTag": ["old"] } },
+    "texts": ["燃えないゴミが火曜に出ていた。たぶん{a}さん"]
+  },
+  {
+    "id": "circular-board",
+    "kind": "daily",
+    "trigger": "hour",
+    "cooldownDays": 3,
+    "roles": { "a": {} },
+    "numbers": { "n": [3, 9] },
+    "texts": ["回覧板が{a}さんの部屋で{n}日止まっている"]
+  },
+  {
+    "id": "laundry-rain",
+    "kind": "daily",
+    "trigger": "hour",
+    "cooldownDays": 2,
+    "when": { "weather": ["rain"] },
+    "roles": { "a": { "inRoom": true, "awake": true } },
+    "numbers": { "n": [2, 5] },
+    "texts": ["{a}さん、雨に気づいたのは洗濯物を干して{n}時間後（コインランドリーは駅の向こう）"],
+    "effects": [
+      { "type": "say", "role": "a", "text": "あっ、洗濯物！" },
+      { "type": "adjust", "role": "a", "stat": "mood", "delta": -8 }
+    ]
+  },
+  {
+    "id": "care-package",
+    "kind": "daily",
+    "trigger": "hour",
+    "cooldownDays": 5,
+    "roles": { "a": { "archetype": ["ronin", "student"] } },
+    "texts": ["{a}さんに実家から段ボール。米と手紙。手紙は読まずに米だけ出した"],
+    "effects": [
+      { "type": "adjust", "role": "a", "stat": "money", "delta": 5000 },
+      { "type": "adjust", "role": "a", "stat": "hunger", "delta": -20 }
+    ]
+  },
+  {
+    "id": "souvenir",
+    "kind": "daily",
+    "trigger": "hour",
+    "cooldownDays": 4,
+    "roles": { "a": {} },
+    "choices": {
+      "gift": ["謎のキーホルダー", "ご当地ペナント", "賞味期限が明日の饅頭", "「根性」と彫られた木刀"]
+    },
+    "texts": ["{a}さんから旅行のお土産をもらった。{gift}"]
+  },
+  {
+    "id": "garbage-chat",
+    "kind": "relation",
+    "trigger": "hour",
+    "cooldownDays": 1,
+    "roles": {
+      "a": { "inRoom": true, "awake": true },
+      "b": { "inRoom": true, "awake": true }
+    },
+    "numbers": { "n": [5, 40] },
+    "texts": ["{a}さんと{b}さん、ゴミ捨て場で{n}分立ち話していた"],
+    "effects": [
+      { "type": "adjust", "role": "a", "stat": "mood", "delta": 6 },
+      { "type": "adjust", "role": "b", "stat": "mood", "delta": 6 },
+      { "type": "bond", "delta": 3 }
+    ]
+  },
+  {
+    "id": "late-night-noodles",
+    "kind": "daily",
+    "trigger": "hour",
+    "cooldownDays": 2,
+    "when": { "hours": [23, 4] },
+    "roles": { "a": { "inRoom": true, "awake": true } },
+    "texts": ["{room}の換気扇から、深夜のカップ麺の匂い"],
+    "effects": [
+      { "type": "say", "role": "a", "text": "（ズルズル…）" },
+      { "type": "adjust", "role": "a", "stat": "hunger", "delta": -30 }
+    ]
+  }
+]

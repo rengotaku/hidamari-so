@@ -1,24 +1,28 @@
+import { defaultContent, type Archetype, type Content } from "@/content";
 import { chooseAct, workNow } from "./behavior";
-import { log, type Ctx } from "./context";
+import type { Ctx } from "./context";
 import {
   BLANKET,
   CURTAIN,
   GIVEN_NAMES,
   HAIR,
-  JOBS,
-  JOB_TRAITS,
   OLD_GIVEN_NAMES,
   PANTS,
   SHIRT,
   SKIN,
   SURNAMES,
-  TRAITS,
 } from "./data";
 import { roomRect } from "./layout";
 import { chance, pick, randi, type Rng } from "./random";
+import { bookArc, fireStorylet } from "./storylets";
 import type { GameState, JobId, Resident, TraitId } from "./types";
 
 const START_T = 17 * 60;
+/** 最初から入居している部屋（残りの二部屋は空室） */
+const INITIAL_ROOMS = [0, 1, 3, 5] as const;
+const OPENING_ID = "opening";
+
+const isOld = (a: Archetype): boolean => a.tags.includes("old");
 
 interface ResidentOption {
   sei?: string;
@@ -27,9 +31,9 @@ interface ResidentOption {
   traits?: TraitId[];
 }
 
-function pickTraits(rng: Rng, job: JobId): TraitId[] {
-  const base: TraitId[] = [pick(rng, JOB_TRAITS[job])];
-  const others = (Object.keys(TRAITS) as TraitId[]).filter((k) => !base.includes(k));
+function pickTraits(rng: Rng, arch: Archetype, content: Content): TraitId[] {
+  const base: TraitId[] = [pick(rng, arch.traits)];
+  const others = Object.keys(content.traits).filter((k) => !base.includes(k));
   base.push(pick(rng, others));
   if (chance(rng, 0.4))
     base.push(
@@ -48,7 +52,7 @@ export function makeResident(
   opt: ResidentOption = {}
 ): Resident {
   const { rng } = c;
-  const j = JOBS[job];
+  const j = c.content.archetypes[job]!;
   const used = c.s.res.map((r) => r.sei);
   const sei =
     opt.sei ??
@@ -56,17 +60,17 @@ export function makeResident(
       rng,
       SURNAMES.filter((x) => !used.includes(x))
     );
-  const traits = opt.traits ?? pickTraits(rng, job);
-  const mei = opt.mei ?? pick(rng, j.old ? OLD_GIVEN_NAMES : GIVEN_NAMES);
+  const traits = opt.traits ?? pickTraits(rng, j, c.content);
+  const mei = opt.mei ?? pick(rng, isOld(j) ? OLD_GIVEN_NAMES : GIVEN_NAMES);
   const age = opt.age ?? randi(rng, j.age[0], j.age[1]);
   const look = {
-    hair: j.old ? "#d8d4cc" : pick(rng, HAIR),
+    hair: isOld(j) ? "#d8d4cc" : pick(rng, HAIR),
     skin: pick(rng, SKIN),
     shirt: pick(rng, SHIRT),
     pants: pick(rng, PANTS),
     blanket: pick(rng, BLANKET),
     curtain: pick(rng, CURTAIN),
-    bald: !!j.old && chance(rng, 0.6),
+    bald: isOld(j) && chance(rng, 0.6),
     long: chance(rng, 0.3),
   };
   return {
@@ -77,7 +81,7 @@ export function makeResident(
     job,
     traits,
     look,
-    money: j.start,
+    money: j.startMoney,
     mood: 55,
     hunger: randi(rng, 10, 40),
     sleepy: randi(rng, 10, 40),
@@ -122,8 +126,22 @@ function moveIn(c: Ctx, r: Resident, room: number): void {
   c.s.res.push(r);
 }
 
-/** 新しいゲーム。乱数は引数で渡す（固定シードなら常に同じ初期状態になる） */
-export function newGame(rng: Rng): GameState {
+/** 種類を重複なしで n 個抽選する。高齢の住人は階段のない一階へ入れるため先に並べる */
+function drawArchetypes(rng: Rng, content: Content, n: number): Archetype[] {
+  const pool = Object.values(content.archetypes);
+  const drawn: Archetype[] = [];
+  while (drawn.length < n && pool.length > 0) {
+    const i = Math.floor(rng.next() * pool.length);
+    drawn.push(pool.splice(i, 1)[0]!);
+  }
+  return [...drawn.filter(isOld), ...drawn.filter((a) => !isOld(a))];
+}
+
+/**
+ * 新しいゲーム。乱数は引数で渡す（固定シードなら常に同じ初期状態になる）。
+ * 初期住人（四人）の種類・名前・癖はシードから抽選する。
+ */
+export function newGame(rng: Rng, content: Content = defaultContent): GameState {
   const s: GameState = {
     t: START_T,
     t0: START_T,
@@ -135,20 +153,14 @@ export function newGame(rng: Rng): GameState {
     lastHour: Math.floor(START_T / 60),
     pending: [],
     noiseHour: -1,
+    bonds: [],
+    booked: [],
+    story: { last: {}, done: [] },
   };
-  const c: Ctx = { s, rng, quiet: true };
-  const add = (job: JobId, room: number, opt: ResidentOption): void => {
-    moveIn(c, makeResident(c, s.nextId++, job, opt), room);
-  };
-  add("oldman", 0, { sei: "松本", mei: "茂", age: 78, traits: ["neko", "hitorigoto"] });
-  add("salaryman", 1, { sei: "田中", mei: "誠", age: 41, traits: ["sake", "mie"] });
-  add("band", 3, {
-    sei: "佐々木",
-    mei: "翔",
-    age: 29,
-    traits: ["nebou", "katazuke", "sake"],
+  const c: Ctx = { s, rng, quiet: true, content };
+  drawArchetypes(rng, content, INITIAL_ROOMS.length).forEach((arch, i) => {
+    moveIn(c, makeResident(c, s.nextId++, arch.id), INITIAL_ROOMS[i]!);
   });
-  add("ronin", 5, { sei: "森", mei: "健太", age: 22, traits: ["samishi", "mikka"] });
   for (const r of s.res) {
     const sh = workNow(c, r);
     if (sh) {
@@ -157,8 +169,9 @@ export function newGame(rng: Rng): GameState {
       r.outPurpose = "work";
       r.shift = { label: sh.label, pay: sh.pay };
     } else chooseAct(c, r);
+    bookArc(c, r);
   }
-  s.res[2]!.clutter = 85;
-  log(c, `今日からこのアパートの大家になった。住人は四人、空室が二つ`, "move");
+  if (s.res[2]) s.res[2].clutter = 85;
+  fireStorylet(c, OPENING_ID);
   return s;
 }

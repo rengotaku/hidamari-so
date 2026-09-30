@@ -1,7 +1,9 @@
 import { z } from "zod";
 import { ACTS, JOBS, TRAITS } from "@/sim";
+import { ROMANCE_STAGES } from "@/content/schema";
 
-export const SCHEMA_VERSION = 1;
+/** 2: 日誌を構造（出来事 id・役割・言い回し）で持つ形にし、関係・予約・出来事の履歴を足した */
+export const SCHEMA_VERSION = 2;
 
 const finite = z.number().refine(Number.isFinite, "有限値でない");
 const nonNeg = finite.refine((n) => n >= 0, "負の値");
@@ -72,6 +74,22 @@ const resident = z.object({
   bubble: z.object({ text: z.string(), until: finite }).nullable(),
 });
 
+const roleRef = z.object({ id: nonNegInt, sei: z.string(), room });
+
+const logEntry = z.union([
+  z.object({ t: finite, kind: z.literal("day") }),
+  z.object({
+    t: finite,
+    kind: z.enum(["", "move", "noise"]),
+    storyletId: z.string().min(1),
+    roles: z.object({ a: roleRef.optional(), b: roleRef.optional() }),
+    variant: z.object({
+      text: nonNegInt,
+      slots: z.record(z.string(), z.union([finite, z.string()])),
+    }),
+  }),
+]);
+
 const gameState = z
   .object({
     t: nonNeg,
@@ -79,17 +97,31 @@ const gameState = z
     weather: z.enum(["sunny", "cloudy", "rain"]),
     res: z.array(resident),
     rooms: z.array(nonNegInt.max(1_000_000).nullable()).length(6),
-    log: z.array(
-      z.object({
-        t: finite,
-        text: z.string(),
-        kind: z.enum(["", "day", "move", "noise"]),
-      })
-    ),
+    log: z.array(logEntry),
     nextId: nonNegInt,
     lastHour: int,
     pending: z.array(z.object({ id: nonNegInt, text: z.string(), at: finite })),
     noiseHour: int,
+    bonds: z.array(
+      z.object({
+        a: nonNegInt,
+        b: nonNegInt,
+        affinity: percent,
+        stage: z.enum(ROMANCE_STAGES),
+      })
+    ),
+    booked: z.array(
+      z.object({
+        id: z.string().min(1),
+        at: finite,
+        roles: z.object({ a: nonNegInt.optional(), b: nonNegInt.optional() }),
+        tries: nonNegInt,
+      })
+    ),
+    story: z.object({
+      last: z.record(z.string(), finite),
+      done: z.array(z.string()),
+    }),
   })
   // lastHour は経過時間から決まる値。食い違う保存は、1 時間ごとの処理が延々と回るので拒否する
   .refine((s) => s.lastHour === Math.floor(s.t / 60), "lastHour が t と一致しない");

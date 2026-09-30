@@ -1,0 +1,108 @@
+[
+  {
+    "id": "ronin-mock-eve",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": { "a": { "archetype": ["ronin"] } },
+    "texts": ["{a}さん、明日が模試の本番らしい。{room}の電気が朝まで消えなかった"],
+    "effects": [
+      {
+        "type": "book",
+        "next": [
+          { "id": "ronin-mock-good", "weight": 45 },
+          { "id": "ronin-mock-bad", "weight": 55 }
+        ],
+        "afterMinutes": [1440, 1440]
+      }
+    ]
+  },
+  {
+    "id": "ronin-mock-good",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": { "a": { "archetype": ["ronin"] } },
+    "texts": ["{a}さん、模試で初めて志望校に丸がついた。掲示板の前で泣いていたらしい。その夜は勝手に祝賀会になった"],
+    "effects": [
+      { "type": "say", "role": "a", "text": "丸…丸がついた…" },
+      { "type": "adjust", "role": "a", "stat": "mood", "delta": 50 },
+      { "type": "book", "next": [{ "id": "ronin-mock-eve" }], "afterMinutes": [14400, 21600] }
+    ]
+  },
+  {
+    "id": "ronin-mock-bad",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": { "a": { "archetype": ["ronin"] } },
+    "choices": { "how": ["判定は今回も見なかったことにした", "「来年こそ」が口癖に戻った"] },
+    "texts": ["{a}さん、模試の結果が返ってきた。{how}。隣の人が黙ってカップ麺を置いていった"],
+    "effects": [
+      { "type": "adjust", "role": "a", "stat": "mood", "delta": -30 },
+      { "type": "book", "next": [{ "id": "ronin-mock-eve" }], "afterMinutes": [14400, 21600] }
+    ]
+  },
+  {
+    "id": "band-scout",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": { "a": { "archetype": ["band"] } },
+    "texts": ["{a}さんのバンドに、レコード会社の人が来たらしい"],
+    "effects": [
+      { "type": "adjust", "role": "a", "stat": "mood", "delta": 20 },
+      {
+        "type": "book",
+        "next": [
+          { "id": "band-deal-fell-through", "weight": 7 },
+          { "id": "band-deal-toast", "weight": 3 }
+        ],
+        "afterMinutes": [4320, 4320]
+      }
+    ]
+  },
+  {
+    "id": "band-deal-toast",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": { "a": { "archetype": ["band"] } },
+    "texts": ["{a}さんのバンド、デビューの話が本決まりになった。祝杯は発泡酒だった"],
+    "effects": [{ "type": "adjust", "role": "a", "stat": "mood", "delta": 30 }]
+  },
+  {
+    "id": "band-deal-fell-through",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": { "a": { "archetype": ["band"] } },
+    "texts": ["{a}さんのデビューの話、流れた。その夜はひと晩中ギターが鳴っていた"],
+    "effects": [
+      { "type": "adjust", "role": "a", "stat": "mood", "delta": -25 },
+      {
+        "type": "book",
+        "next": [
+          { "id": "band-breakup", "weight": 6 },
+          { "id": "band-scout", "weight": 4 }
+        ],
+        "afterMinutes": [12960, 12960]
+      }
+    ]
+  },
+  {
+    "id": "band-breakup",
+    "kind": "arc",
+    "trigger": "book",
+    "once": true,
+    "roles": { "a": { "archetype": ["band"] } },
+    "texts": ["{a}さん、バンドを解散。髪を切って就職した。ギターは押し入れに入った"],
+    "effects": [{ "type": "changeJob", "role": "a", "archetype": "salaryman" }]
+  },
+  {
+    "id": "salaryman-promotion",
+    "kind": "arc",
+    "trigger": "book",
+    "once": true,
+    "roles": { "a": { "archetype": ["salaryman"] } },
+    "texts": ["{a}さん、係長になった。お祝いに自分で自分に寿司を買った"],
+    "effects": [
+      { "type": "adjust", "role": "a", "stat": "money", "delta": 30000 },
+      { "type": "adjust", "role": "a", "stat": "mood", "delta": 15 }
+    ]
+  }
+]

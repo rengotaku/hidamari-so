@@ -35,3 +35,9 @@ export function minutesUntilHour(t: number, e: number): number {
   if (dh <= 0) dh += 24;
   return dh * 60;
 }
+
+/** 「day % every が on のどれかに一致する日」か */
+export const dayMatches = (
+  rule: { every: number; on: readonly number[] },
+  day: number
+): boolean => rule.on.includes(day % rule.every);

@@ -1,0 +1,92 @@
+[
+  {
+    "id": "visit-soy-sauce",
+    "kind": "relation",
+    "trigger": "visit",
+    "roles": { "a": {}, "b": {} },
+    "texts": ["{a}さんが{b}さんに醤油を借りに行った（今月三回目）"],
+    "effects": [
+      { "type": "say", "role": "a", "text": "醤油、貸してもらえます？" },
+      { "type": "say", "role": "b", "text": "またですか", "afterMinutes": 3 }
+    ]
+  },
+  {
+    "id": "visit-vent",
+    "kind": "relation",
+    "trigger": "visit",
+    "roles": { "a": {}, "b": {} },
+    "texts": ["{a}さんが{b}さんに愚痴をこぼしに行った"],
+    "effects": [
+      { "type": "say", "role": "a", "text": "聞いてくださいよ…" },
+      { "type": "say", "role": "b", "text": "（この話三回目だ）", "afterMinutes": 3 },
+      { "type": "adjust", "role": "a", "stat": "mood", "delta": 6 },
+      { "type": "adjust", "role": "b", "stat": "mood", "delta": -3 }
+    ]
+  },
+  {
+    "id": "visit-loan-granted",
+    "kind": "relation",
+    "trigger": "visit",
+    "weight": 0.6,
+    "roles": { "a": {}, "b": { "money": { "min": 1001 } } },
+    "texts": ["{a}さんが{b}さんに小銭を借りた。{b}さんは結局貸した"],
+    "effects": [
+      { "type": "say", "role": "a", "text": "小銭だけ…来週返すんで" },
+      { "type": "say", "role": "b", "text": "先月の小銭は？", "afterMinutes": 3 },
+      { "type": "adjust", "role": "b", "stat": "money", "delta": -1000 },
+      { "type": "adjust", "role": "a", "stat": "money", "delta": 1000 }
+    ]
+  },
+  {
+    "id": "visit-loan-refused",
+    "kind": "relation",
+    "trigger": "visit",
+    "weight": 0.4,
+    "roles": { "a": {}, "b": {} },
+    "texts": ["{a}さんが{b}さんに小銭を借りに行って断られた"],
+    "effects": [
+      { "type": "say", "role": "a", "text": "小銭だけ…来週返すんで" },
+      { "type": "say", "role": "b", "text": "先月の小銭は？", "afterMinutes": 3 },
+      { "type": "bond", "delta": -2 }
+    ]
+  },
+  {
+    "id": "visit-gift",
+    "kind": "relation",
+    "trigger": "visit",
+    "roles": { "a": {}, "b": {} },
+    "choices": { "gift": ["じゃがいも", "みかん", "謎の漬物"] },
+    "texts": ["{a}さんが{b}さんに{gift}をお裾分け"],
+    "effects": [
+      { "type": "say", "role": "a", "text": "実家から大量に届いて…" },
+      { "type": "say", "role": "b", "text": "助かる〜", "afterMinutes": 3 },
+      { "type": "adjust", "role": "b", "stat": "hunger", "delta": -30 },
+      { "type": "adjust", "role": "b", "stat": "mood", "delta": 8 },
+      { "type": "adjust", "role": "a", "stat": "mood", "delta": 4 },
+      { "type": "bond", "delta": 4 }
+    ]
+  },
+  {
+    "id": "visit-complaint",
+    "kind": "relation",
+    "trigger": "visit",
+    "roles": { "a": {}, "b": { "noisy": true } },
+    "texts": ["{a}さんが{b}さんに遠回しに苦情を言いに行った。伝わっていない"],
+    "effects": [
+      { "type": "say", "role": "a", "text": "昨日の夜、ちょっと音が…" },
+      { "type": "say", "role": "b", "text": "え、何のことです？", "afterMinutes": 3 },
+      { "type": "bond", "delta": -3 }
+    ]
+  },
+  {
+    "id": "visit-wifi",
+    "kind": "relation",
+    "trigger": "visit",
+    "roles": { "a": {}, "b": {} },
+    "texts": ["{a}さんが{b}さんのWi-Fiにただ乗りを始めた"],
+    "effects": [
+      { "type": "say", "role": "a", "text": "Wi-Fiのパスワード、教えてもらえたり…" },
+      { "type": "say", "role": "b", "text": "…いいですけど", "afterMinutes": 3 }
+    ]
+  }
+]

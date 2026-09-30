@@ -1,17 +1,11 @@
-import { hourOf, dayOf, inWin, minutesUntilHour } from "./clock";
-import { hasTrait, isAwake, isHome, log, pickRes, say, type Ctx } from "./context";
-import {
-  ACTS,
-  GIFTS,
-  JOBS,
-  LEAVE_LINES,
-  RETURN_LINES,
-  VISITS,
-  type ShiftDef,
-} from "./data";
-import { exitPath, neighbors, roomNo, roomRect, type Point } from "./layout";
-import { chance, clamp, kanji, pick, randi, weighted } from "./random";
-import type { ActId, HobbyId, OutPurpose, Resident } from "./types";
+import type { ShiftDef } from "@/content/schema";
+import { dayMatches, hourOf, dayOf, inWin, minutesUntilHour } from "./clock";
+import { archOf, hasTrait, isAwake, isHome, pickRes, say, type Ctx } from "./context";
+import { ACTS, LEAVE_LINES, RETURN_LINES } from "./data";
+import { exitPath, neighbors, roomRect, type Point } from "./layout";
+import { chance, clamp, pick, randi, weighted } from "./random";
+import { fireTrigger } from "./storylets";
+import type { ActId, HobbyId, MealId, OutPurpose, Resident } from "./types";
 
 const ROOM_OF = (r: Resident): number => (typeof r.at === "number" ? r.at : r.room);
 
@@ -19,9 +13,9 @@ const ROOM_OF = (r: Resident): number => (typeof r.at === "number" ? r.at : r.ro
 export function workNow(c: Ctx, r: Resident): ShiftDef | null {
   const h = hourOf(c.s.t);
   const d = dayOf(c.s.t);
-  for (const sh of JOBS[r.job].shifts) {
-    const dd = sh.s > sh.e && h < sh.e ? d - 1 : d;
-    if (sh.d(dd) && inWin(h, sh.s, sh.e)) return sh;
+  for (const sh of archOf(c, r).shifts) {
+    const dd = sh.start > sh.end && h < sh.end ? d - 1 : d;
+    if (dayMatches(sh.days, dd) && inWin(h, sh.start, sh.end)) return sh;
   }
   return null;
 }
@@ -58,14 +52,14 @@ export function startAct(
 function startSleep(c: Ctx, r: Resident): void {
   r.beers = 0;
   const wake =
-    minutesUntilHour(c.s.t, JOBS[r.job].sleep[1]) +
+    minutesUntilHour(c.s.t, archOf(c, r).sleep[1]) +
     (hasTrait(r, "nebou") ? randi(c.rng, 0, 40) : 0);
   startAct(c, r, "sleep", wake);
   if (chance(c.rng, 0.3)) say(c, r, "おやすみ（誰に言うでもなく）");
 }
 
 function startEat(c: Ctx, r: Resident): void {
-  let k: "ramen" | "bento" | "cook" | "nimono" | "moyashi" = JOBS[r.job].eat;
+  let k: MealId = archOf(c, r).eat;
   if (hasTrait(r, "jisui") && chance(c.rng, 0.5)) k = "cook";
   if (hasTrait(r, "mie") && k !== "nimono") k = "bento";
   if (r.money < 1500) k = "moyashi";
@@ -75,7 +69,7 @@ function startEat(c: Ctx, r: Resident): void {
 
 function hobbyPick(c: Ctx, r: Resident): HobbyId {
   const h = hourOf(c.s.t);
-  const w: Partial<Record<HobbyId, number>> = { ...JOBS[r.job].hobbies };
+  const w: Partial<Record<HobbyId, number>> = { ...archOf(c, r).hobbies };
   w.stare = (w.stare ?? 0) + 1;
   w.nap = (w.nap ?? 0) + 0.5;
   const evening = h >= 17 || h < 4;
@@ -90,7 +84,7 @@ export function chooseAct(c: Ctx, r: Resident): void {
     goHome(c, r);
     return;
   }
-  const j = JOBS[r.job];
+  const j = archOf(c, r);
   const h = hourOf(c.s.t);
   if (inWin(h, j.sleep[0], j.sleep[1])) return startSleep(c, r);
   if (r.sleepy > 88) return startAct(c, r, "nap");
@@ -126,55 +120,17 @@ export function chooseAct(c: Ctx, r: Resident): void {
 
 function endAct(c: Ctx, r: Resident): void {
   const k = r.act;
-  const p = (q: number): boolean => chance(c.rng, q);
   if (k === "clean") {
     r.clutter = 0;
     r.mood += 10;
-    log(c, `${r.sei}さんが掃除をした。ゴミ袋${kanji(randi(c.rng, 3, 9))}個`);
   } else if (k === "workout") {
     r.gym++;
     if (hasTrait(r, "mikka") && r.gym >= 3 && !r.quitGym) {
       r.quitGym = true;
-      log(
-        c,
-        `${r.sei}さん、筋トレ${kanji(r.gym)}日目で「明日から本気出す」宣言。ダンベルは物干しになった`
-      );
+      fireTrigger(c, "quit-gym", { fixed: { a: r } });
     }
-  } else if (k === "drunk") {
-    r.beers = 0;
-    if (p(0.5))
-      log(
-        c,
-        `${r.sei}さん、酔って廊下で${pick(c.rng, ["一曲歌った", "月に向かって何か叫んだ", "自分の部屋の番号を忘れた", "大家の悪口を言ったあと謝った"])}`,
-        "noise"
-      );
-  } else if (k === "stream" && p(0.3))
-    log(
-      c,
-      `${r.sei}さんの配信、同時視聴者数${kanji(randi(c.rng, 0, 3))}人（うち一人は本人のスマホ）`
-    );
-  else if (k === "draw" && p(0.25))
-    log(
-      c,
-      `${r.sei}さん、原稿を${kanji(randi(c.rng, 1, 3))}ページ描いて${kanji(randi(c.rng, 4, 9))}ページ消した`
-    );
-  else if (k === "study" && p(0.25))
-    log(c, `${r.sei}さん、参考書の同じページを${kanji(randi(c.rng, 3, 12))}回開いた`);
-  else if (k === "cook" && p(0.4))
-    log(
-      c,
-      `${roomNo(r.room)}から焦げた匂い。${pick(c.rng, ["本人いわく「香ばしい」", "火災報知器が鳴る寸前だった", "料理名は「炒め物だったもの」"])}`
-    );
-  else if (k === "keiba" && p(0.2))
-    log(
-      c,
-      `${r.sei}さん、競馬新聞に赤丸を${kanji(randi(c.rng, 8, 20))}個つけた（全部の馬）`
-    );
-  else if (k === "guitar" && p(0.2))
-    log(
-      c,
-      `${r.sei}さん、新曲「${pick(c.rng, ["四畳半ブルース", "家賃", "カップ麺の三分", "ひだまり"])}」を作曲。コードは三つ`
-    );
+  } else if (k === "drunk") r.beers = 0;
+  fireTrigger(c, "act-end", { act: k, fixed: { a: r } });
 }
 
 /* ---------- 訪問と騒音 ---------- */
@@ -206,11 +162,6 @@ function startVisit(c: Ctx, a: Resident): boolean {
       !s.res.some((v) => v !== r && v.at === r.room)
   );
   if (!b) return false;
-  const noisyRecently = b.noisy !== null && s.t - b.noisy < 1440;
-  const V = pick(
-    c.rng,
-    VISITS.filter((v) => !v.when || v.when(noisyRecently))
-  );
   const dur = randi(c.rng, 20, 60);
   const rr = roomRect(b.room);
   a.visiting = true;
@@ -220,25 +171,7 @@ function startVisit(c: Ctx, a: Resident): boolean {
   a.tx = rr.x + randi(c.rng, 44, 52);
   startAct(c, b, "host", dur);
   b.tx = rr.x + randi(c.rng, 30, 36);
-  say(c, a, V.a);
-  s.pending.push({ id: b.id, text: V.b, at: s.t + 3 });
-  let text = V.text(a.sei, b.sei);
-  if (V.kind === "vent") {
-    a.mood += 6;
-    b.mood -= 3;
-  } else if (V.kind === "loan") {
-    if (b.money > 1000 && chance(c.rng, 0.6)) {
-      b.money -= 1000;
-      a.money += 1000;
-      text = `${a.sei}さんが${b.sei}さんに小銭を借りた。${b.sei}さんは結局貸した`;
-    } else text = `${a.sei}さんが${b.sei}さんに小銭を借りに行って断られた`;
-  } else if (V.kind === "gift") {
-    text = `${a.sei}さんが${b.sei}さんに${pick(c.rng, GIFTS)}をお裾分け`;
-    b.hunger = Math.max(0, b.hunger - 30);
-    b.mood += 8;
-    a.mood += 4;
-  }
-  log(c, text);
+  fireTrigger(c, "visit", { fixed: { a, b } });
   return true;
 }
 
@@ -257,8 +190,8 @@ function noiseEvent(c: Ctx, r: Resident): void {
       const hr = Math.floor(s.t / 60);
       if (s.noiseHour !== hr) {
         s.noiseHour = hr;
-        const label = r.act in ACTS ? ACTS[r.act as keyof typeof ACTS].label : "物音";
-        log(c, `${r.sei}さんの${label}で、${nb.sei}さんが壁ドン`, "noise");
+        const act = r.act in ACTS ? ACTS[r.act as keyof typeof ACTS].label : "物音";
+        fireTrigger(c, "noise", { fixed: { a: r, b: nb }, vals: { act } });
       }
       if (chance(c.rng, 0.5))
         s.pending.push({ id: r.id, text: "…すみません", at: s.t + 2 });
@@ -350,11 +283,11 @@ function arrive(c: Ctx, r: Resident): void {
       r.money = Math.max(0, r.money + g);
       if (g >= 10000) {
         say(c, r, "今日は勝った！！");
-        log(c, `${r.sei}さん、パチンコで大勝ちした。寿司の出前を取っていた`);
+        fireTrigger(c, "gamble-win", { fixed: { a: r } });
       } else if (g <= -5000) {
         say(c, r, "…");
-        log(c, `${r.sei}さん、パチンコで大負けした。帰りの足取りが重い`);
         r.mood -= 10;
+        fireTrigger(c, "gamble-loss", { fixed: { a: r } });
       } else say(c, r, "まあ、トントンだな");
     } else {
       r.money += r.shift.pay;
@@ -421,11 +354,7 @@ export function updateRes(c: Ctx, r: Resident, dt: number): void {
     if (!over) {
       const late = r.late;
       r.late = false;
-      if (late)
-        log(
-          c,
-          `${r.sei}さん、${sh.label}に寝坊。${pick(c.rng, ["寝ぐせのまま階段を駆け下りた", "靴を片方しか履いていなかった", "パンをくわえて走っていった"])}`
-        );
+      if (late) fireTrigger(c, "late", { fixed: { a: r }, vals: { shift: sh.label } });
       startLeave(c, r, "work", late ? "遅刻だーーっ！" : pick(c.rng, LEAVE_LINES), {
         shift: sh,
         hurry: late,
