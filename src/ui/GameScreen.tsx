@@ -4,6 +4,7 @@ import type { KeyValueStorage, Speed } from "@/save";
 import { buildingAge, formatClock, type BuyoutChoice } from "@/sim";
 import { BuyoutDialog, Ending } from "./BuyoutDialog";
 import { DepartedProfile } from "./DepartedProfile";
+import { bubbleAnchors, holdBubbles, screenKey } from "./bubbles";
 import { GameEngine, defaultStorage } from "./engine";
 import { Journal } from "./Journal";
 import { Profile } from "./Profile";
@@ -40,6 +41,19 @@ export function GameScreen({ seed, storage, now = systemNow }: Props) {
     GameEngine.open(store, seed ?? now() % 2147483647, now())
   );
   const [state, setState] = useState(engine.state);
+  // 吹き出しは、読める時間のあいだ画面に残す。判定はゲームのループ（onUi）で行い、結果だけを Stage に渡す
+  const [initialBubbles] = useState(() =>
+    holdBubbles(
+      new Map(),
+      engine.state.res,
+      engine.state.t,
+      performance.now(),
+      bubbleAnchors(engine.state, initialZoom),
+      screenKey(initialZoom)
+    )
+  );
+  const heldRef = useRef(initialBubbles.held);
+  const [bubbles, setBubbles] = useState(initialBubbles.visible);
   const [speed, setSpeedState] = useState<Speed>(engine.speed);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   /** 日誌の名前から開いた、出ていった住人 */
@@ -50,10 +64,28 @@ export function GameScreen({ seed, storage, now = systemNow }: Props) {
   const selectedIdRef = useRef<number | null>(null);
   const zoomRef = useRef<ZoomState>(initialZoom);
 
-  const onZoom = useCallback((z: ZoomState) => {
-    zoomRef.current = z;
-    setZoom(z);
-  }, []);
+  /** 吹き出しの判定。ループ（onUi）と、zoom が変わった直後の両方から呼ぶ */
+  const updateBubbles = useCallback(() => {
+    const next = holdBubbles(
+      heldRef.current,
+      engine.state.res,
+      engine.state.t,
+      performance.now(),
+      bubbleAnchors(engine.state, zoomRef.current),
+      screenKey(zoomRef.current)
+    );
+    heldRef.current = next.held;
+    setBubbles(next.visible);
+  }, [engine]);
+
+  const onZoom = useCallback(
+    (z: ZoomState) => {
+      zoomRef.current = z;
+      setZoom(z);
+      updateBubbles();
+    },
+    [updateBubbles]
+  );
 
   useEffect(() => {
     selectedIdRef.current = selectedId;
@@ -62,7 +94,8 @@ export function GameScreen({ seed, storage, now = systemNow }: Props) {
   const onUi = useCallback(() => {
     setState(engine.state);
     setSpeedState(engine.speed);
-  }, [engine]);
+    updateBubbles();
+  }, [engine, updateBubbles]);
   const onSpeed = (s: Speed) => {
     engine.setSpeed(s);
     // 次の定期保存（5 秒ごと）を待たずに、速さの選択を残す
@@ -147,6 +180,7 @@ export function GameScreen({ seed, storage, now = systemNow }: Props) {
           canvasRef={canvasRef}
           state={state}
           zoom={zoom}
+          bubbles={bubbles}
           onPick={onPick}
           onEnterRoom={onEnterRoom}
           onBack={() => pressView(null)}
