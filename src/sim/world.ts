@@ -19,8 +19,12 @@ const leaking = (c: Ctx, r: Resident): boolean =>
 
 /** 仕送り・年金が入り、家賃の集金日になる。払いきれない分は大家の取りぱぐれ（滞納の言い訳が日誌に出る） */
 function allowanceDay(c: Ctx): void {
+  // 家賃は 1 部屋につき 1 回。同じ部屋に住む人（同棲・結婚）は id が最小の 1 人だけが払う
+  const payer = new Map<number, number>();
+  for (const r of c.s.res) payer.set(r.room, Math.min(payer.get(r.room) ?? r.id, r.id));
   for (const r of c.s.res.slice()) {
     r.money += archOf(c, r).allowance ?? 0;
+    if (payer.get(r.room) !== r.id) continue;
     const paid = Math.min(r.money, RENT);
     r.money -= paid;
     c.s.landlordMoney += paid;

@@ -45,7 +45,7 @@
 | `act` | `trigger` が `act-end` のときだけ。どの行動が終わったときか |
 | `chance` | 選ばれたあと実際に起きる確率（0〜1、既定 1） |
 | `weight` | 候補が複数あるときの重み（既定 1） |
-| `when` | `hours`: `[開始時, 終了時)`（`[23, 4]` のように日をまたげる）、`weather`: `sunny` / `cloudy` / `rain` / `snow`、`season`: `spring` / `tsuyu` / `summer` / `autumn` / `winter` |
+| `when` | `hours`: `[開始時, 終了時)`（`[23, 4]` のように日をまたげる）、`weather`: `sunny` / `cloudy` / `rain` / `snow`、`season`: `spring` / `tsuyu` / `summer` / `autumn` / `winter`、`days`: ゲーム開始からの日数の範囲 `{min, max}`（設備が年月とともに増える出来事に使う。例 `"when": { "days": { "min": 18 } }`） |
 | `roles` | 登場人物の条件。`a`・`b` のうち宣言した役割だけが登場する（下の表） |
 | `cooldownDays` | 同じ出来事が再び起きるまでの最短日数 |
 | `once` | `true` なら 1 ゲームで 1 回だけ |
@@ -69,13 +69,14 @@
 | `act-end` | 行動 `act` が終わったとき | `a` |
 | `quit-gym` / `late` / `gamble-win` / `gamble-loss` | 筋トレを諦めた / 寝坊した / パチンコで大勝ち・大負けした | `a` |
 | `season-start` | 季節の最初の日（日付が変わった直後。春 1〜4 日目、梅雨 5〜7、夏 8〜11、秋 12〜15、冬 16〜18、19 日目で春に戻る） | 任意 |
+| `rent-late` | 家賃の集金日に払いきれなかった | `a`=払えなかった住人 |
 | `opening` | 新規ゲームの最初の 1 件 | なし |
 | `book` | 他の出来事の `book` や人生の筋から予約されたときだけ | 任意 |
 
 ### roles の条件（すべて省略可。書いたものは全部満たす）
 
-`archetype` / `notArchetype`（種類の id）、`tag` / `notTag`（種類のタグ。例 `old`）、`trait` / `notTrait`（癖の id）、`floor`（1 か 2）、`inRoom`（自室にいるか）、`awake`（起きているか）、`out`（外出中か）、`noisy`（この 1 日以内に騒いだか）、`stayDays`・`money`（`{min, max}`）。
-`b` にだけ、`a` との関係として `affinity`（仲の良さ 0〜100、初期値 30。`{min, max}`）と `romance`（恋の段階 `none` / `crush` / `dating` / `married` のどれか）を書ける。
+`archetype` / `notArchetype`（種類の id）、`tag` / `notTag`（種類のタグ。例 `old`）、`trait` / `notTrait`（癖の id）、`floor`（1 か 2）、`inRoom`（自室にいるか）、`awake`（起きているか）、`out`（外出中か）、`noisy`（この 1 日以内に騒いだか）、`stayDays`・`money`・`age`（年齢）・`mood`（気分。内部値 0〜100）（いずれも `{min, max}`）、`single`（恋の相手が他にいないか。関係が `none` 以外の相手がいなければ真。例 `"single": true`）。
+`b` にだけ、`a` との関係として `affinity`（仲の良さ 0〜100、初期値 30。`{min, max}`）と `romance`（恋の段階の配列。`none`（なし）/ `crush`（片想い）/ `dating`（付き合っている）/ `cohabiting`（同棲）/ `married`（結婚）のどれか。例 `["dating", "cohabiting"]`）を書ける。
 
 ### effects
 
@@ -88,11 +89,15 @@
 | `book` | `next`（`{id, weight}` の配列）から 1 つ選び、`afterMinutes: [最小, 最大]` 後に予約する。宴会・送別会・人生の筋の続きはこれで書く |
 | `moveOut` | `role` の住人が出ていく |
 | `changeJob` | `role` の住人の種類を `archetype` に変える（その種類の人生の筋が予約される） |
+| `purse` | 大家の所持金を `delta` だけ増減（内部値。マイナスになってもゲームは終わらない）。例 `{ "type": "purse", "delta": -6000 }` |
+| `away` | `role` の住人が部屋を空けて入院する。`minutes: [最小, 最大]` 分のあと帰ってくる（自室にいるときだけ）。例 `{ "type": "away", "role": "a", "minutes": [7200, 9000] }` |
+| `cohabit` | `role` の住人が、もう一方の部屋へ移って一緒に住む。元の部屋は空室になり、大家が片付けて次の入居者を迎える。`roles.a` と `roles.b` が要る。恋の段階は別に `romance` で `cohabiting` にする |
+| `party` | a の部屋に、起きて自室にいる住人が集まって宴会になる。全員の仲の良さを `bond`、気分を `mood` だけ増減する。財布は動かない。例 `{ "type": "party", "bond": 8, "mood": 8 }` |
 | `decorAdd` / `decorRemove` | `role` の部屋に装飾（`decor.json` の id）を足す / 外す。外すと、これから置く予定だった分も取り消す |
 
 ## 種類（archetype）を足す
 
-`archetypes.json` に 1 件足す。`traits` は `traits.json` に存在する id、`arc` は人生の筋の入口にする storylet の id（`trigger: "book"`）。
+`archetypes.json` に 1 件足す。`traits` は `traits.json` に存在する id、`arc` は人生の筋の入口にする storylet の id（`trigger: "book"`）。`tags` に `arc-only` を付けた種類は、人生の筋の途中（`changeJob`）でだけなる種類で、新しい入居者としては抽選されない（例: 浪人生が専門学校に進んだときの専門学校生）。
 勤務シフトの `days` は「日付 % every が on のどれかに一致する日」（毎日なら `{"every": 1, "on": [0]}`）。`start` が `end` より大きいシフトは日をまたぐ夜勤。
 
 ## 町並みの変化を足す

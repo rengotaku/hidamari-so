@@ -1,6 +1,5 @@
 import { ambientRng, createAmbient, updateAmbient, type Ambient } from "@/render";
 import {
-  MAX_CATCHUP_MINUTES,
   catchUp,
   loadOrNew,
   saveGame,
@@ -11,9 +10,9 @@ import {
 } from "@/save";
 import {
   decideBuyout,
-  MIN_PER_SEC,
   hourOf,
   isBuyoutPending,
+  isEnded,
   step,
   type BuyoutChoice,
   type GameState,
@@ -25,9 +24,6 @@ import {
 export const MAX_TICK_MINUTES = 240;
 /** 持ち越しの上限（ゲーム内分）。重い端末で溜まり続けないように */
 export const MAX_BACKLOG_MINUTES = 1440;
-
-/** 留守中の進行を区切る長さ（実時間ミリ秒。ゲーム内 6 時間）。記念日でそこまでに止めるため */
-const RESUME_CHUNK_MS = (6 * 60 * 1000) / MIN_PER_SEC;
 
 /**
  * 進行中のゲーム 1 つぶん（状態・乱数・通行人の演出）を持つ入れ物。
@@ -61,10 +57,11 @@ export class GameEngine {
 
   /**
    * 速さを切り替える。停止にすると持ち越し分も捨てるので、戻した瞬間に一気に進まない。
-   * 築 50 年の買収提案への返事を待っている間は切り替えられない（返事の前に時間が進まないように）。
+   * 築 50 年の買収提案への返事を待っている間と、売って結末を迎えたあとは切り替えられない。
    */
   setSpeed(speed: Speed): void {
-    if (!SPEEDS.includes(speed) || isBuyoutPending(this.state)) return;
+    if (!SPEEDS.includes(speed) || isBuyoutPending(this.state) || isEnded(this.state))
+      return;
     this.speed = speed;
     if (speed === 0) this.backlog = 0;
   }
@@ -109,12 +106,8 @@ export class GameEngine {
   /** 留守にしていた実時間 elapsedMs ぶん進める。記念日が来たらそこで止める */
   resume(elapsedMs: number): void {
     if (!Number.isFinite(elapsedMs) || isBuyoutPending(this.state)) return;
-    let left = Math.min(elapsedMs, (MAX_CATCHUP_MINUTES / MIN_PER_SEC) * 1000);
-    while (left > 0 && !isBuyoutPending(this.state)) {
-      const chunk = Math.min(left, RESUME_CHUNK_MS);
-      this.state = catchUp(this.state, chunk, this.rng);
-      left -= chunk;
-    }
+    // step が記念日の立った瞬間で止まるので、区切らずに一度に進めてよい
+    this.state = catchUp(this.state, elapsedMs, this.rng);
     this.haltForBuyout();
   }
 

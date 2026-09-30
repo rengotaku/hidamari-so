@@ -109,4 +109,40 @@ describe("買収提案での自動停止", () => {
     e.save(localStorage, NOW);
     expect(loadGame(localStorage)!.speed).toBe(0);
   });
+
+  it("速さ 1・速さ 15・大きな tick のどれでも、記念日が立った瞬間の状態で止まる", () => {
+    const states = [
+      [1, 2],
+      [15, 16],
+      [15, 60],
+    ].map(([speed, dt]) => {
+      const e = openBeforeAnniversary(speed as 1 | 15);
+      for (let i = 0; i < 400 && !isBuyoutPending(e.state); i++) e.tick(dt!);
+      expect(e.speed).toBe(0);
+      return e.state;
+    });
+    expect(states[0]!.t - states[0]!.t0).toBe(54 * DAY);
+    expect(states[1]).toEqual(states[0]);
+    expect(states[2]).toEqual(states[0]);
+    const voice = states[0]!.buyout.voice;
+    if (voice) expect(states[0]!.res.some((r) => r.id === voice.roles.a?.id)).toBe(true);
+  });
+
+  it("留守明けの resume も、記念日のちょうどで止まる", () => {
+    const rng = createRng(2026);
+    const s = step(newGame(rng), 52 * DAY + 60, rng);
+    saveGame(localStorage, s, rng.getState(), NOW, 4);
+    const e = GameEngine.open(localStorage, 1, NOW + 3 * DAY * 30_000);
+    expect(isBuyoutPending(e.state)).toBe(true);
+    expect(e.state.t - e.state.t0).toBe(54 * DAY);
+  });
+
+  it("売ったあとに「15倍」を押しても停止のまま。保存にも 15 が入らない", () => {
+    const e = pendingEngine();
+    e.decide("sell");
+    e.setSpeed(15);
+    expect(e.speed).toBe(0);
+    e.save(localStorage, NOW);
+    expect(loadGame(localStorage)!.speed).toBe(0);
+  });
 });

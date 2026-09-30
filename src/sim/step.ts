@@ -1,5 +1,5 @@
 import { defaultContent, type Content } from "@/content";
-import { isEnded } from "./buyout";
+import { isBuyoutPending, isEnded } from "./buyout";
 import type { Ctx } from "./context";
 import type { Rng } from "./random";
 import type { GameState } from "./types";
@@ -41,6 +41,8 @@ export function step(
     const dt = Math.min(MAX_SUBSTEP, left);
     update(c, dt);
     left -= dt;
+    // 記念日の買収提案が立ったら、その瞬間で止める（返事の前に状態を進めない）
+    if (isBuyoutPending(s)) break;
   }
   return s;
 }
