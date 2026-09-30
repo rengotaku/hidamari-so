@@ -1,12 +1,7 @@
-import { BrowserRouter } from "react-router-dom";
-import { AppRouter } from "@/router";
+import { GameScreen } from "@/ui/GameScreen";
 
 function App() {
-  return (
-    <BrowserRouter>
-      <AppRouter />
-    </BrowserRouter>
-  );
+  return <GameScreen />;
 }
 
 export default App;
