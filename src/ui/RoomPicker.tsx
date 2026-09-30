@@ -42,7 +42,9 @@ export function RoomPicker({ state, zoom, onEnter, onBack }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
 
   // マウスで開いた部屋にも選択を合わせる（描画中の調整）
-  if (zoom.room !== null && zoom.room !== seenRoom) {
+  // 全体図に戻ったら覚えを消す（同じ部屋をもう一度開いたときも揃える）
+  if (zoom.room === null && seenRoom !== null) setSeenRoom(null);
+  else if (zoom.room !== null && zoom.room !== seenRoom) {
     setSeenRoom(zoom.room);
     setCursor(zoom.room);
   }

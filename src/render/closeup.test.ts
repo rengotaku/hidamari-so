@@ -65,6 +65,30 @@ describe("G5: 大写し中に住人が外出・帰宅する", () => {
   });
 });
 
+describe("追加: 外出中も部屋そのものは描かれ続ける", () => {
+  it("住人が外出中のコマでも壁・床・装飾が描かれ、住人がいる時より少なく、空室ではない", () => {
+    const s = at(newGame(createRng(9)), 12);
+    const r = s.res[0]!;
+    const room = r.room;
+    const total = (x: GameState) => {
+      const c = countingCtx();
+      drawCloseup(c.ctx, x, room, 0);
+      return c.calls.rects + c.calls.fills;
+    };
+    const home = structuredClone(s);
+    home.res.find((x) => x.id === r.id)!.at = room;
+    const out = structuredClone(s);
+    out.res.find((x) => x.id === r.id)!.at = "out";
+    const vacant = structuredClone(s);
+    vacant.res = vacant.res.filter((x) => x.room !== room);
+    vacant.rooms[room] = null;
+    vacant.decor[room] = { items: [], boxes: 0 };
+    expect(total(out)).toBeGreaterThan(0);
+    expect(total(out)).toBeLessThan(total(home));
+    expect(total(out)).toBeGreaterThan(total(vacant));
+  });
+});
+
 describe("追加: 大写しの描画", () => {
   const base = newGame(createRng(9));
 

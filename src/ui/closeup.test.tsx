@@ -222,3 +222,26 @@ describe("追加: キーボードで部屋・住人を選ぶ", () => {
     expect(stageView(container)).toBe("overview");
   });
 });
+
+describe("追加: マウスで開いた部屋にキーボードの選択が揃う", () => {
+  it("部屋 3 をマウスで開いて戻り、矢印で部屋 4 に移り、部屋 3 をもう一度マウスで開いて戻ると、選択は部屋 3", () => {
+    mockReduced(true);
+    seedSave();
+    render(<GameScreen seed={1} storage={localStorage} now={() => NOW} />);
+    const selected = () =>
+      within(screen.getByRole("listbox"))
+        .getAllByRole("option")
+        .filter((o) => o.getAttribute("aria-selected") === "true")
+        .map((o) => o.getAttribute("aria-label")!.slice(0, 5));
+    clickRoom(screen.getByRole("img"), 3);
+    clickRoom(screen.getByRole("img"), 3); // 戻る
+    const opts = within(screen.getByRole("listbox")).getAllByRole("option");
+    fireEvent.keyDown(opts.find((o) => o.getAttribute("tabindex") === "0")!, {
+      key: "ArrowRight",
+    });
+    expect(selected()).toEqual(["202号室"]);
+    clickRoom(screen.getByRole("img"), 3);
+    clickRoom(screen.getByRole("img"), 3);
+    expect(selected()).toEqual(["201号室"]);
+  });
+});

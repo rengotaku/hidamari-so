@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { createRng, newGame, step, type GameState } from "@/sim";
+import { createRng, newGame, step, type GameState, type LogEntry } from "@/sim";
 import { roomLog } from "./roomLog";
 
 function played(seed: number, days: number): { s: GameState } {
@@ -44,5 +44,50 @@ describe("大写し中の日誌", () => {
     const empty = structuredClone(s);
     empty.res = empty.res.filter((r) => r.room !== 2);
     expect(roomLog(empty.log, empty, 2)).toEqual([]);
+  });
+});
+
+describe("追加: 役割 a / b のどちらで登場しても、その部屋の日誌に入る", () => {
+  const ref = (id: number, room: number) => ({ id, sei: "試験", room });
+  const variant = { text: 0, slots: {} };
+  const log: LogEntry[] = [
+    {
+      t: 50,
+      kind: "",
+      storyletId: "x5",
+      roles: { a: ref(11, 0), b: ref(22, 1) },
+      variant,
+    },
+    { t: 40, kind: "", storyletId: "x4", roles: { b: ref(22, 1) }, variant },
+    { t: 30, kind: "", storyletId: "x3", roles: { a: ref(11, 0) }, variant },
+    {
+      t: 20,
+      kind: "",
+      storyletId: "x2",
+      roles: { a: ref(33, 2), b: ref(44, 3) },
+      variant,
+    },
+    { t: 10, kind: "day" },
+  ];
+  const s = {
+    res: [
+      { id: 11, room: 0 },
+      { id: 22, room: 1 },
+      { id: 33, room: 2 },
+      { id: 44, room: 3 },
+    ],
+  } as unknown as GameState;
+  const idsOf = (room: number) =>
+    roomLog(log, s, room).map((e) => ("storyletId" in e ? e.storyletId : e.kind));
+
+  it("b だけが部屋 1 の住人の出来事（x4）も、a だけが部屋 0 の住人の出来事（x3）も含まれる", () => {
+    expect(idsOf(1)).toEqual(["x5", "x4"]);
+    expect(idsOf(0)).toEqual(["x5", "x3"]);
+  });
+
+  it("別の部屋の住人の出来事は、a でも b でも含まれない", () => {
+    expect(idsOf(2)).toEqual(["x2"]);
+    expect(idsOf(3)).toEqual(["x2"]);
+    expect(idsOf(4)).toEqual([]);
   });
 });
