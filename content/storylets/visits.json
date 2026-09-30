@@ -4,7 +4,7 @@
     "kind": "relation",
     "trigger": "visit",
     "roles": { "a": {}, "b": {} },
-    "texts": ["{a}さんが{b}さんに醤油を借りに行った（今月三回目）"],
+    "texts": ["{a}さんが{b}さんに醤油を借りに行った（今月三回目）", "{a}さんが{b}さんに醤油を借りにいった。今月、すでに三回目だ"],
     "effects": [
       { "type": "say", "role": "a", "text": "醤油、貸してもらえます？" },
       { "type": "say", "role": "b", "text": "またですか", "afterMinutes": 3 },
@@ -16,7 +16,7 @@
     "kind": "relation",
     "trigger": "visit",
     "roles": { "a": {}, "b": {} },
-    "texts": ["{a}さんが{b}さんに愚痴をこぼしに行った"],
+    "texts": ["{a}さんが{b}さんに愚痴をこぼしに行った", "{a}さんが{b}さんの部屋へ、愚痴をこぼしにいった。{b}さんは黙って、お茶を淹れた"],
     "effects": [
       { "type": "say", "role": "a", "text": "聞いてくださいよ…" },
       { "type": "say", "role": "b", "text": "（この話三回目だ）", "afterMinutes": 3 },
@@ -31,7 +31,7 @@
     "trigger": "visit",
     "weight": 0.6,
     "roles": { "a": {}, "b": { "money": { "min": 1001 } } },
-    "texts": ["{a}さんが{b}さんに小銭を借りた。{b}さんは結局貸した"],
+    "texts": ["{a}さんが{b}さんに小銭を借りた。{b}さんは結局貸した", "{a}さんが{b}さんに小銭を借りた。{b}さんは断りきれず、結局出してくれた"],
     "effects": [
       { "type": "say", "role": "a", "text": "小銭だけ…来週返すんで" },
       { "type": "say", "role": "b", "text": "先月の小銭は？", "afterMinutes": 3 },
@@ -45,7 +45,7 @@
     "trigger": "visit",
     "weight": 0.4,
     "roles": { "a": {}, "b": {} },
-    "texts": ["{a}さんが{b}さんに小銭を借りに行って断られた"],
+    "texts": ["{a}さんが{b}さんに小銭を借りに行って断られた", "{a}さんは{b}さんに小銭を借りにいったが、断られた。廊下の足音が、帰りは軽かった"],
     "effects": [
       { "type": "say", "role": "a", "text": "小銭だけ…来週返すんで" },
       { "type": "say", "role": "b", "text": "先月の小銭は？", "afterMinutes": 3 },
@@ -58,7 +58,7 @@
     "trigger": "visit",
     "roles": { "a": {}, "b": {} },
     "choices": { "gift": ["じゃがいも", "みかん", "謎の漬物"] },
-    "texts": ["{a}さんが{b}さんに{gift}をお裾分け"],
+    "texts": ["{a}さんが{b}さんに{gift}をお裾分け", "{a}さんが{b}さんに{gift}を分けにいった。受け取る手が、一瞬ためらった"],
     "effects": [
       { "type": "say", "role": "a", "text": "実家から大量に届いて…" },
       { "type": "say", "role": "b", "text": "助かる〜", "afterMinutes": 3 },
@@ -73,7 +73,7 @@
     "kind": "relation",
     "trigger": "visit",
     "roles": { "a": {}, "b": { "noisy": true } },
-    "texts": ["{a}さんが{b}さんに遠回しに苦情を言いに行った。伝わっていない"],
+    "texts": ["{a}さんが{b}さんに遠回しに苦情を言いに行った。伝わっていない", "{a}さんが{b}さんに、遠回しな苦情を伝えにいった。{b}さんは、うなずきながら聞き流していた"],
     "effects": [
       { "type": "say", "role": "a", "text": "昨日の夜、ちょっと音が…" },
       { "type": "say", "role": "b", "text": "え、何のことです？", "afterMinutes": 3 },
@@ -85,7 +85,7 @@
     "kind": "relation",
     "trigger": "visit",
     "roles": { "a": {}, "b": {} },
-    "texts": ["{a}さんが{b}さんのWi-Fiにただ乗りを始めた"],
+    "texts": ["{a}さんが{b}さんのWi-Fiにただ乗りを始めた", "{a}さんが{b}さんのWi-Fiを使いはじめた。パスワードは、部屋の壁に書いてあったらしい"],
     "effects": [
       { "type": "say", "role": "a", "text": "Wi-Fiのパスワード、教えてもらえたり…" },
       { "type": "say", "role": "b", "text": "…いいですけど", "afterMinutes": 3 },

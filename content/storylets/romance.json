@@ -43,7 +43,7 @@
     "cooldownDays": 5,
     "chance": 0.3,
     "roles": { "a": {}, "b": { "romance": ["crush"], "affinity": { "max": 35 } } },
-    "texts": ["{a}さんの{b}さんへの気持ちは、いつのまにか冷めていた。本人は「そんな時期もあった」と言っている"],
+    "texts": ["{a}さんの{b}さんへの気持ちは、いつのまにか冷めていた。本人は「そんな時期もあった」と言っている", "{a}さんの{b}さんへの熱が、いつのまにか引いていた。本人いわく、あれは気の迷いだったらしい"],
     "effects": [{ "type": "romance", "stage": "none" }]
   },
   {
@@ -125,7 +125,7 @@
     "logKind": "noise",
     "when": { "hours": [0, 6] },
     "roles": { "a": {}, "b": { "romance": ["married"] } },
-    "texts": ["{a}さんと{b}さんの部屋から、赤ちゃんの夜泣き。隣の住人は、二日目までは誰も文句を言わなかった"],
+    "texts": ["{a}さんと{b}さんの部屋から、赤ちゃんの夜泣き。隣の住人は、二日目までは誰も文句を言わなかった", "{a}さんと{b}さんの部屋から、赤ちゃんの泣き声が聞こえた。隣の住人は、三日目まで寝不足を口にしなかった"],
     "effects": [
       { "type": "adjust", "role": "a", "stat": "sleepy", "delta": 25 },
       { "type": "adjust", "role": "b", "stat": "sleepy", "delta": 25 },
@@ -150,7 +150,7 @@
     "trigger": "book",
     "logKind": "move",
     "roles": { "a": {}, "b": { "romance": ["married"] } },
-    "texts": ["{a}さんと{b}さんが、赤ちゃんを連れて引っ越していった。{room}の玄関に、小さなくつ下が片方だけ落ちていた"],
+    "texts": ["{a}さんと{b}さんが、赤ちゃんを連れて引っ越していった。{room}の玄関に、小さなくつ下が片方だけ落ちていた", "{a}さんと{b}さんが、赤ちゃんを連れて引っ越した。{room}の前に、小さな靴下が片方だけ落ちていた"],
     "effects": [{ "type": "moveOut", "role": "a" }, { "type": "moveOut", "role": "b" }]
   },
   {
@@ -190,7 +190,7 @@
     "cooldownDays": 4,
     "chance": 0.5,
     "roles": { "a": {}, "b": { "romance": ["dating", "cohabiting", "married"], "affinity": { "min": 35, "max": 80 } } },
-    "texts": ["{a}さんが{b}さんに、高い方のプリンを買ってきた。仲直りの味がした"],
+    "texts": ["{a}さんが{b}さんに、高い方のプリンを買ってきた。仲直りの味がした", "{a}さんが{b}さんに、高いほうのプリンを買って帰った。二人はそれを半分ずつ食べた"],
     "effects": [
       { "type": "bond", "delta": 12 },
       { "type": "adjust", "role": "a", "stat": "mood", "delta": 8 },
@@ -220,7 +220,7 @@
     "chance": 0.4,
     "logKind": "move",
     "roles": { "a": {}, "b": { "romance": ["cohabiting"], "affinity": { "max": 35 } } },
-    "texts": ["{a}さんと{b}さんの同棲が終わった。{a}さんは荷物をまとめて、ひとりで出ていった"],
+    "texts": ["{a}さんと{b}さんの同棲が終わった。{a}さんは荷物をまとめて、ひとりで出ていった", "{a}さんと{b}さんの同棲が終わった。{a}さんは荷物をまとめ、ひとりで階段を降りていった"],
     "effects": [
       { "type": "romance", "stage": "none" },
       { "type": "adjust", "role": "b", "stat": "mood", "delta": -25 },
