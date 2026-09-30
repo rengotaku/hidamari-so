@@ -177,24 +177,29 @@ export function drawLying(
   P(ctx, rx + 8, ry + 33, 19, 1, shade(L.blanket, 15));
 }
 
+/** 猫。dir = 1 で右、-1 で左を向く（頭が進む方向に来る） */
 export function drawCat(
   ctx: CanvasRenderingContext2D,
   xIn: number,
   yIn: number,
-  frame: number
+  frame: number,
+  dir: 1 | -1 = 1
 ): void {
   const x = Math.round(xIn);
   const y = Math.round(yIn);
   const c = "#e39a45";
   const d = "#b86e2a";
-  P(ctx, x - 3, y - 3, 6, 3, c);
-  P(ctx, x - 1, y - 3, 1, 3, d);
-  P(ctx, x + 1, y - 3, 1, 3, d);
-  P(ctx, x + 2, y - 5, 3, 3, c);
-  P(ctx, x + 2, y - 6, 1, 1, c);
-  P(ctx, x + 4, y - 6, 1, 1, c);
-  P(ctx, x + 3, y - 4, 1, 1, EYE);
-  P(ctx, x - 4, frame ? y - 6 : y - 5, 1, 3, c);
-  P(ctx, x - 2, y, 1, 1, d);
-  P(ctx, x + 2, y, 1, 1, d);
+  // 右向きの形を x を軸に左右反転して描く。[x+a, x+a+w) は [x-a-w, x-a) に写る
+  const R = (a: number, yy: number, w: number, h: number, col: string) =>
+    P(ctx, dir === 1 ? x + a : x - a - w, yy, w, h, col);
+  R(-3, y - 3, 6, 3, c);
+  R(-1, y - 3, 1, 3, d);
+  R(1, y - 3, 1, 3, d);
+  R(2, y - 5, 3, 3, c);
+  R(2, y - 6, 1, 1, c);
+  R(4, y - 6, 1, 1, c);
+  R(3, y - 4, 1, 1, EYE);
+  R(-4, frame ? y - 6 : y - 5, 1, 3, c);
+  R(-2, y, 1, 1, d);
+  R(2, y, 1, 1, d);
 }

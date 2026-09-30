@@ -242,7 +242,7 @@ export function drawScene(
       false,
       "shovel"
     );
-  drawCat(ctx, ambient.cat.x, 178, frame);
+  drawCat(ctx, ambient.cat.x, 178, frame, ambient.cat.dir);
   const walkFr = Math.floor(now / 180) % 2;
   for (const w of ambient.walkers) {
     drawPerson(
