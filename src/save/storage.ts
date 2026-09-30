@@ -7,9 +7,10 @@ import {
   type SeededRng,
 } from "@/sim";
 import { migrateSave } from "./migrate";
-import { SCHEMA_VERSION, saveEnvelope } from "./schema";
+import { SCHEMA_VERSION, SPEEDS, saveEnvelope, type Speed } from "./schema";
 
 export { SCHEMA_VERSION };
+export { SPEEDS, type Speed };
 export const SAVE_KEY = "hidamari-so-save";
 /** 留守中に進めるのは、ゲーム内 3 日ぶんまで */
 export const MAX_CATCHUP_MINUTES = 3 * 1440;
@@ -20,6 +21,8 @@ export interface LoadedGame {
   state: GameState;
   rngState: number;
   savedAt: number;
+  /** 保存時の時間の速さ。無い保存は 1 */
+  speed: Speed;
 }
 
 /** 書き込みに失敗（容量超過・プライベートモード等）してもゲームは止めない */
@@ -27,12 +30,19 @@ export function saveGame(
   storage: KeyValueStorage,
   state: GameState,
   rngState: number,
-  nowMs: number
+  nowMs: number,
+  speed: Speed = 1
 ): boolean {
   try {
     storage.setItem(
       SAVE_KEY,
-      JSON.stringify({ schemaVersion: SCHEMA_VERSION, savedAt: nowMs, rngState, state })
+      JSON.stringify({
+        schemaVersion: SCHEMA_VERSION,
+        savedAt: nowMs,
+        rngState,
+        speed,
+        state,
+      })
     );
     return true;
   } catch {
@@ -50,8 +60,8 @@ export function loadGame(storage: KeyValueStorage): LoadedGame | null {
     if (!migrated) return null;
     const parsed = saveEnvelope.safeParse(migrated);
     if (!parsed.success) return null;
-    const { state, rngState, savedAt } = parsed.data;
-    return { state: state as GameState, rngState, savedAt };
+    const { state, rngState, savedAt, speed } = parsed.data;
+    return { state: state as GameState, rngState, savedAt, speed: speed ?? 1 };
   } catch {
     return null;
   }
@@ -62,6 +72,8 @@ export interface OpenedGame {
   rng: SeededRng;
   /** 読み込んだ保存の時刻。新しいゲームのときは null */
   savedAt: number | null;
+  /** 保存されていた時間の速さ。新しいゲームでは 1 */
+  speed: Speed;
 }
 
 /** 保存があれば続きから、無ければ seed から新しいゲームを始める */
@@ -72,9 +84,10 @@ export function loadOrNew(storage: KeyValueStorage, seed: number): OpenedGame {
       state: loaded.state,
       rng: createRng(loaded.rngState),
       savedAt: loaded.savedAt,
+      speed: loaded.speed,
     };
   const rng = createRng(seed);
-  return { state: newGame(rng), rng, savedAt: null };
+  return { state: newGame(rng), rng, savedAt: null, speed: 1 };
 }
 
 /**
