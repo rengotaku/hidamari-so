@@ -1,5 +1,6 @@
-import { hourOf, type GameState } from "@/sim";
+import { dayOf, hourOf, seasonOf, type GameState } from "@/sim";
 import { mix } from "./palette";
+import { seasonSky } from "./season";
 
 const SKY: Array<[number, string]> = [
   [0, "#141a33"],
@@ -33,8 +34,9 @@ export function nightness(h: number): number {
 }
 
 export function currentSky(s: GameState): string {
-  const sky = skyAt(hourOf(s.t));
+  const sky = seasonSky(skyAt(hourOf(s.t)), seasonOf(dayOf(s.t)));
   if (s.weather === "cloudy") return mix(sky, "#8a8f98", 0.35);
   if (s.weather === "rain") return mix(sky, "#5a6068", 0.5);
+  if (s.weather === "snow") return mix(sky, "#aeb6c2", 0.45);
   return sky;
 }

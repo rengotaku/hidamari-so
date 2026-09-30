@@ -1,7 +1,10 @@
+import { dayOf } from "./clock";
 import { archOf, isHome, pushLog, say, type Ctx } from "./context";
 import { chance, clamp } from "./random";
 import { updateRes } from "./behavior";
+import { drawWeather, seasonDay } from "./season";
 import { AMBIENT_CHANCE, fireTrigger, processBooked } from "./storylets";
+import { advanceTown } from "./town";
 import type { Resident } from "./types";
 
 const RENT = 28000;
@@ -20,8 +23,11 @@ function allowanceDay(c: Ctx): void {
 
 function onDay(c: Ctx): void {
   const { s } = c;
-  s.weather = chance(c.rng, 0.25) ? "rain" : chance(c.rng, 0.35) ? "cloudy" : "sunny";
+  const sd = seasonDay(dayOf(s.t));
+  s.weather = drawWeather(c.rng, sd.season);
   pushLog(c, { t: s.t, kind: "day" });
+  advanceTown(c);
+  if (sd.index === 0) fireTrigger(c, "season-start");
   fireTrigger(c, "day-start");
   for (const r of s.res) {
     if (!r.bathed) r.mood -= 4;

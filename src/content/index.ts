@@ -1,10 +1,12 @@
 import { z } from "zod";
 import archetypesJson from "../../content/archetypes.json";
 import traitsJson from "../../content/traits.json";
+import townJson from "../../content/town.json";
 import {
   archetypeSchema,
   contentErrors,
   storyletSchema,
+  townChangeSchema,
   traitSchema,
   type Content,
 } from "./schema";
@@ -16,6 +18,8 @@ export interface RawContent {
   traits: unknown;
   /** storylet の配列（1 ファイルに複数件でも 1 件でもよい） */
   storylets: unknown;
+  /** 町並みの変化の配列（省略すると変化なし） */
+  town?: unknown;
 }
 
 const asList = (v: unknown): unknown[] => (Array.isArray(v) ? v : [v]);
@@ -38,6 +42,8 @@ export function parseContent(raw: RawContent): Content {
   const archetypes = z.array(archetypeSchema).parse(asList(raw.archetypes));
   const traits = z.array(traitSchema).parse(asList(raw.traits));
   const storylets = z.array(storyletSchema).parse(asList(raw.storylets));
+  const town = z.array(townChangeSchema).parse(asList(raw.town ?? []));
+  indexById("town", town);
   const dup = new Set<string>();
   for (const s of storylets) {
     if (dup.has(s.id)) throw new Error(`storylet の id が重複している: ${s.id}`);
@@ -47,6 +53,7 @@ export function parseContent(raw: RawContent): Content {
     archetypes: indexById("archetype", archetypes),
     traits: indexById("trait", traits),
     storylets,
+    town,
   };
   const errs = contentErrors(content);
   if (errs.length > 0) throw new Error(`content の参照エラー:\n${errs.join("\n")}`);
@@ -62,6 +69,7 @@ const storyletFiles = import.meta.glob<unknown>("../../content/storylets/*.json"
 export const defaultContent: Content = parseContent({
   archetypes: archetypesJson,
   traits: traitsJson,
+  town: townJson,
   storylets: Object.keys(storyletFiles)
     .sort()
     .flatMap((p) => asList(storyletFiles[p])),

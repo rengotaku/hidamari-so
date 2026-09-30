@@ -1,6 +1,7 @@
 import { ACTS, roomRect, type GameState, type Resident } from "@/sim";
 import { P, shade } from "./palette";
 import { drawLying, drawPerson } from "./person";
+import { drawWindowSeason } from "./season";
 
 export const STAINS: number[][][] = [0, 1, 2, 3, 4, 5].map((i) => [
   [8 + ((i * 17) % 40), 3, 5, 3],
@@ -227,6 +228,7 @@ export function drawRoom(
   P(ctx, x + 6, y + 8, 20, 15, "#6b4b32");
   P(ctx, x + 7, y + 9, 18, 13, sky);
   P(ctx, x + 16, y + 9, 1, 13, "#6b4b32");
+  drawWindowSeason(ctx, s, x, y);
   P(ctx, x + 5, y + 22, 22, 1, "#5a3d28");
   if (owner) {
     P(ctx, x + 7, y + 9, 4, 13, owner.look.curtain);

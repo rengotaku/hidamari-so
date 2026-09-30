@@ -19,7 +19,12 @@ export {
   formatClockShort,
   formatTime,
   buildingAge,
+  START_AGE,
+  YEAR_DAYS,
 } from "./clock";
+export { SEASONS, seasonOf, seasonDay, drawWeather, type Season } from "./season";
+export { agingOf, type Aging } from "./aging";
+export { townLooks } from "./town";
 export {
   ROOM_COUNT,
   ROOM_ORDER,

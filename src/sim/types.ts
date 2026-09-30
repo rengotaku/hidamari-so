@@ -99,7 +99,7 @@ export interface Variant {
   slots: Record<string, number | string>;
 }
 
-export type LogKind = "" | "day" | "move" | "noise";
+export type LogKind = "" | "day" | "move" | "noise" | "town";
 
 /**
  * 日誌の 1 行。組み立て済みの文字列は持たず、どの出来事が誰にいつ起きたかを構造のまま残す。
@@ -107,6 +107,7 @@ export type LogKind = "" | "day" | "move" | "noise";
  */
 export type LogEntry =
   | { t: number; kind: "day" }
+  | { t: number; kind: "town"; changeId: string; stage: number }
   | {
       t: number;
       kind: "" | "move" | "noise";
@@ -145,6 +146,13 @@ export interface StoryLedger {
   done: string[];
 }
 
+/** 町並みの変化 1 件の進み具合。stage は進む一方で戻らない（0 は最初の姿） */
+export interface TownProgress {
+  /** 変化が始まった時刻（ゲーム内分） */
+  start: number;
+  stage: number;
+}
+
 export interface GameState {
   /** 1 日目 0:00 からの経過分 */
   t: number;
@@ -163,4 +171,6 @@ export interface GameState {
   bonds: Bond[];
   booked: Booked[];
   story: StoryLedger;
+  /** 町並みの変化の進み具合（content/town.json の id → 進み具合。始まっていないものは無い） */
+  town: Record<string, TownProgress>;
 }

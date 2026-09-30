@@ -5,7 +5,13 @@ import { z } from "zod";
  * 未知のフィールドはすべてエラー（strictObject）。書き間違いを CI で落とすため、実行時の警告にはしない。
  */
 
-export const WEATHER_IDS = ["sunny", "cloudy", "rain"] as const;
+export const WEATHER_IDS = ["sunny", "cloudy", "rain", "snow"] as const;
+/** 春 → 梅雨 → 夏 → 秋 → 冬。ゲーム内 18 日（1 年）で一巡する */
+export const SEASON_IDS = ["spring", "tsuyu", "summer", "autumn", "winter"] as const;
+/** 町並みの変化が起きる場所（絵を描く位置） */
+export const TOWN_SLOTS = ["east", "pole"] as const;
+/** 町並みの見た目の種類。新しい種類は render/town.ts に描画を足す */
+export const TOWN_LOOKS = ["lot", "fence", "mansion", "pole", "underground"] as const;
 export const HOBBY_IDS = [
   "phone",
   "tv",
@@ -55,6 +61,7 @@ export const TRIGGERS = [
   "late", // 寝坊して出勤したとき（a=本人）
   "gamble-win", // ギャンブルで大きく勝って帰ったとき（a=本人）
   "gamble-loss", // ギャンブルで大きく負けて帰ったとき（a=本人）
+  "season-start", // 季節の最初の日（日付が変わった直後）
   "opening", // 新規ゲームの最初の 1 件
   "book", // 他の出来事の結果（next）や人生の筋の入口から予約されたときだけ
 ] as const;
@@ -71,6 +78,9 @@ export type HobbyId = (typeof HOBBY_IDS)[number];
 export type MealId = (typeof MEAL_IDS)[number];
 export type ActId = (typeof ACT_IDS)[number];
 export type Weather = (typeof WEATHER_IDS)[number];
+export type SeasonId = (typeof SEASON_IDS)[number];
+export type TownSlot = (typeof TOWN_SLOTS)[number];
+export type TownLook = (typeof TOWN_LOOKS)[number];
 export type RomanceStage = (typeof ROMANCE_STAGES)[number];
 export type Trigger = (typeof TRIGGERS)[number];
 export type Role = "a" | "b";
@@ -251,6 +261,7 @@ export const storyletSchema = z
         /** [開始時, 終了時) 日をまたぐ指定も可 */
         hours: hourWindow.optional(),
         weather: z.array(z.enum(WEATHER_IDS)).min(1).optional(),
+        season: z.array(z.enum(SEASON_IDS)).min(1).optional(),
       })
       .default({}),
     roles: z.strictObject({ a: roleCond.optional(), b: roleCond.optional() }).default({}),
@@ -294,6 +305,49 @@ export const storyletSchema = z
     }
   });
 
+/**
+ * 町並みの変化 1 件。stages[0] は最初の姿で、afterDays は持たない。
+ * 変化が始まってから afterDays 日目に次の段階へ進む（afterDays は 0 以上で、段階ごとに必ず増える。
+ * 段階を逆戻りさせたり、同じ日に 2 段階進めたりできない）。
+ */
+const townStage = z.strictObject({
+  look: z.enum(TOWN_LOOKS),
+  afterDays: nonNeg.optional(),
+  /** この段階に入った日の日誌の 1 行（省略可）。数字は書かない */
+  log: nonEmpty.optional(),
+});
+
+export const townChangeSchema = z
+  .strictObject({
+    id,
+    slot: z.enum(TOWN_SLOTS),
+    /** ゲーム開始から何年たったら始まりうるか（0 なら最初から） */
+    startYear: z.number().int().min(0),
+    /** 始まりうる日ごとの、実際に始まる確率 */
+    chance,
+    stages: z.array(townStage).min(2),
+  })
+  .superRefine((t, ctx) => {
+    const add = (message: string) => ctx.addIssue({ code: "custom", message });
+    if (t.stages[0]!.afterDays !== undefined || t.stages[0]!.log !== undefined)
+      add("最初の段階には afterDays も log も書かない");
+    let prev = -1;
+    t.stages.slice(1).forEach((st, i) => {
+      if (st.afterDays === undefined) add(`段階 ${i + 1} に afterDays が要る`);
+      else {
+        if (st.afterDays <= prev)
+          add(`段階 ${i + 1} の afterDays が前の段階以下（逆転）`);
+        prev = st.afterDays;
+      }
+      if (st.log && /[0-9０-９]/.test(st.log)) add("log に数字を書かない");
+    });
+    for (let i = 1; i < t.stages.length; i++)
+      if (t.stages[i]!.look === t.stages[i - 1]!.look)
+        add(`段階 ${i} の look が前の段階と同じ`);
+  });
+
+export type TownChange = z.infer<typeof townChangeSchema>;
+
 export type Archetype = z.infer<typeof archetypeSchema>;
 export type ShiftDef = Archetype["shifts"][number];
 export type Trait = z.infer<typeof traitSchema>;
@@ -305,6 +359,8 @@ export interface Content {
   archetypes: Record<string, Archetype>;
   traits: Record<string, Trait>;
   storylets: Storylet[];
+  /** 町並みの変化（content/town.json） */
+  town: TownChange[];
 }
 
 /** id の重複と、存在しない id への参照を集める */

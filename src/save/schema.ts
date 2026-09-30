@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ACTS, JOBS, TRAITS } from "@/sim";
-import { ROMANCE_STAGES } from "@/content/schema";
+import { ROMANCE_STAGES, WEATHER_IDS } from "@/content/schema";
 
 /** 2: 日誌を構造（出来事 id・役割・言い回し）で持つ形にし、関係・予約・出来事の履歴を足した */
 export const SCHEMA_VERSION = 2;
@@ -80,6 +80,12 @@ const logEntry = z.union([
   z.object({ t: finite, kind: z.literal("day") }),
   z.object({
     t: finite,
+    kind: z.literal("town"),
+    changeId: z.string().min(1),
+    stage: nonNegInt,
+  }),
+  z.object({
+    t: finite,
     kind: z.enum(["", "move", "noise"]),
     storyletId: z.string().min(1),
     roles: z.object({ a: roleRef.optional(), b: roleRef.optional() }),
@@ -94,7 +100,7 @@ const gameState = z
   .object({
     t: nonNeg,
     t0: nonNeg,
-    weather: z.enum(["sunny", "cloudy", "rain"]),
+    weather: z.enum(WEATHER_IDS),
     res: z.array(resident),
     rooms: z.array(nonNegInt.max(1_000_000).nullable()).length(6),
     log: z.array(logEntry),
@@ -122,6 +128,8 @@ const gameState = z
       last: z.record(z.string(), finite),
       done: z.array(z.string()),
     }),
+    // 町並みの変化。足す前の保存（版 2）には無いので、欠けていれば「まだ何も変わっていない」とする
+    town: z.record(z.string(), z.object({ start: finite, stage: nonNegInt })).default({}),
   })
   // lastHour は経過時間から決まる値。食い違う保存は、1 時間ごとの処理が延々と回るので拒否する
   .refine((s) => s.lastHour === Math.floor(s.t / 60), "lastHour が t と一致しない");
