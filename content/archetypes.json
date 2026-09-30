@@ -1,0 +1,130 @@
+[
+  {
+    "id": "konbini",
+    "label": "コンビニ夜勤",
+    "age": [24, 38],
+    "sleep": [8.5, 15.5],
+    "eat": "bento",
+    "startMoney": 30000,
+    "shifts": [
+      { "days": { "every": 1, "on": [0] }, "start": 22, "end": 6, "label": "コンビニ夜勤", "pay": 11000 }
+    ],
+    "hobbies": { "phone": 3, "tv": 2, "game": 2, "beer": 2, "stare": 1 },
+    "traits": ["katazuke"]
+  },
+  {
+    "id": "band",
+    "label": "売れないバンドマン",
+    "age": [26, 36],
+    "sleep": [3, 11.5],
+    "eat": "ramen",
+    "startMoney": 9000,
+    "allowance": 8000,
+    "shifts": [
+      { "days": { "every": 3, "on": [1] }, "start": 18, "end": 23.5, "label": "ライブ（客は七人）", "pay": 3000 },
+      { "days": { "every": 3, "on": [0] }, "start": 9, "end": 17, "label": "引越しバイト", "pay": 12000 }
+    ],
+    "hobbies": { "guitar": 5, "beer": 3, "phone": 2, "nap": 1 },
+    "traits": ["nebou", "sake"],
+    "arc": "band-scout"
+  },
+  {
+    "id": "ronin",
+    "label": "三浪中の浪人生",
+    "age": [21, 22],
+    "sleep": [2, 10.5],
+    "eat": "ramen",
+    "startMoney": 20000,
+    "allowance": 45000,
+    "shifts": [
+      { "days": { "every": 4, "on": [1] }, "start": 13, "end": 17, "label": "予備校（たまに）", "pay": 0 }
+    ],
+    "hobbies": { "study": 4, "phone": 4, "game": 2, "nap": 2, "stare": 1 },
+    "traits": ["samishi", "hitorigoto"],
+    "arc": "ronin-mock-eve"
+  },
+  {
+    "id": "oldman",
+    "label": "年金暮らし（元国鉄の車掌）",
+    "age": [71, 82],
+    "sleep": [21, 5],
+    "eat": "nimono",
+    "startMoney": 90000,
+    "allowance": 62000,
+    "tags": ["old"],
+    "shifts": [
+      { "days": { "every": 1, "on": [0] }, "start": 5.5, "end": 7, "label": "朝の散歩", "pay": 0 }
+    ],
+    "hobbies": { "plants": 3, "radio": 3, "tv": 3, "stare": 1 },
+    "traits": ["neko", "hitorigoto"]
+  },
+  {
+    "id": "salaryman",
+    "label": "中小企業の営業",
+    "age": [34, 52],
+    "sleep": [0.5, 6.5],
+    "eat": "bento",
+    "startMoney": 60000,
+    "shifts": [
+      { "days": { "every": 7, "on": [1, 2, 3, 4, 5] }, "start": 7.5, "end": 22.5, "label": "会社", "pay": 15000 }
+    ],
+    "hobbies": { "beer": 4, "tv": 3, "phone": 2, "nap": 2 },
+    "traits": ["sake", "mie"],
+    "arc": "salaryman-promotion"
+  },
+  {
+    "id": "mangaka",
+    "label": "漫画家志望（持ち込み十七回）",
+    "age": [25, 34],
+    "sleep": [5, 13],
+    "eat": "ramen",
+    "startMoney": 12000,
+    "allowance": 15000,
+    "shifts": [
+      { "days": { "every": 3, "on": [2] }, "start": 10, "end": 18, "label": "倉庫バイト", "pay": 9000 }
+    ],
+    "hobbies": { "draw": 6, "phone": 2, "stare": 2, "nap": 1 },
+    "traits": ["nebou", "jisui"]
+  },
+  {
+    "id": "pachinko",
+    "label": "自称・投資家（パチンコ）",
+    "age": [38, 58],
+    "sleep": [1.5, 9.5],
+    "eat": "bento",
+    "startMoney": 60000,
+    "shifts": [
+      { "days": { "every": 2, "on": [0] }, "start": 10, "end": 21, "label": "パチンコ", "pay": "gamble" }
+    ],
+    "hobbies": { "keiba": 4, "beer": 3, "tv": 2, "phone": 1 },
+    "traits": ["kinketsu", "mie"]
+  },
+  {
+    "id": "student",
+    "label": "大学八年生",
+    "age": [26, 27],
+    "sleep": [4, 12.5],
+    "eat": "ramen",
+    "startMoney": 15000,
+    "allowance": 40000,
+    "shifts": [
+      { "days": { "every": 2, "on": [1] }, "start": 13, "end": 16, "label": "講義（たぶん）", "pay": 0 },
+      { "days": { "every": 3, "on": [0] }, "start": 18, "end": 23, "label": "居酒屋バイト", "pay": 8000 }
+    ],
+    "hobbies": { "phone": 4, "game": 4, "beer": 2, "nap": 3, "guitar": 1 },
+    "traits": ["katazuke", "nebou"]
+  },
+  {
+    "id": "youtuber",
+    "label": "動画配信者（登録者はほぼ身内）",
+    "age": [23, 31],
+    "sleep": [4.5, 12],
+    "eat": "ramen",
+    "startMoney": 150000,
+    "shifts": [
+      { "days": { "every": 5, "on": [3] }, "start": 14, "end": 22, "label": "倉庫バイト", "pay": 9000 }
+    ],
+    "hobbies": { "stream": 5, "phone": 3, "stare": 1 },
+    "traits": ["hitorigoto", "jisui"]
+  }
+]

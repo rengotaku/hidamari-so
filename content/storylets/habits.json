@@ -1,0 +1,130 @@
+[
+  {
+    "id": "cleaned-room",
+    "kind": "daily",
+    "trigger": "act-end",
+    "act": "clean",
+    "roles": { "a": {} },
+    "numbers": { "n": [3, 9] },
+    "texts": ["{a}さんが掃除をした。ゴミ袋{n}個"]
+  },
+  {
+    "id": "quit-workout",
+    "kind": "daily",
+    "trigger": "quit-gym",
+    "roles": { "a": {} },
+    "texts": ["{a}さん、筋トレ三日目で「明日から本気出す」宣言。ダンベルは物干しになった"]
+  },
+  {
+    "id": "drunk-hallway",
+    "kind": "happening",
+    "trigger": "act-end",
+    "act": "drunk",
+    "chance": 0.5,
+    "logKind": "noise",
+    "roles": { "a": {} },
+    "choices": {
+      "how": [
+        "一曲歌った",
+        "月に向かって何か叫んだ",
+        "自分の部屋の番号を忘れた",
+        "大家の悪口を言ったあと謝った"
+      ]
+    },
+    "texts": ["{a}さん、酔って廊下で{how}"]
+  },
+  {
+    "id": "stream-viewers",
+    "kind": "daily",
+    "trigger": "act-end",
+    "act": "stream",
+    "chance": 0.3,
+    "roles": { "a": {} },
+    "numbers": { "n": [0, 3] },
+    "texts": ["{a}さんの配信、同時視聴者数{n}人（うち一人は本人のスマホ）"]
+  },
+  {
+    "id": "draft-pages",
+    "kind": "daily",
+    "trigger": "act-end",
+    "act": "draw",
+    "chance": 0.25,
+    "roles": { "a": {} },
+    "numbers": { "n": [1, 3], "m": [4, 9] },
+    "texts": ["{a}さん、原稿を{n}ページ描いて{m}ページ消した"]
+  },
+  {
+    "id": "study-page",
+    "kind": "daily",
+    "trigger": "act-end",
+    "act": "study",
+    "chance": 0.25,
+    "roles": { "a": {} },
+    "numbers": { "n": [3, 12] },
+    "texts": ["{a}さん、参考書の同じページを{n}回開いた"]
+  },
+  {
+    "id": "burnt-cooking",
+    "kind": "daily",
+    "trigger": "act-end",
+    "act": "cook",
+    "chance": 0.4,
+    "roles": { "a": {} },
+    "choices": {
+      "how": ["本人いわく「香ばしい」", "火災報知器が鳴る寸前だった", "料理名は「炒め物だったもの」"]
+    },
+    "texts": ["{room}から焦げた匂い。{how}"]
+  },
+  {
+    "id": "horse-circles",
+    "kind": "daily",
+    "trigger": "act-end",
+    "act": "keiba",
+    "chance": 0.2,
+    "roles": { "a": {} },
+    "numbers": { "n": [8, 20] },
+    "texts": ["{a}さん、競馬新聞に赤丸を{n}個つけた（全部の馬）"]
+  },
+  {
+    "id": "new-song",
+    "kind": "daily",
+    "trigger": "act-end",
+    "act": "guitar",
+    "chance": 0.2,
+    "roles": { "a": {} },
+    "choices": { "song": ["四畳半ブルース", "家賃", "カップ麺の三分", "ひだまり"] },
+    "texts": ["{a}さん、新曲「{song}」を作曲。コードは三つ"]
+  },
+  {
+    "id": "overslept-shift",
+    "kind": "daily",
+    "trigger": "late",
+    "roles": { "a": {} },
+    "choices": {
+      "how": ["寝ぐせのまま階段を駆け下りた", "靴を片方しか履いていなかった", "パンをくわえて走っていった"]
+    },
+    "texts": ["{a}さん、{shift}に寝坊。{how}"]
+  },
+  {
+    "id": "gamble-big-win",
+    "kind": "happening",
+    "trigger": "gamble-win",
+    "roles": { "a": {} },
+    "texts": ["{a}さん、パチンコで大勝ちした。寿司の出前を取っていた"]
+  },
+  {
+    "id": "gamble-big-loss",
+    "kind": "happening",
+    "trigger": "gamble-loss",
+    "roles": { "a": {} },
+    "texts": ["{a}さん、パチンコで大負けした。帰りの足取りが重い"]
+  },
+  {
+    "id": "wall-knock",
+    "kind": "relation",
+    "trigger": "noise",
+    "logKind": "noise",
+    "roles": { "a": {}, "b": { "awake": false } },
+    "texts": ["{a}さんの{act}で、{b}さんが壁ドン"]
+  }
+]

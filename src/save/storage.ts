@@ -6,6 +6,7 @@ import {
   type GameState,
   type SeededRng,
 } from "@/sim";
+import { migrateSave } from "./migrate";
 import { SCHEMA_VERSION, saveEnvelope } from "./schema";
 
 export { SCHEMA_VERSION };
@@ -39,12 +40,15 @@ export function saveGame(
   }
 }
 
-/** 保存が無い・壊れている・schemaVersion が違うときは null（例外は出さない） */
+/** 保存が無い・壊れている・未来の版のときは null（例外は出さない）。古い版は移してから読む */
 export function loadGame(storage: KeyValueStorage): LoadedGame | null {
   try {
     const raw = storage.getItem(SAVE_KEY);
     if (!raw) return null;
-    const parsed = saveEnvelope.safeParse(JSON.parse(raw));
+    // 古い版は最新まで段階的に移してから検証する
+    const migrated = migrateSave(JSON.parse(raw), SCHEMA_VERSION);
+    if (!migrated) return null;
+    const parsed = saveEnvelope.safeParse(migrated);
     if (!parsed.success) return null;
     const { state, rngState, savedAt } = parsed.data;
     return { state: state as GameState, rngState, savedAt };

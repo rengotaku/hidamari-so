@@ -1,3 +1,4 @@
+import { defaultContent, type Content } from "@/content";
 import type { Ctx } from "./context";
 import type { Rng } from "./random";
 import type { GameState } from "./types";
@@ -6,6 +7,8 @@ import { update } from "./world";
 export interface StepOptions {
   /** true なら吹き出しを出さない（留守中の進行用） */
   quiet?: boolean;
+  /** 出来事の定義。省略すると content/ の既定コンテンツ */
+  content?: Content;
 }
 
 /** 内部の 1 更新あたりの最大刻み（ゲーム内分） */
@@ -24,7 +27,12 @@ export function step(
 ): GameState {
   if (!Number.isFinite(minutes) || minutes <= 0) return state;
   const s = structuredClone(state);
-  const c: Ctx = { s, rng, quiet: options.quiet ?? false };
+  const c: Ctx = {
+    s,
+    rng,
+    quiet: options.quiet ?? false,
+    content: options.content ?? defaultContent,
+  };
   let left = minutes;
   while (left > 0) {
     const dt = Math.min(MAX_SUBSTEP, left);

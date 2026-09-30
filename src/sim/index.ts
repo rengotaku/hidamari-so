@@ -32,4 +32,5 @@ export {
 } from "./layout";
 export { stepPath } from "./behavior";
 export { JOBS, TRAITS, ACTS } from "./data";
+export { composeEntry, bondOf, DEFAULT_AFFINITY } from "./storylets";
 export type * from "./types";
