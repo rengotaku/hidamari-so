@@ -8,7 +8,7 @@ const NOW = 5_000_000;
 
 /** 10 日ぶん進めた保存データを用意する（日誌に中身がある状態） */
 function seedSave() {
-  const rng = createRng(31341);
+  const rng = createRng(31337);
   let s = newGame(rng);
   for (let i = 0; i < 10 * 24; i++) s = step(s, 60, rng);
   saveGame(localStorage, s, rng.getState(), NOW);

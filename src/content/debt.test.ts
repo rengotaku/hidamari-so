@@ -29,6 +29,7 @@ const VIOLENT_WORDS = [
   "ぶっ飛ば",
   "壊す",
   "壊して",
+  "壊した",
   "叩き壊",
   "蹴り上げ",
   "ぶん殴",
@@ -65,8 +66,10 @@ function withYamikin(seed: number): { s: GameState; id: number } {
   r.job = "yamikin";
   r.money = 0;
   r.mood = 20;
-  r.since = s.t - 10 * 1440;
-  s.booked.push({ id: "debt-swell", at: s.t, roles: { a: r.id }, tries: 0 });
+  r.since = s.t - 20 * 1440;
+  // debt-swell は確率で起きるので、毎日 1 回ずつ予約して（起きたら cooldown で後続は捨てられる）確実に筋を起動する
+  for (let k = 0; k < 15; k++)
+    s.booked.push({ id: "debt-swell", at: s.t + k * 1440, roles: { a: r.id }, tries: 0 });
   return { s, id: r.id };
 }
 
@@ -102,12 +105,18 @@ describe("Y1: 取り立て・借金の出来事は 15 件以上", () => {
   });
 });
 
+/** 「壊された・壊した・壊し」など。取り壊し・取り壊された（建物の話）は除く */
+const VIOLENT_PATTERNS = [/(?<!取り)壊[しされ]/];
+
 describe("Y2: 暴力表現が 0 件", () => {
   it("content 全件の本文・台詞に暴力表現の語が無い", () => {
     const hits: string[] = [];
     for (const s of defaultContent.storylets)
       for (const t of allTexts(s))
         for (const w of VIOLENT_WORDS) if (t.includes(w)) hits.push(`${s.id}: ${w}`);
+    for (const s of defaultContent.storylets)
+      for (const t of allTexts(s))
+        for (const re of VIOLENT_PATTERNS) if (re.test(t)) hits.push(`${s.id}: ${re}`);
     expect(hits).toEqual([]);
   });
 });
@@ -221,5 +230,52 @@ describe("追加: 取り立ての筋の整合", () => {
     );
     // 後日談は、どの順で予約が実行されても連れて行かれたあとに起きる
     expect(askMax + minAfter).toBeGreaterThan(takenMax);
+  });
+});
+
+/** 闇金に借りている人が初期住人にいて、人生の筋（yamikin-notice）だけを予約したゲーム */
+function withYamikinArc(seed: number): GameState {
+  const rng = createRng(seed);
+  const s = newGame(rng);
+  const r = s.res[0]!;
+  r.job = "yamikin";
+  s.booked.push({ id: "yamikin-notice", at: s.t + 2880, roles: { a: r.id }, tries: 0 });
+  return s;
+}
+
+describe("追加: 片付く筋と連れて行かれる筋が両立する", () => {
+  it("seed 1〜10 で 60 日進めると、yamikin-clear と debt-taken の両方が起きる。後日談は debt-taken のあとだけ", () => {
+    let cleared = 0;
+    let taken = 0;
+    for (let seed = 1; seed <= 10; seed++) {
+      const { entries } = run(withYamikinArc(seed), 60, seed);
+      const ids = new Set(entries.map((e) => e.storyletId));
+      if (ids.has("yamikin-clear")) cleared++;
+      if (ids.has("debt-taken")) taken++;
+      // 連れて行かれていないゲーム（片付いた・別の筋で出ていった）で、後日談は起きない
+      if (!ids.has("debt-taken")) {
+        expect(ids.has("debt-after-luggage"), `seed ${seed}`).toBe(false);
+        expect(ids.has("debt-after-return"), `seed ${seed}`).toBe(false);
+      }
+    }
+    expect(cleared).toBeGreaterThan(0);
+    expect(taken).toBeGreaterThan(0);
+  });
+  it("yamikin-consult で片付いたゲームでは、debt-taken も後日談も起きない（片付いた直後まで）", () => {
+    let checked = 0;
+    for (let seed = 1; seed <= 10; seed++) {
+      const { entries } = run(withYamikinArc(seed), 16, seed);
+      const ids = new Set(entries.map((e) => e.storyletId));
+      if (!ids.has("yamikin-clear")) continue;
+      checked++;
+      for (const id of [
+        "debt-swell",
+        "debt-taken",
+        "debt-after-luggage",
+        "debt-after-return",
+      ])
+        expect(ids.has(id), `seed ${seed} ${id}`).toBe(false);
+    }
+    expect(checked).toBeGreaterThan(0);
   });
 });
