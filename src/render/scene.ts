@@ -25,6 +25,7 @@ import {
   seasonPhase,
   shovelerAt,
 } from "./season";
+import { drawCollector } from "./collector";
 import { drawNightScenes } from "./night";
 import { currentSky, nightness } from "./sky";
 import { drawAging, drawTown, signBoard } from "./town";
@@ -289,6 +290,7 @@ export function drawScene(
         "bag"
       );
   }
+  drawCollector(ctx, s, now);
   if (s.weather === "rain") {
     ctx.fillStyle = "rgba(170,200,235,0.55)";
     for (let k = 0; k < 90; k++) {

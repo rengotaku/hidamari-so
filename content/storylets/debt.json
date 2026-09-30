@@ -1,0 +1,691 @@
+[
+  {
+    "id": "collector-knock",
+    "kind": "happening",
+    "trigger": "hour",
+    "weight": 0.6,
+    "cooldownDays": 4,
+    "when": {
+      "hours": [
+        9,
+        19
+      ]
+    },
+    "roles": {
+      "a": {
+        "archetype": [
+          "yamikin"
+        ],
+        "inRoom": true
+      }
+    },
+    "texts": [
+      "{room}のドアを、黒い背広の男が一定の間隔で叩いている。{a}さんは息をひそめたのか、部屋の中は物音ひとつしない",
+      "{a}さんの部屋の前に、黒い背広の人影が立った。ノックは短く、そのあとに長い沈黙が続いた"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": -6
+      },
+      {
+        "type": "say",
+        "role": "a",
+        "text": "いません、いません…"
+      }
+    ]
+  },
+  {
+    "id": "collector-hide",
+    "kind": "happening",
+    "trigger": "hour",
+    "weight": 0.6,
+    "cooldownDays": 4,
+    "when": {
+      "hours": [
+        9,
+        19
+      ]
+    },
+    "roles": {
+      "a": {
+        "archetype": [
+          "yamikin"
+        ],
+        "inRoom": true
+      }
+    },
+    "texts": [
+      "{a}さんは居留守を使った。ドアの向こうの声は「いるのは分かってますよ」と、のんびり言った",
+      "{room}の電気は消えたまま、{a}さんは居留守を続けている。ドアの前の男は、腕時計を見て、また立ち続けた"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": -5
+      },
+      {
+        "type": "say",
+        "role": "a",
+        "text": "（布団をかぶる）"
+      }
+    ]
+  },
+  {
+    "id": "collector-cover",
+    "kind": "relation",
+    "trigger": "hour",
+    "weight": 0.5,
+    "cooldownDays": 6,
+    "when": {
+      "hours": [
+        9,
+        19
+      ]
+    },
+    "roles": {
+      "a": {
+        "archetype": [
+          "yamikin"
+        ]
+      },
+      "b": {
+        "notArchetype": [
+          "yamikin"
+        ],
+        "awake": true,
+        "inRoom": true
+      }
+    },
+    "texts": [
+      "{b}さんが廊下に出て「{a}さんは出かけましたよ」と言ってくれた。男は{b}さんの顔を、しばらく覚えるように見ていた",
+      "見かねた{b}さんが、{a}さんのドアの前の男に「ここは静かにしてください」と声をかけた。男は肩をすくめて、階段を下りていった"
+    ],
+    "effects": [
+      {
+        "type": "bond",
+        "delta": 5
+      },
+      {
+        "type": "adjust",
+        "role": "b",
+        "stat": "mood",
+        "delta": -4
+      },
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": 3
+      },
+      {
+        "type": "say",
+        "role": "b",
+        "text": "うちは静かに暮らしたいので"
+      }
+    ]
+  },
+  {
+    "id": "collector-shout",
+    "kind": "happening",
+    "trigger": "hour",
+    "weight": 0.5,
+    "cooldownDays": 6,
+    "when": {
+      "hours": [
+        9,
+        19
+      ]
+    },
+    "roles": {
+      "a": {
+        "archetype": [
+          "yamikin"
+        ],
+        "inRoom": true
+      }
+    },
+    "texts": [
+      "ドアの向こうから「出てこいよ」と、怒鳴る声が廊下に響いた。両隣の壁が、ぴたりと静かになった",
+      "「逃げても無駄ですよ」と男が廊下で声を張り上げた。{a}さんの部屋からは、何の返事もない"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": -8
+      },
+      {
+        "type": "say",
+        "role": "a",
+        "text": "…………"
+      }
+    ]
+  },
+  {
+    "id": "collector-stairs",
+    "kind": "happening",
+    "trigger": "hour",
+    "weight": 0.6,
+    "cooldownDays": 4,
+    "when": {
+      "hours": [
+        9,
+        19
+      ]
+    },
+    "roles": {
+      "a": {
+        "archetype": [
+          "yamikin"
+        ]
+      }
+    },
+    "texts": [
+      "外階段に、革靴の音がゆっくり上がってきた。黒い背広の男が{room}の前で足を止め、手帳を見た",
+      "黒い背広の男が階段を上がってきた。{a}さんのドアの前で、時計と表札を交互に見ている"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": -3
+      }
+    ]
+  },
+  {
+    "id": "collector-note",
+    "kind": "happening",
+    "trigger": "hour",
+    "weight": 0.5,
+    "cooldownDays": 5,
+    "when": {
+      "hours": [
+        9,
+        19
+      ]
+    },
+    "roles": {
+      "a": {
+        "archetype": [
+          "yamikin"
+        ]
+      }
+    },
+    "texts": [
+      "{a}さんのドアに、折りたたんだ紙が挟まっていた。「ご連絡をください」とだけ、丁寧な字で書いてある",
+      "{room}のドアノブに、封筒が掛かっている。黒い背広の男が置いていったらしい"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": -4
+      }
+    ]
+  },
+  {
+    "id": "debt-landlord-talk",
+    "kind": "happening",
+    "trigger": "hour",
+    "weight": 0.4,
+    "cooldownDays": 12,
+    "when": {
+      "hours": [
+        10,
+        18
+      ]
+    },
+    "roles": {
+      "a": {
+        "archetype": [
+          "yamikin"
+        ]
+      }
+    },
+    "texts": [
+      "黒い背広の男が大家を訪ねて、{a}さんの部屋の話を持ち込んだ。「部屋は空けてもらうことになるかもしれない」と言うので、大家は「契約の話は本人としてください」と丁寧に断った",
+      "ヤクザ風の男が大家に「{room}の立ち退きの件で」と切り出した。大家は湯呑みを置いて、ゆっくり首を横に振った"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": -6
+      }
+    ]
+  },
+  {
+    "id": "debt-wait",
+    "kind": "happening",
+    "trigger": "hour",
+    "weight": 0.5,
+    "cooldownDays": 5,
+    "when": {
+      "hours": [
+        9,
+        19
+      ]
+    },
+    "roles": {
+      "a": {
+        "archetype": [
+          "yamikin"
+        ],
+        "out": true
+      }
+    },
+    "texts": [
+      "角の自販機の横で、黒い背広の男が{a}さんの帰りを待っている。缶コーヒーは、もう空のようだ",
+      "黒い背広の男が、アパートの前の道を行ったり来たりしている。{a}さんは、まだ帰ってこない"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": -3
+      }
+    ]
+  },
+  {
+    "id": "debt-interest",
+    "kind": "happening",
+    "trigger": "hour",
+    "weight": 0.5,
+    "cooldownDays": 6,
+    "roles": {
+      "a": {
+        "archetype": [
+          "yamikin"
+        ],
+        "awake": true
+      }
+    },
+    "texts": [
+      "{a}さんが電話口で利息の計算を聞かされて、顔色が変わった。受話器を持つ手が、しばらく下りなかった",
+      "利息の計算を聞き終えた{a}さんは、畳に座り込んだまま動かない。電卓の画面を、何度も消している"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": -10
+      },
+      {
+        "type": "say",
+        "role": "a",
+        "text": "そんなに…？"
+      }
+    ]
+  },
+  {
+    "id": "debt-ask-neighbor",
+    "kind": "relation",
+    "trigger": "book",
+    "roles": {
+      "b": {
+        "notArchetype": [
+          "yamikin"
+        ]
+      }
+    },
+    "texts": [
+      "黒い背広の男が、{b}さんに隣の住人のことを尋ねていた。{b}さんは「何も知りません」とだけ答えたそうだ",
+      "見知らぬ男に隣のことを聞かれて、{b}さんはドアのチェーンを掛けたまま答えた。あとで、しばらく手の震えが止まらなかった"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "b",
+        "stat": "mood",
+        "delta": -6
+      },
+      {
+        "type": "say",
+        "role": "b",
+        "text": "巻き込まないでほしいな…"
+      },
+      {
+        "type": "book",
+        "next": [
+          {
+            "id": "debt-after-luggage",
+            "weight": 5
+          },
+          {
+            "id": "debt-after-return",
+            "weight": 5
+          }
+        ],
+        "afterMinutes": [
+          1800,
+          4320
+        ]
+      }
+    ]
+  },
+  {
+    "id": "debt-rumor",
+    "kind": "relation",
+    "trigger": "hour",
+    "weight": 0.4,
+    "cooldownDays": 7,
+    "when": {
+      "hours": [
+        8,
+        21
+      ]
+    },
+    "roles": {
+      "a": {
+        "archetype": [
+          "yamikin"
+        ]
+      },
+      "b": {
+        "notArchetype": [
+          "yamikin"
+        ],
+        "awake": true
+      }
+    },
+    "texts": [
+      "{b}さんが郵便受けの前で「{a}さんのところ、また来てたね」と小声で言った。誰も聞き返さなかった",
+      "階段の踊り場で、{b}さんと近所の人が{a}さんの話をしている。声はだんだん小さくなっていった"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "b",
+        "stat": "mood",
+        "delta": -2
+      }
+    ]
+  },
+  {
+    "id": "debt-borrow",
+    "kind": "relation",
+    "trigger": "hour",
+    "weight": 0.4,
+    "cooldownDays": 7,
+    "roles": {
+      "a": {
+        "archetype": [
+          "yamikin"
+        ]
+      },
+      "b": {
+        "notArchetype": [
+          "yamikin"
+        ],
+        "awake": true,
+        "inRoom": true
+      }
+    },
+    "texts": [
+      "{a}さんが{b}さんの部屋の前で、長いこと立っていた。「今月だけ」と言いかけては、やめている",
+      "{a}さんが{b}さんに小声で何かを頼んでいる。{b}さんは困った顔で、うなずいたり首を振ったりしている"
+    ],
+    "effects": [
+      {
+        "type": "bond",
+        "delta": -1
+      },
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": -3
+      }
+    ]
+  },
+  {
+    "id": "debt-payment",
+    "kind": "daily",
+    "trigger": "hour",
+    "weight": 0.4,
+    "cooldownDays": 6,
+    "when": {
+      "hours": [
+        9,
+        18
+      ]
+    },
+    "roles": {
+      "a": {
+        "archetype": [
+          "yamikin"
+        ],
+        "awake": true,
+        "inRoom": true,
+        "money": {
+          "min": 2000
+        }
+      }
+    },
+    "texts": [
+      "{a}さんが封筒を握りしめて、今月分だけでもと出かけていった。背中が、いつもより小さく見えた",
+      "{a}さんが、何かを払いに行くのか、そわそわと靴を履いた。靴箱の上には、領収書が何枚も重なっている"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "money",
+        "delta": -2000
+      },
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": -2
+      }
+    ]
+  },
+  {
+    "id": "debt-kind",
+    "kind": "relation",
+    "trigger": "hour",
+    "weight": 0.4,
+    "cooldownDays": 8,
+    "when": {
+      "hours": [
+        8,
+        20
+      ]
+    },
+    "roles": {
+      "a": {
+        "archetype": [
+          "yamikin"
+        ],
+        "awake": true
+      }
+    },
+    "texts": [
+      "大家が{a}さんに「困ったことがあれば、町の窓口を紹介しますよ」と声をかけた。{a}さんは深く頭を下げた",
+      "大家が廊下で{a}さんとすれ違うとき、「ご飯は食べてますか」とだけ聞いた。{a}さんは小さくうなずいた"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": 4
+      }
+    ]
+  },
+  {
+    "id": "debt-phone",
+    "kind": "happening",
+    "trigger": "hour",
+    "weight": 0.5,
+    "cooldownDays": 5,
+    "roles": {
+      "a": {
+        "archetype": [
+          "yamikin"
+        ],
+        "inRoom": true
+      }
+    },
+    "texts": [
+      "{room}の電話が鳴り続けている。{a}さんは受話器を見つめたまま、手を伸ばさない",
+      "着信音が何度も鳴って、ようやく止まった。また鳴り始めるまで、{a}さんは息を止めていた"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": -4
+      }
+    ]
+  },
+  {
+    "id": "debt-swell",
+    "kind": "arc",
+    "trigger": "hour",
+    "weight": 0.5,
+    "cooldownDays": 14,
+    "when": {
+      "hours": [
+        9,
+        19
+      ]
+    },
+    "roles": {
+      "a": {
+        "archetype": [
+          "yamikin"
+        ],
+        "money": {
+          "max": 3000
+        },
+        "mood": {
+          "max": 45
+        },
+        "stayDays": {
+          "min": 16
+        }
+      }
+    },
+    "texts": [
+      "{a}さん宛の封筒が、郵便受けに入りきらなくなった。{room}のこたつの上には、開けていない手紙が山になっている",
+      "{a}さんの借金は、もう自分では数えられないところまで来ているらしい。{room}の前を通る人が、足早になる"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": -8
+      },
+      {
+        "type": "book",
+        "next": [
+          {
+            "id": "debt-ask-neighbor"
+          }
+        ],
+        "afterMinutes": [
+          60,
+          300
+        ]
+      },
+      {
+        "type": "book",
+        "next": [
+          {
+            "id": "debt-taken"
+          }
+        ],
+        "afterMinutes": [
+          1440,
+          1800
+        ]
+      }
+    ],
+    "chance": 0.6
+  },
+  {
+    "id": "debt-taken",
+    "kind": "arc",
+    "trigger": "book",
+    "logKind": "move",
+    "roles": {
+      "a": {}
+    },
+    "texts": [
+      "{a}さんが、黒い背広の人たちと一緒に、黒い車に乗せられていった。{room}には、脱ぎ捨てたスリッパだけが残っている",
+      "昼過ぎ、{a}さんは黒い車に乗せられて{room}を出ていった。大家は窓から、車が角を曲がるまで見ていた"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "a",
+        "stat": "mood",
+        "delta": -30
+      },
+      {
+        "type": "moveOut",
+        "role": "a"
+      }
+    ]
+  },
+  {
+    "id": "debt-after-luggage",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": {
+      "b": {}
+    },
+    "texts": [
+      "黒い背広の人が、あの部屋の荷物を取りに来た。大家が鍵を開け、段ボールが運び出されるのを、{b}さんは廊下から黙って見ていた",
+      "あの部屋の荷物を、黒い背広の人が引き取りに来た。{b}さんはドアの隙間から見て、そっとチェーンを掛け直した"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "b",
+        "stat": "mood",
+        "delta": -3
+      }
+    ]
+  },
+  {
+    "id": "debt-after-return",
+    "kind": "arc",
+    "trigger": "book",
+    "roles": {
+      "b": {}
+    },
+    "texts": [
+      "あの人が、何事もなかったような顔で階段を上がってきた。{b}さんに「お世話になりました」と会釈して、また降りていった",
+      "あの人が、紙袋を下げてふらっと戻ってきた。{b}さんが声をかけると「ちょっと忘れ物を」と笑って、長居せずに帰った"
+    ],
+    "effects": [
+      {
+        "type": "adjust",
+        "role": "b",
+        "stat": "mood",
+        "delta": 2
+      },
+      {
+        "type": "say",
+        "role": "b",
+        "text": "元気そうで、よかった"
+      }
+    ]
+  }
+]

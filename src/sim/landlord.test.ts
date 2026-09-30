@@ -10,7 +10,7 @@ const ids = (s: GameState): string[] =>
 
 describe("入居の一本化: 大家が新入居者を連れて来る", () => {
   it("退去の数日後に大家が新入居者を連れて来て、入居の日誌は 1 回だけ出て、歓迎会が開かれる", () => {
-    const rng = createRng(11);
+    const rng = createRng(15);
     let s = newGame(rng);
     const target = s.res[0]!;
     s.booked = [{ id: "moveout-good", at: s.t + 60, roles: { a: target.id }, tries: 0 }];
