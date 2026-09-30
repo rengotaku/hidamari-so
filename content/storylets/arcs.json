@@ -4,7 +4,7 @@
     "kind": "arc",
     "trigger": "book",
     "roles": { "a": { "archetype": ["ronin"] } },
-    "texts": ["{a}さん、明日が模試の本番らしい。{room}の電気が朝まで消えなかった"],
+    "texts": ["{a}さん、明日が模試の本番らしい。{room}の電気が朝まで消えなかった", "{a}さんは模試の前の晩、鉛筆を八本削った。{room}の明かりは、朝まで消えなかった"],
     "effects": [
       {
         "type": "book",
@@ -18,7 +18,7 @@
     "kind": "arc",
     "trigger": "book",
     "roles": { "a": { "archetype": ["ronin"] } },
-    "texts": ["{a}さん、模試で初めて志望校に丸がついた。掲示板の前で泣いていたらしい。その夜は勝手に祝賀会になった"],
+    "texts": ["{a}さん、模試で初めて志望校に丸がついた。掲示板の前で泣いていたらしい。その夜は勝手に祝賀会になった", "{a}さんの模試の結果に、初めて志望校の名前へ丸がついた。掲示板の前の涙は見られていた。夜は、勝手に小さな祝賀会になった"],
     "effects": [
       { "type": "say", "role": "a", "text": "丸…丸がついた…" },
       { "type": "adjust", "role": "a", "stat": "mood", "delta": 50 },
@@ -39,7 +39,7 @@
     "trigger": "book",
     "roles": { "a": { "archetype": ["ronin"] } },
     "choices": { "how": ["判定は今回も見なかったことにした", "「来年こそ」が口癖に戻った"] },
-    "texts": ["{a}さん、模試の結果が返ってきた。{how}。隣の人が黙ってカップ麺を置いていった"],
+    "texts": ["{a}さん、模試の結果が返ってきた。{how}。隣の人が黙ってカップ麺を置いていった", "{a}さんの模試の結果が戻ってきた。{how}。廊下に、誰かがカップ麺をそっと置いていった"],
     "effects": [
       { "type": "adjust", "role": "a", "stat": "mood", "delta": -30 },
       {
@@ -54,7 +54,7 @@
     "kind": "arc",
     "trigger": "book",
     "roles": { "a": { "archetype": ["band"] } },
-    "texts": ["{a}さんのバンドに、レコード会社の人が来たらしい"],
+    "texts": ["{a}さんのバンドに、レコード会社の人が来たらしい", "{a}さんのライブに、名刺を持った人が来ていたらしい。本人は最後まで気づかなかった"],
     "effects": [
       { "type": "adjust", "role": "a", "stat": "mood", "delta": 20 },
       {
@@ -69,7 +69,7 @@
     "kind": "arc",
     "trigger": "book",
     "roles": { "a": { "archetype": ["band"] } },
-    "texts": ["{a}さんのバンド、デビューの話が本決まりになった。祝杯は発泡酒だった"],
+    "texts": ["{a}さんのバンド、デビューの話が本決まりになった。祝杯は発泡酒だった", "{a}さんのバンドのデビューが本決まりになった。乾杯は発泡酒で、みんな泣いた"],
     "effects": [
       { "type": "adjust", "role": "a", "stat": "mood", "delta": 30 },
       { "type": "book", "next": [{ "id": "farewell-party" }], "afterMinutes": [2880, 4320] }
@@ -80,7 +80,7 @@
     "kind": "arc",
     "trigger": "book",
     "roles": { "a": { "archetype": ["band"] } },
-    "texts": ["{a}さんのデビューの話、流れた。その夜はひと晩中ギターが鳴っていた"],
+    "texts": ["{a}さんのデビューの話、流れた。その夜はひと晩中ギターが鳴っていた", "{a}さんのデビューの話が、ひっそり流れた。その夜のギターは、いつもより長く鳴っていた"],
     "effects": [
       { "type": "adjust", "role": "a", "stat": "mood", "delta": -25 },
       {
@@ -96,7 +96,7 @@
     "trigger": "book",
     "once": true,
     "roles": { "a": { "archetype": ["band"] } },
-    "texts": ["{a}さん、バンドを解散。髪を切って就職した。ギターは押し入れに入った"],
+    "texts": ["{a}さん、バンドを解散。髪を切って就職した。ギターは押し入れに入った", "{a}さんがバンドを解散した。髪を切り、スーツを買い、ギターは押し入れの奥へ消えた"],
     "effects": [{ "type": "changeJob", "role": "a", "archetype": "salaryman" }]
   },
   {
@@ -105,7 +105,7 @@
     "trigger": "book",
     "once": true,
     "roles": { "a": { "archetype": ["salaryman"] } },
-    "texts": ["{a}さん、係長になった。お祝いに自分で自分に寿司を買った"],
+    "texts": ["{a}さん、係長になった。お祝いに自分で自分に寿司を買った", "{a}さんが係長になった。祝いは自分への寿司で、醤油を多めにつけた"],
     "effects": [
       { "type": "adjust", "role": "a", "stat": "money", "delta": 30000 },
       { "type": "adjust", "role": "a", "stat": "mood", "delta": 15 },
@@ -122,7 +122,7 @@
     "trigger": "book",
     "once": true,
     "roles": { "a": { "archetype": ["ronin"] } },
-    "texts": ["{a}さんの合格発表の日。掲示板の前で膝から崩れ落ち、その足で全員にカップ麺をおごった"],
+    "texts": ["{a}さんの合格発表の日。掲示板の前で膝から崩れ落ち、その足で全員にカップ麺をおごった", "{a}さんの合格発表の日。掲示板の前で膝をつき、帰りにみんなへカップ麺をふるまった"],
     "effects": [
       { "type": "say", "role": "a", "text": "受かった…受かった…" },
       { "type": "adjust", "role": "a", "stat": "mood", "delta": 60 },
@@ -135,7 +135,7 @@
     "trigger": "book",
     "once": true,
     "roles": { "a": { "archetype": ["ronin"] } },
-    "texts": ["{a}さん、志望校は落ちたが、専門学校の合格通知が届いた。「手に職だ」と自分に言い聞かせている"],
+    "texts": ["{a}さん、志望校は落ちたが、専門学校の合格通知が届いた。「手に職だ」と自分に言い聞かせている", "{a}さんは志望校に落ちたが、専門学校の合格通知が届いた。「手に職だ」と、何度も自分に言った"],
     "effects": [
       { "type": "adjust", "role": "a", "stat": "mood", "delta": 20 },
       { "type": "changeJob", "role": "a", "archetype": "senmon" }
@@ -146,7 +146,7 @@
     "kind": "arc",
     "trigger": "book",
     "roles": { "a": { "archetype": ["ronin"] } },
-    "texts": ["{a}さんの合格発表。番号は、なかった。その夜は誰も廊下を通らなかった"],
+    "texts": ["{a}さんの合格発表。番号は、なかった。その夜は誰も廊下を通らなかった", "{a}さんの合格発表。番号は見つからなかった。廊下は、その夜ずっと静かだった"],
     "effects": [
       { "type": "adjust", "role": "a", "stat": "mood", "delta": -40 },
       {
@@ -161,7 +161,7 @@
     "kind": "arc",
     "trigger": "book",
     "roles": { "a": { "archetype": ["mangaka"] } },
-    "texts": ["{a}さん、持ち込みで十八回目の編集者の前に座った。帰り道の缶コーヒーは無糖だった"],
+    "texts": ["{a}さん、持ち込みで十八回目の編集者の前に座った。帰り道の缶コーヒーは無糖だった", "{a}さんが十八回目の持ち込みに行った。編集者の前で緊張して、お茶に口をつけそびれた"],
     "effects": [
       {
         "type": "book",
@@ -175,7 +175,7 @@
     "kind": "arc",
     "trigger": "book",
     "roles": { "a": { "archetype": ["mangaka"] } },
-    "texts": ["{a}さんの原稿に、赤ペンで「キャラが薄い」と書かれて戻ってきた。本人は「濃くすると描けない」と反論している"],
+    "texts": ["{a}さんの原稿に、赤ペンで「キャラが薄い」と書かれて戻ってきた。本人は「濃くすると描けない」と反論している", "{a}さんの原稿が、赤ペンだらけで戻ってきた。「キャラが薄い」の文字の下に、本人が線を引いている"],
     "effects": [
       { "type": "adjust", "role": "a", "stat": "mood", "delta": -20 },
       { "type": "book", "next": [{ "id": "mangaka-pitch" }], "afterMinutes": [10080, 20160] }
@@ -187,7 +187,7 @@
     "trigger": "book",
     "once": true,
     "roles": { "a": { "archetype": ["mangaka"] } },
-    "texts": ["{a}さんの連載が決まった。担当は「月に三十ページ」と言っていた。{a}さんは三日ぶりに風呂に入った"],
+    "texts": ["{a}さんの連載が決まった。担当は「月に三十ページ」と言っていた。{a}さんは三日ぶりに風呂に入った", "{a}さんの連載が決まった。三日ぶりの風呂上がりに、担当から電話が来た"],
     "effects": [
       { "type": "adjust", "role": "a", "stat": "mood", "delta": 40 },
       { "type": "adjust", "role": "a", "stat": "money", "delta": 50000 },
@@ -200,7 +200,7 @@
     "kind": "arc",
     "trigger": "book",
     "roles": { "a": { "archetype": ["pachinko"] } },
-    "texts": ["{a}さんの財布には、パチンコ店のポイントカードが二十枚。全部、ポイントが残っている"],
+    "texts": ["{a}さんの財布には、パチンコ店のポイントカードが二十枚。全部、ポイントが残っている", "{a}さんの財布は、パチンコ店のポイントカードで膨らんでいる。どれもポイントが残っていた"],
     "effects": [
       { "type": "adjust", "role": "a", "stat": "mood", "delta": -10 },
       {
@@ -220,7 +220,7 @@
     "trigger": "book",
     "once": true,
     "roles": { "a": { "archetype": ["pachinko"] } },
-    "texts": ["{a}さんがパチンコから足を洗った。ポイントカードは全部ゴミ箱へ。今度は夜のコンビニで働いている"],
+    "texts": ["{a}さんがパチンコから足を洗った。ポイントカードは全部ゴミ箱へ。今度は夜のコンビニで働いている", "{a}さんがパチンコをやめた。ポイントカードは束ごと捨てて、夜は別の仕事に出かけていく"],
     "effects": [
       { "type": "adjust", "role": "a", "stat": "mood", "delta": 10 },
       { "type": "say", "role": "a", "text": "もう、やめた" },
@@ -233,7 +233,7 @@
     "trigger": "book",
     "roles": { "a": { "archetype": ["youtuber"] } },
     "numbers": { "n": [2, 9] },
-    "texts": ["{a}さんの動画が一本だけ伸びた。再生回数は{n}万回。コメント欄の半分は、本人が書いたものだ"],
+    "texts": ["{a}さんの動画が一本だけ伸びた。再生回数は{n}万回。コメント欄の半分は、本人が書いたものだ", "{a}さんの動画が一本だけ跳ねた。再生は{n}万回。コメントのうち半分は、{a}さんが夜中に書いたものだ"],
     "effects": [
       { "type": "adjust", "role": "a", "stat": "mood", "delta": 35 },
       { "type": "adjust", "role": "a", "stat": "money", "delta": 80000 },
@@ -250,7 +250,7 @@
     "kind": "arc",
     "trigger": "book",
     "roles": { "a": { "archetype": ["youtuber"] } },
-    "texts": ["{a}さんの動画の熱が冷めた。再生回数は、また身内だけに戻った"],
+    "texts": ["{a}さんの動画の熱が冷めた。再生回数は、また身内だけに戻った", "{a}さんの動画の勢いが落ち着いた。再生数は、ふたたび身内の数に戻った"],
     "effects": [
       { "type": "adjust", "role": "a", "stat": "mood", "delta": -15 },
       { "type": "book", "next": [{ "id": "youtuber-viral" }], "afterMinutes": [14400, 28800] }
@@ -262,7 +262,7 @@
     "trigger": "book",
     "once": true,
     "roles": { "a": { "archetype": ["youtuber"] } },
-    "texts": ["{a}さん、広告収入で駅前のマンションを契約した。音を出しても怒られない部屋だそうだ"],
+    "texts": ["{a}さん、広告収入で駅前のマンションを契約した。音を出しても怒られない部屋だそうだ", "{a}さんが、広告の収入で駅前のマンションを借りた。音を出しても怒られない部屋を選んだらしい"],
     "effects": [
       { "type": "adjust", "role": "a", "stat": "mood", "delta": 25 },
       { "type": "book", "next": [{ "id": "farewell-party" }], "afterMinutes": [1440, 2880] }
@@ -273,7 +273,7 @@
     "kind": "arc",
     "trigger": "book",
     "roles": { "a": { "archetype": ["student"] } },
-    "texts": ["{a}さんのところに、成績通知が届いた。卒業に必要な数の、三分の一だったらしい"],
+    "texts": ["{a}さんのところに、成績通知が届いた。卒業に必要な数の、三分の一だったらしい", "{a}さんの成績通知が届いた。卒業に必要な数の、三分の一だったらしい。通知は折りたたまれて、本棚に挟まれた"],
     "effects": [
       { "type": "adjust", "role": "a", "stat": "mood", "delta": -10 },
       {
@@ -293,7 +293,7 @@
     "trigger": "book",
     "once": true,
     "roles": { "a": { "archetype": ["student"] } },
-    "texts": ["{a}さんの卒業が決まった。大学八年目。ゼミの教授が泣いていた。{a}さんは就職先を探し始めた"],
+    "texts": ["{a}さんの卒業が決まった。大学八年目。ゼミの教授が泣いていた。{a}さんは就職先を探し始めた", "{a}さんの卒業が決まった。八年目だった。ゼミの教授が泣き、{a}さんは就職の本を買いにいった"],
     "effects": [
       { "type": "adjust", "role": "a", "stat": "mood", "delta": 40 },
       { "type": "say", "role": "a", "text": "そつぎょう…できる…" },
@@ -305,7 +305,7 @@
     "kind": "arc",
     "trigger": "book",
     "roles": { "a": { "archetype": ["senmon"] } },
-    "texts": ["{a}さんの専門学校の課題が、提出期限の二分前に終わった。本人は「いつもこう」と言っている"],
+    "texts": ["{a}さんの専門学校の課題が、提出期限の二分前に終わった。本人は「いつもこう」と言っている", "{a}さんの課題が、提出の二分前に仕上がった。「いつもこう」と本人は言う"],
     "effects": [
       { "type": "adjust", "role": "a", "stat": "mood", "delta": 5 },
       {
@@ -321,7 +321,7 @@
     "trigger": "book",
     "once": true,
     "roles": { "a": { "archetype": ["senmon"] } },
-    "texts": ["{a}さんが専門学校を卒業した。内定先は「まだ言えない」らしい。卒業証書は冷蔵庫の扉に貼られた"],
+    "texts": ["{a}さんが専門学校を卒業した。内定先は「まだ言えない」らしい。卒業証書は冷蔵庫の扉に貼られた", "{a}さんが専門学校を卒業した。内定は「まだ言えない」そうで、証書は冷蔵庫の扉に貼られた"],
     "effects": [
       { "type": "adjust", "role": "a", "stat": "mood", "delta": 35 },
       { "type": "book", "next": [{ "id": "farewell-party" }], "afterMinutes": [1440, 2880] }
@@ -333,7 +333,7 @@
     "trigger": "book",
     "once": true,
     "roles": { "a": { "archetype": ["salaryman"] } },
-    "texts": ["{a}さんに転勤の辞令が出た。紙を二度見て、三度見て、部屋の電気を消した"],
+    "texts": ["{a}さんに転勤の辞令が出た。紙を二度見て、三度見て、部屋の電気を消した", "{a}さんに転勤の辞令が出た。紙を何度も見返したあと、部屋の電気を消した"],
     "effects": [
       { "type": "adjust", "role": "a", "stat": "mood", "delta": -15 },
       { "type": "say", "role": "a", "text": "…また引っ越しか" },
@@ -345,7 +345,7 @@
     "kind": "arc",
     "trigger": "book",
     "roles": { "a": { "archetype": ["oldman"], "inRoom": true } },
-    "texts": ["{a}さんが倒れ、救急車で運ばれた。廊下に集まった住人は、サイレンが聞こえなくなるまで黙っていた"],
+    "texts": ["{a}さんが倒れ、救急車で運ばれた。廊下に集まった住人は、サイレンが聞こえなくなるまで黙っていた", "{a}さんが倒れて、救急車で運ばれた。サイレンが聞こえなくなるまで、廊下の住人は誰も動けなかった"],
     "effects": [
       { "type": "away", "role": "a", "minutes": [7200, 9000] },
       {
@@ -360,7 +360,7 @@
     "kind": "arc",
     "trigger": "book",
     "roles": { "a": { "archetype": ["oldman"], "inRoom": true } },
-    "texts": ["{a}さんが退院した。玄関の前に、誰かが置いた花が一日で増えた"],
+    "texts": ["{a}さんが退院した。玄関の前に、誰かが置いた花が一日で増えた", "{a}さんが退院してきた。玄関先に、誰が置いたか分からない花が増えていった"],
     "effects": [
       { "type": "adjust", "role": "a", "stat": "mood", "delta": 10 },
       { "type": "say", "role": "a", "text": "ただいま。お世話をかけました" },
@@ -377,7 +377,7 @@
     "trigger": "book",
     "once": true,
     "roles": { "a": { "archetype": ["oldman"] } },
-    "texts": ["{a}さんが介護施設に移ることになった。管理人の猫が、最後の日まで膝から動かなかった"],
+    "texts": ["{a}さんが介護施設に移ることになった。管理人の猫が、最後の日まで膝から動かなかった", "{a}さんが介護施設へ移る日が決まった。管理人の猫は、最後の日まで{a}さんの膝にいた"],
     "effects": [{ "type": "book", "next": [{ "id": "farewell-party" }], "afterMinutes": [1440, 2880] }]
   },
   {
