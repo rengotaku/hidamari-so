@@ -1,0 +1,6 @@
+# Cloudflare Pages configuration
+# https://developers.cloudflare.com/pages/configuration/wrangler-configuration/
+
+name = "hidamari-so"
+compatibility_date = "2024-01-01"
+pages_build_output_dir = "dist"

@@ -1,0 +1,1303 @@
+<title>ひだまり荘</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&family=M+PLUS+1p:wght@400;700&display=swap">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+/* layout: 1画面固定。左に建物の断面（ドット絵）、右にタブ（名簿／日誌／設備／アルバム）。狭い画面は 上=建物・下=タブ */
+:root{
+  --bg:#1d1b24; --panel:#28252e; --panel2:#322e39; --line:#403a48;
+  --ink:#eee4cf; --muted:#a9a091; --accent:#6fb3a6; --bulb:#e7b25a; --danger:#e0705f;
+  --paper:#ebe3cb; --paper-ink:#2f2b35; --rule:#aebfd2; --margin:#d68f8f;
+  --f-pixel:"DotGothic16","MS Gothic","Osaka-mono",monospace;
+  --f-body:"M PLUS 1p","Hiragino Sans","Noto Sans JP",sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.6;overflow:hidden}
+.app{height:100%;display:grid;grid-template-rows:auto minmax(0,1fr);gap:10px;padding-inline:16px;padding-block:10px 12px;max-width:1500px;margin:0 auto}
+.top{display:flex;flex-wrap:wrap;gap:6px 20px;align-items:center;justify-content:space-between;min-width:0}
+h1{font-family:var(--f-pixel);font-weight:400;font-size:clamp(22px,2.6vw,32px);margin:0;letter-spacing:.08em;line-height:1.1}
+.spec{margin:2px 0 0;color:var(--muted);font-size:12px}
+.meters{display:flex;flex-wrap:wrap;gap:6px}
+.m{background:var(--panel);border:2px solid var(--line);padding:2px 9px;display:flex;flex-direction:column;min-width:0}
+.m .k{font-size:10px;color:var(--muted);letter-spacing:.08em}
+.m .v{font-family:var(--f-pixel);font-size:16px;font-variant-numeric:tabular-nums;white-space:nowrap;line-height:1.3}
+.m .sub{font-size:10px;color:var(--muted)}
+.neg{color:var(--danger)}
+.main{display:grid;grid-template-columns:minmax(0,1fr) 370px;gap:14px;min-height:0}
+.stageWrap{container-type:size;min-width:0;min-height:0;display:flex;align-items:center;justify-content:center}
+.stage{position:relative;width:min(100cqw,160cqh);aspect-ratio:320/200;max-width:100%;border:4px solid #0d0c11;background:#0d0c11;box-shadow:0 0 0 2px var(--line)}
+#scene{display:block;width:100%;height:100%;image-rendering:crisp-edges;image-rendering:pixelated;cursor:pointer}
+.overlay{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.sign{position:absolute;left:44.375%;top:22.75%;transform:translate(-50%,-50%);font-family:var(--f-pixel);color:#3b2f2a;font-size:clamp(7px,1.1vw,13px);letter-spacing:.12em;white-space:nowrap}
+.bubble{position:absolute;transform:translate(-50%,-100%);background:#fbf8ec;color:#26222c;font-family:var(--f-pixel);font-size:clamp(9px,1.05vw,13px);line-height:1.25;padding:2px 6px;border:2px solid #26222c;white-space:nowrap;max-width:46%;overflow:hidden;text-overflow:ellipsis}
+.side{display:flex;flex-direction:column;gap:8px;min-height:0;min-width:0}
+.controls{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center}
+.speed{display:flex}
+.speed button{font-family:var(--f-pixel);font-size:13px;background:var(--panel);color:var(--ink);border:2px solid var(--line);margin-left:-2px;padding:4px 10px;cursor:pointer}
+.speed button:first-child{margin-left:0}
+.speed button[aria-pressed="true"]{background:var(--accent);color:#14201e;border-color:var(--accent);position:relative}
+button:focus-visible,input:focus-visible,.note:focus-visible{outline:2px solid var(--bulb);outline-offset:2px}
+.rent{display:flex;align-items:center;gap:6px;font-size:12px;flex:1;min-width:0}
+.rent b{font-family:var(--f-pixel);font-weight:400;font-size:14px;font-variant-numeric:tabular-nums;color:var(--bulb);white-space:nowrap}
+.rent input{accent-color:var(--accent);flex:1;min-width:60px}
+.tabs{display:flex;gap:0;border-bottom:2px solid var(--line)}
+.tabs button{flex:1;font-family:var(--f-pixel);font-size:14px;background:transparent;color:var(--muted);border:0;border-bottom:3px solid transparent;margin-bottom:-2px;padding:6px 4px;cursor:pointer;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--bulb);border-bottom-color:var(--bulb)}
+.tabs button .dot{display:inline-block;width:6px;height:6px;background:var(--danger);margin-left:4px;vertical-align:middle}
+.panes{flex:1;min-height:0;background:var(--panel);border:2px solid var(--line)}
+.pane{height:100%;overflow:auto;padding:12px;scrollbar-width:thin}
+.pane.flush{padding:0}
+.roster{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.rc{display:flex;flex-direction:column;gap:1px;text-align:left;background:var(--panel2);border:2px solid var(--line);color:var(--ink);padding:5px 7px;font:inherit;cursor:pointer;min-width:0}
+.rc[aria-pressed="true"]{border-color:var(--bulb)}
+.rc .no{font-family:var(--f-pixel);font-size:11px;color:var(--accent)}
+.rc .nm{font-weight:700;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rc .st{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rc.vac .nm{color:var(--muted);font-weight:400}
+.detail{margin-top:12px;border-top:2px dashed var(--line);padding-top:10px}
+.detail h3{margin:0;font-size:16px;text-wrap:balance}
+.detail h3 small{font-weight:400;color:var(--muted);font-size:12px;margin-left:6px}
+.detail .job{margin:2px 0 8px;color:var(--accent);font-size:12.5px}
+.detail h4{font-family:var(--f-pixel);font-weight:400;font-size:13px;color:var(--bulb);margin:10px 0 3px;letter-spacing:.06em}
+.detail ul{margin:0;padding-left:1.1em}
+.detail li{margin:1px 0;font-size:12.5px}
+.detail li b{font-weight:700}
+.bars{display:grid;grid-template-columns:auto minmax(0,1fr) 2.6em;gap:3px 8px;align-items:center;font-size:12px}
+.bar{height:8px;background:#1b1920;border:1px solid var(--line)}
+.bar i{display:block;height:100%;background:var(--accent)}
+.bar i.warm{background:var(--bulb)}
+.bar i.bad{background:var(--danger)}
+.bars .n{font-family:var(--f-pixel);font-variant-numeric:tabular-nums;text-align:right;color:var(--muted)}
+.facts{display:grid;grid-template-columns:auto 1fr;gap:1px 12px;font-size:12.5px;margin:8px 0 0}
+.facts dt{color:var(--muted)}
+.facts dd{margin:0;font-family:var(--f-pixel);font-variant-numeric:tabular-nums}
+.note{background-color:var(--paper);color:var(--paper-ink);background-image:linear-gradient(to right,transparent 57px,var(--margin) 57px,var(--margin) 59px,transparent 59px),repeating-linear-gradient(to bottom,transparent 0,transparent 25px,var(--rule) 25px,var(--rule) 26px);background-attachment:local;line-height:26px;font-size:13px;padding:0 10px 0 66px;min-height:100%}
+.ent{margin:0;position:relative}
+.ent .ts{position:absolute;left:-64px;width:54px;font-family:var(--f-pixel);font-size:10px;color:#6c6475;text-align:right;white-space:nowrap}
+.ent.rent{font-weight:700}
+.ent.cost{color:#9d3a2b}
+.ent.move{color:#1f6b5f;font-weight:700}
+.ent.life{color:#8a4b2e;font-weight:700}
+.ent.day{color:#6c6475;font-family:var(--f-pixel);font-size:12px}
+.item{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px dashed var(--line)}
+.item>div{min-width:0}
+.item b{font-size:13px;display:block}
+.item small{display:block;color:var(--muted);font-size:11.5px;line-height:1.5}
+.buy{font-family:var(--f-pixel);font-size:13px;background:transparent;color:var(--bulb);border:2px solid var(--bulb);padding:3px 8px;white-space:nowrap;cursor:pointer;font-variant-numeric:tabular-nums}
+.buy:disabled{opacity:.4;cursor:not-allowed}
+.buy.done{color:var(--accent);border-color:var(--accent);opacity:1}
+.reset{margin-top:12px;background:transparent;border:1px solid var(--line);color:var(--muted);font:inherit;font-size:12px;padding:4px 10px;cursor:pointer}
+.reset.arm{color:var(--danger);border-color:var(--danger)}
+.hint{color:var(--muted);font-size:12px;margin:0 0 8px}
+.albumGrid{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+.ac{background:var(--paper);color:var(--paper-ink);padding:8px 11px;border-left:4px solid var(--accent);min-width:0}
+.ac.gone{border-left-color:#9a8f80}
+.ac.happy{border-left-color:var(--bulb)}
+.ac h3{margin:0;font-size:13.5px}
+.ac h3 small{display:block;font-weight:400;font-size:11px;color:#6c6475}
+.ac .per{margin:3px 0;font-family:var(--f-pixel);font-size:11px;color:#6c6475}
+.ac ul{margin:3px 0;padding-left:1.1em;font-size:12px}
+.ac .end{margin:3px 0 0;font-size:12px;font-weight:700}
+.modal{position:fixed;inset:0;background:rgba(10,9,14,.74);display:grid;place-items:center;padding:16px;z-index:10}
+#event{z-index:11}
+.modal .card{background:var(--paper);color:var(--paper-ink);width:100%;max-width:480px;padding:18px 20px;border:3px solid #26222c;max-height:90%;overflow:auto}
+.modal h2{font-family:var(--f-pixel);font-weight:400;font-size:20px;margin:0 0 8px;color:#8a4b2e}
+.modal ul{padding-left:1.1em;margin:8px 0 14px}
+.modal li{font-size:13.5px;margin:3px 0}
+.modal p{font-size:14px;line-height:1.8;margin:0 0 10px}
+.modal .btns{display:flex;flex-wrap:wrap;gap:8px}
+.modal button{font-family:var(--f-pixel);font-size:15px;background:#26222c;color:var(--paper);border:2px solid #26222c;padding:8px 16px;cursor:pointer}
+.modal button.alt{background:transparent;color:#26222c}
+@media (max-width:760px){
+  .app{gap:6px;padding-block:6px 8px}
+  .spec{display:none}
+  .top{gap:4px 10px}
+  .m{padding:1px 6px}
+  .m .v{font-size:13px}
+  .m .sub{display:none}
+  .main{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);gap:8px}
+  .stageWrap{container-type:normal}
+  .stage{width:100%}
+  .bubble{font-size:9px}
+}
+</style>
+
+<div class="app">
+  <header class="top">
+    <div>
+      <h1>ひだまり荘</h1>
+      <p class="spec" id="spec">築47年・木造2階建て・6室・風呂なし</p>
+    </div>
+    <div class="meters">
+      <div class="m"><span class="k">築年数</span><span class="v" id="age">-</span><span class="sub" id="ageSub"></span></div>
+      <div class="m"><span class="k">日付</span><span class="v" id="clock">-</span></div>
+      <div class="m"><span class="k">天気</span><span class="v" id="weather">-</span></div>
+      <div class="m"><span class="k">大家の財布</span><span class="v" id="money">-</span></div>
+      <div class="m"><span class="k">評判</span><span class="v" id="rep">-</span></div>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="stageWrap">
+      <div class="stage">
+        <canvas id="scene" width="320" height="200" aria-label="ひだまり荘の断面図。部屋を押すと住人の情報が出る"></canvas>
+        <div class="overlay" id="overlay"><div class="sign">ひだまり荘</div></div>
+      </div>
+    </div>
+
+    <aside class="side">
+      <div class="controls">
+        <div class="speed" role="group" aria-label="時間の速さ">
+          <button type="button" id="sp0" data-s="0">止める</button>
+          <button type="button" id="sp1" data-s="1">等速</button>
+          <button type="button" id="sp4" data-s="4">4倍</button>
+          <button type="button" id="sp15" data-s="15">15倍</button>
+        </div>
+        <label class="rent" for="rent" title="上げると儲かる。そのぶん滞納と退去が増える">家賃 <b id="rentv">-</b>
+          <input type="range" id="rent" min="18000" max="45000" step="1000">
+        </label>
+      </div>
+      <div class="tabs" role="tablist" aria-label="大家の手元">
+        <button type="button" role="tab" id="tab-roster" aria-controls="pane-roster" data-pane="roster">名簿</button>
+        <button type="button" role="tab" id="tab-log" aria-controls="pane-log" data-pane="log">日誌</button>
+        <button type="button" role="tab" id="tab-shop" aria-controls="pane-shop" data-pane="shop">設備</button>
+        <button type="button" role="tab" id="tab-album" aria-controls="pane-album" data-pane="album">アルバム</button>
+      </div>
+      <div class="panes">
+        <section class="pane" id="pane-roster" role="tabpanel" aria-labelledby="tab-roster">
+          <div class="roster" id="roster"></div>
+          <div class="detail" id="detail"></div>
+        </section>
+        <section class="pane flush" id="pane-log" role="tabpanel" aria-labelledby="tab-log" hidden>
+          <div class="note" id="log" tabindex="0"></div>
+        </section>
+        <section class="pane" id="pane-shop" role="tabpanel" aria-labelledby="tab-shop" hidden>
+          <div class="shop" id="shop"></div>
+          <button type="button" class="reset" id="reset">最初からやり直す</button>
+        </section>
+        <section class="pane" id="pane-album" role="tabpanel" aria-labelledby="tab-album" hidden>
+          <p class="hint">ここに住んだ人と、その人のいちばん人間臭かった瞬間。出ていった人も残る</p>
+          <div class="albumGrid" id="album"></div>
+        </section>
+      </div>
+    </aside>
+  </main>
+</div>
+
+<div class="modal" id="away" hidden>
+  <div class="card" role="dialog" aria-labelledby="awayTitle">
+    <h2 id="awayTitle">お帰りなさい、大家さん</h2>
+    <p id="awayLead"></p>
+    <ul id="awayList"></ul>
+    <div class="btns"><button type="button" id="awayClose">日誌を閉じる</button></div>
+  </div>
+</div>
+
+<div class="modal" id="event" hidden>
+  <div class="card" role="dialog" aria-labelledby="evTitle">
+    <h2 id="evTitle"></h2>
+    <div id="evBody"></div>
+    <div class="btns" id="evBtns"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+const W=320,H=200,MIN_PER_SEC=2,KEY='hidamari-so-v1';
+const cv=document.getElementById('scene'),ctx=cv.getContext('2d');
+const overlay=document.getElementById('overlay');
+const rand=(a,b)=>a+Math.random()*(b-a);
+const randi=(a,b)=>Math.floor(a+Math.random()*(b-a+1));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const chance=p=>Math.random()<p;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const yen=n=>(n<0?'-¥':'¥')+Math.abs(Math.round(n)).toLocaleString('ja-JP');
+const reduceMotion=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- 色 ---------- */
+function hex2(c){c=c.replace('#','');return[parseInt(c.slice(0,2),16),parseInt(c.slice(2,4),16),parseInt(c.slice(4,6),16)];}
+function mix(a,b,t){const A=hex2(a),B=hex2(b);return '#'+A.map((v,i)=>Math.round(v+(B[i]-v)*t).toString(16).padStart(2,'0')).join('');}
+function shade(c,amt){return amt<0?mix(c,'#000000',-amt/100):mix(c,'#ffffff',amt/100);}
+function P(x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(Math.round(x),Math.round(y),w,h);}
+
+/* ---------- 固定の背景（毎回同じ町並み） ---------- */
+function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const srng=mulberry(47);
+const BG=[];{let x=-6;while(x<330){const w=18+Math.floor(srng()*26),h=26+Math.floor(srng()*44),roof=srng()<.5,wins=[];for(let k=0;k<3;k++)wins.push([x+3+Math.floor(srng()*(w-6)),172-h+6+Math.floor(srng()*(h-14)),srng()<.45]);BG.push({x,w,h,roof,wins});x+=w+Math.floor(srng()*4);}}
+const STARS=[];for(let k=0;k<40;k++)STARS.push([Math.floor(srng()*320),Math.floor(srng()*95),srng()]);
+const STAINS=[0,1,2,3,4,5].map(i=>[[8+((i*17)%40),3,5,3],[30+((i*29)%30),4,3,2]]);
+
+/* ---------- 住人の素材 ---------- */
+const SURN=['田中','佐々木','山口','松本','井上','木村','林','斎藤','清水','森','池田','橋本','石川','前田','藤田','岡田','後藤','長谷川','村上','近藤','小野','坂本','原田','中川'];
+const GIVEN=['健太','翔','大輔','誠','修','勇気','優子','真由美','さくら','陽菜','亮','哲也','聡','美咲','隼人','亜美','蓮','拓也','由香','直樹'];
+const OLDGIVEN=['茂','治','勇','清','和子','トメ'];
+const HAIR=['#2a211c','#3a2a20','#6b4a2b','#1c1c24','#8a5a2b','#b58a4a','#4a2f3a'];
+const SKIN=['#f0c9a0','#e6b88f','#d9a57c','#f3d2b1'];
+const SHIRT=['#c65b4a','#4f7fb0','#6f9a5a','#d9c26a','#8a6fb0','#e0e0d8','#d98a4a','#4a4a55','#3f8f8a'];
+const PANTS=['#3b3f5a','#4a3d33','#2e2e36','#6a6a72','#35506a'];
+const BLANKET=['#c96b6b','#5f86b5','#7fa66a','#d9a24a','#9b7bb8','#d88aa0'];
+const CURTAIN=['#b85c4a','#6c8fb0','#c9b04a','#7fa07a','#a07ab0','#8a8a8a'];
+
+const TRAITS={
+  nebou:{label:'寝坊常習',desc:'目覚ましを止めた記憶がない'},
+  sake:{label:'酒好き',desc:'「今日は1本だけ」が口癖。守られたことはない'},
+  mikka:{label:'三日坊主',desc:'部屋のダンベルはもうすぐ物干しになる'},
+  mie:{label:'見栄っ張り',desc:'金欠でも半額じゃない弁当を買う'},
+  samishi:{label:'寂しがり',desc:'用もないのに隣の部屋をノックする'},
+  katazuke:{label:'片付けられない',desc:'万年床のまわりに地層ができている'},
+  jisui:{label:'自炊に挑戦中',desc:'換気扇のスイッチの場所をまだ知らない'},
+  neko:{label:'猫好き',desc:'野良猫に勝手に名前をつけている'},
+  hitorigoto:{label:'独り言が多い',desc:'壁が薄いので全部聞こえている'},
+  kinketsu:{label:'金欠',desc:'財布の中身より、ポイントカードの枚数が多い'}
+};
+const MEMOS=['冷蔵庫にマヨネーズしか入っていない','玄関に傘が11本ある','表札をマジックで手書きしている','洗濯物を3週間ためている','カーテンが半分しか閉まらない','部屋の電球が1個切れたまま','同じTシャツを7枚持っている','目覚まし時計が3個ある（全部止める）','観葉植物に「ポチ」と名付けている','押し入れにギターが3本入っている','実家の母から毎週留守電が入る','ポストのチラシを1年分ためている','年賀状の宛名が毎年ちがう人の名前','カップ麺の空き容器でペン立てを作った'];
+
+const JOBS={
+  konbini:{label:'コンビニ夜勤',age:[24,38],sleep:[8.5,15.5],eat:'bento',start:30000,
+    shifts:[{d:()=>true,s:22,e:6,label:'コンビニ夜勤',pay:11000}],
+    hobbies:{phone:3,tv:2,game:2,beer:2,stare:1}},
+  band:{label:'売れないバンドマン',age:[26,36],sleep:[3,11.5],eat:'ramen',start:9000,allowance:8000,
+    shifts:[{d:d=>d%3===1,s:18,e:23.5,label:'ライブ（客7人）',pay:3000},{d:d=>d%3===0,s:9,e:17,label:'引越しバイト',pay:12000}],
+    hobbies:{guitar:5,beer:3,phone:2,nap:1}},
+  ronin:{label:'三浪中の浪人生',age:[21,22],sleep:[2,10.5],eat:'ramen',start:20000,allowance:45000,
+    shifts:[{d:d=>d%4===1,s:13,e:17,label:'予備校（たまに）',pay:0}],
+    hobbies:{study:4,phone:4,game:2,nap:2,stare:1}},
+  oldman:{label:'年金暮らし（元国鉄の車掌）',age:[71,82],sleep:[21,5],eat:'nimono',start:90000,allowance:62000,old:true,
+    shifts:[{d:()=>true,s:5.5,e:7,label:'朝の散歩',pay:0}],
+    hobbies:{plants:3,radio:3,tv:3,stare:1}},
+  salaryman:{label:'中小企業の営業',age:[34,52],sleep:[0.5,6.5],eat:'bento',start:60000,
+    shifts:[{d:d=>d%7!==6&&d%7!==0,s:7.5,e:22.5,label:'会社',pay:15000}],
+    hobbies:{beer:4,tv:3,phone:2,nap:2}},
+  mangaka:{label:'漫画家志望（持ち込み17回）',age:[25,34],sleep:[5,13],eat:'ramen',start:12000,allowance:15000,
+    shifts:[{d:d=>d%3===2,s:10,e:18,label:'倉庫バイト',pay:9000}],
+    hobbies:{draw:6,phone:2,stare:2,nap:1}},
+  pachinko:{label:'自称・投資家（パチンコ）',age:[38,58],sleep:[1.5,9.5],eat:'bento',start:60000,
+    shifts:[{d:d=>d%2===0,s:10,e:21,label:'パチンコ',pay:'gamble'}],
+    hobbies:{keiba:4,beer:3,tv:2,phone:1}},
+  student:{label:'大学8年生',age:[26,27],sleep:[4,12.5],eat:'ramen',start:15000,allowance:40000,
+    shifts:[{d:d=>d%2===1,s:13,e:16,label:'講義（たぶん）',pay:0},{d:d=>d%3===0,s:18,e:23,label:'居酒屋バイト',pay:8000}],
+    hobbies:{phone:4,game:4,beer:2,nap:3,guitar:1}},
+  freshman:{label:'大学1年生（元・浪人生）',age:[22,23],sleep:[1.5,8.5],eat:'ramen',start:0,allowance:45000,
+    shifts:[{d:d=>d%7!==0,s:9,e:16,label:'大学',pay:0},{d:d=>d%3===1,s:18,e:22,label:'家庭教師のバイト',pay:6000}],
+    hobbies:{phone:3,beer:2,guitar:1,study:1,game:2}},
+  youtuber:{label:'動画配信者（登録者12人）',age:[23,31],sleep:[4.5,12],eat:'ramen',start:150000,
+    shifts:[{d:d=>d%5===3,s:14,e:22,label:'倉庫バイト',pay:9000}],
+    hobbies:{stream:5,phone:3,cook:1,stare:1}}
+};
+const JOB_TRAITS={konbini:['katazuke'],band:['nebou','sake'],ronin:['samishi','hitorigoto'],oldman:['neko','hitorigoto'],salaryman:['sake','mie'],mangaka:['nebou','jisui'],pachinko:['kinketsu','mie'],student:['katazuke','nebou'],youtuber:['hitorigoto','jisui']};
+
+const ACTS={
+  sleep:{label:'寝ている',pose:'lie',lines:['Zzz…','むにゃ…','（いびき）','あと5分…']},
+  nap:{label:'ゴロ寝',pose:'lie',dur:[40,110],lines:['ゴロゴロ…','何もしたくない','天井のシミが増えた気がする']},
+  phone:{label:'スマホ',pose:'sit',prop:'phone',dur:[30,120],lines:['あと5分だけ…','この猫動画いいな','既読つかない','誰からも連絡ない']},
+  tv:{label:'テレビ',pose:'sit',tprop:'tvon',dur:[40,120],lines:['（笑い声）','このCM何回目だ','リモコンどこ']},
+  game:{label:'ゲーム',pose:'sit',prop:'pad',tprop:'tvon',dur:[60,180],lines:['あと1戦だけ','なんで今の当たらないんだよ','セーブし忘れた…'],noise:.5},
+  beer:{label:'晩酌',pose:'sit',prop:'can',dur:[30,80],lines:['プシュッ','今日は1本だけ','…もう1本だけ','くぅ〜っ']},
+  drunk:{label:'酔っぱらい',pose:'stand',prop:'can',dur:[30,70],lines:['♪〜（音程迷子）','俺はまだ本気出してない','月がきれいだなあ！'],noise:2},
+  guitar:{label:'ギター',pose:'sit',prop:'guitar',dur:[40,120],lines:['ジャーン…','Fコードが押さえられない','新曲できた（前の曲と同じ）'],noise:1},
+  study:{label:'勉強（のつもり）',pose:'sit',tprop:'book',dur:[40,150],lines:['今年こそ…','ページが進まない','5分休憩（1時間）','机の片付けから始めよう']},
+  draw:{label:'原稿',pose:'sit',tprop:'pen',dur:[60,200],lines:['この線じゃない','締め切りって何だっけ','主人公の顔が毎回ちがう']},
+  plants:{label:'鉢植えの世話',pose:'stand',prop:'can_water',dur:[20,50],lines:['今日も元気か','お前だけだよ、話を聞いてくれるのは']},
+  radio:{label:'ラジオ',pose:'sit',tprop:'radio',dur:[40,120],lines:['（ラジオ体操第一）','昔はな…','（演歌）']},
+  workout:{label:'筋トレ',pose:'stand',prop:'dumbbell',dur:[10,20],lines:['今日から本気出す','…3回で限界','明日から本気出す']},
+  stream:{label:'配信',pose:'sit',tprop:'light',dur:[60,150],lines:['どうもー！（視聴者0）','チャンネル登録お願いします…','今日の企画は…えーと'],noise:1},
+  keiba:{label:'競馬新聞',pose:'sit',tprop:'paper',dur:[40,100],lines:['次こそ来る','（赤ペンで丸）','この馬は俺を裏切らない']},
+  clean:{label:'掃除',pose:'stand',dur:[30,60],lines:['…やるか','ゴミ袋が足りない','なんでこんな所に靴下が']},
+  stare:{label:'ぼーっとしている',pose:'stand',dur:[10,40],lines:['…','何しに立ったんだっけ','天井のシミが顔に見える']},
+  ramen:{label:'カップ麺',pose:'sit',tprop:'cup',dur:[15,25],lines:['3分も待てない','今日もカップ麺','スープまで飲むか…'],eat:[60,220]},
+  bento:{label:'コンビニ弁当',pose:'sit',tprop:'bento',dur:[15,25],lines:['半額シール最高','温めてもらえばよかった'],eat:[70,520]},
+  cook:{label:'自炊（失敗）',pose:'stand',tprop:'smoke',dur:[25,45],lines:['焦げた…','レシピ通りにやったのに','換気扇どこだっけ'],eat:[40,300]},
+  nimono:{label:'煮物をつくる',pose:'stand',tprop:'steam',dur:[30,50],lines:['今日は筑前煮','味が薄い…年だな'],eat:[70,250]},
+  moyashi:{label:'もやし炒め',pose:'sit',tprop:'cup',dur:[15,20],lines:['もやしは裏切らない','給料日まであと…数えるのやめた'],eat:[40,40]},
+  visit:{label:'お隣へ',pose:'stand'},
+  host:{label:'来客中',pose:'sit'},
+  nabe:{label:'鍋パーティー',pose:'sit',tprop:'nabe',lines:['うまい','肉ばっかり取るなよ','シメは雑炊派']},
+  idle:{label:'ぼんやり',pose:'sit',dur:[5,15]},
+  enkai:{label:'宴会',pose:'sit',lines:['かんぱーい！','まあまあ、もう一杯','あんた、いい人だねえ','（誰かが泣いている）','ここ、壁薄いから静かに…（一番うるさい）']},
+  night:{label:'二人の時間（そっとしておく）',pose:'lie',dur:[30,70]},
+  sick:{label:'風邪で寝込んでいる',pose:'lie',dur:[240,480],lines:['ゲホッ…','おかゆ食べたい…','誰か…']}
+};
+const LEAVE_LINES=['行ってきまーす','はぁ…行くか','（無言で出発）','鍵かけたっけ…'];
+const RETURN_LINES=['ただいま…（誰もいない）','疲れた…','今日も怒られた','（無言）','腹へった'];
+const EXCUSES=['実家から仕送りが来たら払います','財布を電車に忘れまして（2回目）','今月は推しの誕生日で…','来週、デカい話が決まるんで','ATMが混んでて','猫が通帳を隠しまして','明日！明日には必ず'];
+
+const UPG=[
+  {id:'cat',label:'野良猫のエサ皿',cost:5000,comfort:2,rep:1,desc:'茶トラが通ってくるようになる。猫好きの住人が喜ぶ'},
+  {id:'board',label:'共用の掲示板',cost:8000,comfort:2,rep:2,desc:'住人同士の交流が増えて、たまに鍋パーティーが開かれる'},
+  {id:'washer',label:'共用洗濯機（中古）',cost:50000,comfort:4,rep:3,desc:'階段下に置く。脱水のたびに建物ごと揺れる'},
+  {id:'leak',label:'雨漏りの修理',cost:120000,comfort:3,rep:4,desc:'2階の部屋のバケツが要らなくなる'},
+  {id:'vend',label:'自販機を置く',cost:150000,comfort:1,rep:1,desc:'1時間ごとに小銭が入る。住人は夜中に買いに来る'},
+  {id:'sound',label:'壁に防音シート',cost:280000,comfort:6,rep:5,desc:'ギターと酔っぱらいの歌が、隣に届きにくくなる'},
+  {id:'paint',label:'外壁の塗り直し',cost:450000,comfort:3,rep:12,desc:'築47年に見えなくなる（築40年くらいには見える）'},
+  {id:'shower',label:'シャワー室（風呂なし卒業）',cost:700000,comfort:10,rep:12,desc:'住人がもう銭湯の閉店時間を気にしなくていい'}
+];
+
+/* ---------- 状態 ---------- */
+let S=null, catchup=false;
+const walkers=[];
+const roomRect=i=>{const col=i%3,fl=i<3?1:2;return{x:28+col*77,y:fl===2?70:122,w:74,h:48,fl,col};};
+const roomNo=i=>i<3?101+i:201+(i-3);
+const ROOM_ORDER=[3,4,5,0,1,2];
+function neighbors(i){const o=[],c=i%3;if(c>0)o.push(i-1);if(c<2)o.push(i+1);o.push(i<3?i+3:i-3);return o;}
+function exitPath(i){return i>=3?[[266,117],[279,117],[302,171],[302,179],[-12,179]]:[[262,179],[-12,179]];}
+const hourF=()=>(S.t/60)%24;
+const dayN=()=>Math.floor(S.t/1440)+1;
+function fmtT(t,short){const d=Math.floor(t/1440)+1,m=Math.floor(t%1440),h=Math.floor(m/60),mm=m%60;return (short?d+'日 ':d+'日目 ')+String(h).padStart(2,'0')+':'+String(mm).padStart(2,'0');}
+function inWin(h,s,e){return s<e?h>=s&&h<e:h>=s||h<e;}
+function untilHour(e){let dh=e-hourF();if(dh<=0)dh+=24;return dh*60;}
+const getRes=id=>S.res.find(r=>r.id===id);
+const has=(r,t)=>r.traits.includes(t);
+const home=r=>typeof r.at==='number';
+const awake=r=>r.act!=='sleep'&&r.act!=='nap';
+function pickRes(f){const a=S.res.filter(f);return a.length?pick(a):null;}
+function say(r,text){if(!text||catchup)return;r.bubble={text,until:Date.now()+2400+text.length*110};}
+const bubbleOn=r=>r.bubble&&r.bubble.until>Date.now();
+function log(text,kind){
+  S.log.unshift({t:S.t,text,kind:kind||''});if(S.log.length>160)S.log.length=160;
+  for(const r of S.res)if(text.startsWith(r.sei+'さん')){r.hl=(r.hl||[]).concat(text).slice(-3);}
+}
+/* 築年数: 18日ごとに1年。築50年で記念日 */
+const YEAR_DAYS=18,START_AGE=47,GOAL_AGE=50;
+const buildAge=()=>START_AGE+Math.floor((S.t-S.t0)/(YEAR_DAYS*1440));
+const daysToGoal=()=>Math.max(0,Math.ceil((S.t0+(GOAL_AGE-START_AGE)*YEAR_DAYS*1440-S.t)/1440));
+
+function workNow(r){
+  const j=JOBS[r.job],h=hourF(),d=dayN();
+  for(const sh of j.shifts){const dd=(sh.s>sh.e&&h<sh.e)?d-1:d;if(sh.d(dd)&&inWin(h,sh.s,sh.e))return sh;}
+  return null;
+}
+
+function makeRes(job,opt){
+  opt=opt||{};const j=JOBS[job];
+  const used=S.res.map(r=>r.sei);
+  let sei=opt.sei||pick(SURN.filter(s=>!used.includes(s)));
+  const traits=opt.traits||pickTraits(job);
+  const r={id:S.nextId++,sei,mei:opt.mei||pick(j.old?OLDGIVEN:GIVEN),age:opt.age||randi(j.age[0],j.age[1]),job,traits,
+    look:{hair:j.old?'#d8d4cc':pick(HAIR),skin:pick(SKIN),shirt:pick(SHIRT),pants:pick(PANTS),blanket:pick(BLANKET),curtain:pick(CURTAIN),bald:!!j.old&&chance(.6),long:chance(.3)},
+    memos:[],money:j.start,mood:55,hunger:randi(10,40),sleepy:randi(10,40),comfort:55,clutter:randi(5,40),arrears:0,
+    room:-1,at:-1,x:0,y:0,tx:0,dir:1,act:'idle',until:0,beers:0,bathed:false,gym:0,quitGym:false,since:S.t,hl:[],trust:30};
+  const mm=MEMOS.slice();r.memos=[mm.splice(randi(0,mm.length-1),1)[0],mm.splice(randi(0,mm.length-1),1)[0]];
+  return r;
+}
+function pickTraits(job){const base=[pick(JOB_TRAITS[job])];const others=Object.keys(TRAITS).filter(k=>!base.includes(k));base.push(pick(others));if(chance(.4)){const o2=others.filter(k=>!base.includes(k));base.push(pick(o2));}return base;}
+function place(r,room){S.rooms[room]=r.id;r.room=room;r.at=room;const rr=roomRect(room);r.x=rr.x+40;r.tx=r.x;S.res.push(r);}
+
+function newGame(){
+  S={v:1,t:17*60,money:30000,rent:28000,rep:45,up:{},weather:'sunny',res:[],rooms:[null,null,null,null,null,null],log:[],nextId:1,lastHour:17,
+     cat:{x:34,tx:34,room:-1,until:0},vendDay:0,sel:null,pending:[],noiseHour:-1,speed:1,
+     t0:17*60,album:[],stats:{yonige:0,nabe:0},decided:false,ceremony:false,ended:null,hiddenAt:0,
+     rel:{},couples:[],events:[],offers:[],blackout:0,hands:3,handT:17*60,tab:'roster'};
+  place(makeRes('oldman',{sei:'松本',mei:'茂',age:78,traits:['neko','hitorigoto']}),0);
+  place(makeRes('salaryman',{sei:'田中',mei:'誠',age:41,traits:['sake','mie']}),1);
+  place(makeRes('band',{sei:'佐々木',mei:'翔',age:29,traits:['nebou','katazuke','sake']}),3);
+  place(makeRes('ronin',{sei:'森',mei:'健太',age:22,traits:['samishi','mikka']}),5);
+  S.res.forEach(r=>{const sh=workNow(r);if(sh){r.at='out';r.act='out';r.outPurpose='work';r.shift={label:sh.label,pay:sh.pay};}else chooseAct(r);});
+  S.res[3].clutter=85;
+  log('今日からこのアパートの大家になった。住人は4人、空室が2つ','move');
+  S.sel=S.res[2].id;
+}
+
+/* ---------- 行動 ---------- */
+function startAct(r,key,dur){
+  const a=ACTS[key];r.act=key;r.lastAct=key;
+  const d=a.dur||[20,60];r.until=S.t+(dur!=null?dur:randi(d[0],d[1]));
+  const rr=roomRect(r.at);
+  if(a.pose==='lie'){r.x=rr.x+6;r.tx=r.x;}
+  else if(a.pose==='sit')r.tx=rr.x+randi(29,48);
+  else if(key==='cook'||key==='nimono')r.tx=rr.x+randi(52,57);
+  else if(key==='plants')r.tx=rr.x+randi(12,20);
+  else r.tx=rr.x+randi(12,56);
+  if(key==='beer')r.beers=(r.beers||0)+1;
+  if(a.eat){r.hunger=Math.max(0,r.hunger-a.eat[0]);r.money=Math.max(0,r.money-a.eat[1]);}
+  if(a.lines&&chance(.55))say(r,pick(a.lines));
+}
+function startSleep(r){r.beers=0;startAct(r,'sleep',untilHour(JOBS[r.job].sleep[1])+(has(r,'nebou')?randi(0,40):0));if(chance(.3))say(r,'おやすみ（誰に言うでもなく）');}
+function startEat(r){
+  let k=JOBS[r.job].eat||'ramen';
+  if(has(r,'jisui')&&chance(.5))k='cook';
+  if(has(r,'mie')&&k!=='nimono')k='bento';
+  if(r.money<1500)k='moyashi';
+  if(k==='bento'&&r.money<600)k='ramen';
+  startAct(r,k);
+}
+function weighted(w){let sum=0;for(const k in w)sum+=w[k];let x=Math.random()*sum;for(const k in w){x-=w[k];if(x<=0)return k;}return 'stare';}
+function hobbyPick(r){
+  const h=hourF(),w=Object.assign({},JOBS[r.job].hobbies);
+  w.stare=(w.stare||0)+1;w.nap=(w.nap||0)+.5;
+  const evening=h>=17||h<4;
+  if(!evening)delete w.beer;else if(has(r,'sake'))w.beer=(w.beer||1)*3;
+  if(has(r,'mikka')&&!r.quitGym)w.workout=1.5;
+  if(w.cook){w.cook=r.hunger>30?w.cook:0;}
+  return weighted(w);
+}
+function chooseAct(r){
+  if(r.visiting){goHome(r);return;}
+  const j=JOBS[r.job],h=hourF();
+  if(inWin(h,j.sleep[0],j.sleep[1])){startSleep(r);return;}
+  if(r.sleepy>88){startAct(r,'nap');return;}
+  if(r.hunger>62){startEat(r);return;}
+  if((h>=22||h<2)&&startNight(r))return;
+  if(r.lastAct==='beer'&&has(r,'sake')){
+    if(r.beers>=2&&chance(.45)){startAct(r,'drunk');return;}
+    if(chance(.55)){startAct(r,'beer');return;}
+  }
+  if(!S.up.shower&&!r.bathed&&h>=18&&h<23.5&&chance(.3)){startLeave(r,'sento',pick(['銭湯行ってこよ','（洗面器を抱えて出発）','閉まる前に行かないと']),{dur:randi(30,50)});return;}
+  if(chance(has(r,'samishi')?.16:(S.up.board?.08:.04))&&startVisit(r))return;
+  if(r.money>700&&chance((h>=21||h<3)?.08:.03)){startLeave(r,'konbini',pick(['ちょっとコンビニ','（サンダルで出かける）','アイス買ってこよ']),{dur:randi(10,25)});return;}
+  if(r.clutter>70&&chance(.12)){startAct(r,'clean');return;}
+  startAct(r,hobbyPick(r));
+}
+function startNight(r){
+  const c=coupleOf(r),pt=partnerOf(r);
+  if(!c||c.stage==='crush'||!pt||c.night===dayN()||!chance(.35))return false;
+  if(!home(pt)||!awake(pt)||pt.act==='enkai'||pt.act==='sick'||r.act==='enkai')return false;
+  const room=S.rooms[r.room]===r.id?r.room:pt.room;
+  if(pt.at!==room&&pt.at!==pt.room)return false;
+  if(S.res.some(x=>x!==r&&x!==pt&&x.at===room))return false;
+  c.night=dayN();const dur=randi(30,70);
+  for(const x of [r,pt]){if(x.at!==room||x.room!==room){x.visiting=x.room!==room;x.at=room;}startAct(x,'night',dur);}
+  if(chance(.25))log(`${roomNo(room)}の電気が、今夜は早めに消えた`);
+  return true;
+}
+function endAct(r){
+  const k=r.act;
+  if(k==='clean'){r.clutter=0;r.mood+=10;log(`${r.sei}さんが掃除をした。ゴミ袋${randi(3,9)}個`);}
+  else if(k==='workout'){r.gym++;if(has(r,'mikka')&&r.gym>=3&&!r.quitGym){r.quitGym=true;log(`${r.sei}さん、筋トレ${r.gym}日目で「明日から本気出す」宣言。ダンベルは物干しになった`);}}
+  else if(k==='drunk'){r.beers=0;if(chance(.5))log(`${r.sei}さん、酔って廊下で${pick(['一曲歌った','月に向かって何か叫んだ','自分の部屋の番号を忘れた','大家の悪口を言ったあと謝った'])}`,'noise');}
+  else if(k==='stream'&&chance(.3))log(`${r.sei}さんの配信、同時視聴者数${randi(0,3)}人（うち1人は本人のスマホ）`);
+  else if(k==='draw'&&chance(.25))log(`${r.sei}さん、原稿を${randi(1,3)}ページ描いて${randi(4,9)}ページ消した`);
+  else if(k==='study'&&chance(.25))log(`${r.sei}さん、参考書の同じページを${randi(3,12)}回開いた`);
+  else if(k==='cook'&&chance(.4))log(`${roomNo(r.room)}から焦げた匂い。${pick(['本人いわく「香ばしい」','火災報知器が鳴る寸前だった','料理名は「炒め物だったもの」'])}`);
+  else if(k==='keiba'&&chance(.2))log(`${r.sei}さん、競馬新聞に赤丸を${randi(8,20)}個つけた（全部の馬）`);
+  else if(k==='guitar'&&chance(.2))log(`${r.sei}さん、新曲「${pick(['四畳半ブルース','家賃','カップ麺の3分','ひだまり'])}」を作曲。コードは3つ`);
+}
+function goHome(v){v.visiting=false;v.at=v.room;const rr=roomRect(v.room);v.x=rr.x+62;v.tx=v.x;startAct(v,'idle');}
+function evictVisitors(room,owner){for(const v of S.res)if(v!==owner&&v.at===room&&v.visiting)goHome(v);}
+
+const VISITS=[
+  {a:'醤油、貸してもらえます？',b:'またですか',log:(a,b)=>`${a.sei}さんが${b.sei}さんに醤油を借りに行った（今月3回目）`},
+  {a:'聞いてくださいよ…',b:'（この話3回目だ）',log:(a,b)=>`${a.sei}さんが${b.sei}さんに愚痴をこぼしに行った`,fx:(a,b)=>{a.mood+=6;b.mood-=3;}},
+  {a:'千円だけ…来週返すんで',b:'先月の千円は？',log:(a,b)=>{if(b.money>1000&&chance(.6)){b.money-=1000;a.money+=1000;return `${a.sei}さんが${b.sei}さんに千円を借りた。${b.sei}さんは結局貸した`;}return `${a.sei}さんが${b.sei}さんに千円を借りに行って断られた`;}},
+  {a:'実家から大量に届いて…',b:'助かる〜',log:(a,b)=>`${a.sei}さんが${b.sei}さんに${pick(['じゃがいも','みかん','謎の漬物'])}をお裾分け`,fx:(a,b)=>{b.hunger=Math.max(0,b.hunger-30);b.mood+=8;a.mood+=4;}},
+  {a:'昨日の夜、ちょっと音が…',b:'え、何のことです？',when:(a,b)=>b.noisy&&S.t-b.noisy<1440,log:(a,b)=>`${a.sei}さんが${b.sei}さんに遠回しに苦情を言いに行った。伝わっていない`},
+  {a:'Wi-Fiのパスワード、教えてもらえたり…',b:'…いいですけど',log:(a,b)=>`${a.sei}さんが${b.sei}さんのWi-Fiにただ乗りを始めた`}
+];
+function startVisit(a){
+  const b=pickRes(r=>r!==a&&home(r)&&r.at===r.room&&!r.visiting&&awake(r)&&r.act!=='host'&&r.act!=='nabe'&&!S.res.some(v=>v!==r&&v.at===r.room));
+  if(!b)return false;
+  const opts=VISITS.filter(v=>!v.when||v.when(a,b));const V=pick(opts);
+  const dur=randi(20,60),rr=roomRect(b.room);
+  a.visiting=true;a.at=b.room;a.x=rr.x+62;startAct(a,'visit',dur);a.tx=rr.x+randi(44,52);
+  startAct(b,'host',dur);b.tx=rr.x+randi(30,36);
+  say(a,V.a);S.pending.push({id:b.id,text:V.b,at:S.t+3});
+  if(V.fx)V.fx(a,b);
+  bump(a,b,6);
+  log(V.log(a,b));
+  return true;
+}
+function nabe(){
+  const ps=S.res.filter(r=>home(r)&&r.at===r.room&&!r.visiting&&awake(r)&&r.act!=='host');
+  if(ps.length<3)return;
+  const host=pick(ps),rr=roomRect(host.room),dur=randi(90,150);
+  ps.forEach((p,k)=>{if(p!==host){p.visiting=true;p.at=host.room;}startAct(p,'nabe',dur);p.x=p.tx=rr.x+14+k*8;p.mood+=15;p.comfort+=4;});
+  bumpAll(ps,5);
+  S.stats.nabe++;
+  log(`${host.sei}さんの部屋で鍋。${ps.length}人。${pick(['肉だけ先になくなった','シメは雑炊派とうどん派で割れた','誰も鍋を洗わなかった','最後は全員寝た'])}`,'move');
+}
+function noiseEvent(r){
+  r.noisy=S.t;
+  for(const n of neighbors(r.at)){
+    const id=S.rooms[n],nb=id&&getRes(id);
+    if(!nb||nb.at!==n)continue;
+    if(nb.act==='sleep'){
+      say(nb,'（壁ドン）');nb.comfort-=3;nb.mood-=4;bump(r,nb,-4);
+      const hr=Math.floor(S.t/60);
+      if(S.noiseHour!==hr){S.noiseHour=hr;log(`${r.sei}さんの${ACTS[r.act].label}で、${nb.sei}さんが壁ドン`,'noise');}
+      if(chance(.5))S.pending.push({id:r.id,text:'…すみません',at:S.t+2});
+    }else if(chance(.5)){say(nb,pick(['うるさいな…','…またか','（イヤホンをつける）']));nb.comfort-=1;}
+  }
+}
+
+/* ---------- 外出と帰宅 ---------- */
+function startLeave(r,purpose,line,o){
+  o=o||{};
+  if(r.at===r.room)evictVisitors(r.room,r);
+  r.visiting=false;r.act='leave';r.at='walking';r.walkMode='leave';
+  r.path=exitPath(r.room);r.pi=0;r.x=r.path[0][0];r.y=r.path[0][1];
+  r.outPurpose=purpose;r.outDur=o.dur||20;r.hurry=!!o.hurry;
+  r.shift=o.shift?{label:o.shift.label,pay:o.shift.pay}:null;
+  say(r,line);
+}
+function startReturn(r){r.at='walking';r.walkMode='return';r.act='return';r.path=exitPath(r.room).slice().reverse();r.pi=0;r.x=r.path[0][0];r.y=r.path[0][1];}
+function stepPath(o,dt,speed){
+  let left=speed*dt;
+  while(left>0&&o.pi<o.path.length){
+    const p=o.path[o.pi],dx=p[0]-o.x,dy=p[1]-o.y,d=Math.hypot(dx,dy);
+    if(d<=left){o.x=p[0];o.y=p[1];left-=d;o.pi++;}
+    else{o.x+=dx/d*left;o.y+=dy/d*left;if(Math.abs(dx)>.01)o.dir=dx<0?-1:1;left=0;}
+  }
+  return o.pi>=o.path.length;
+}
+function arrive(r){
+  r.hurry=false;
+  if(r.walkMode==='leave'){r.at='out';r.act='out';if(r.outPurpose!=='work')r.outUntil=S.t+r.outDur;return;}
+  r.at=r.room;const rr=roomRect(r.room);r.x=rr.x+64;r.tx=r.x;
+  const p=r.outPurpose;
+  if(p==='work'&&r.shift){
+    if(r.shift.pay==='gamble'){const g=randi(-10,22)*1000;r.money=Math.max(0,r.money+g);
+      if(g>=10000){say(r,'今日は勝った！！');log(`${r.sei}さん、パチンコで${yen(g)}勝った。寿司の出前を取っていた`);}
+      else if(g<=-5000){say(r,'…');log(`${r.sei}さん、パチンコで${yen(-g)}負けた。帰りの足取りが重い`);r.mood-=10;}
+      else say(r,'まあ、トントンだな');}
+    else{r.money+=r.shift.pay;say(r,pick(RETURN_LINES));if(r.job==='salaryman')r.mood-=4;}
+  }else if(p==='konbini'){r.hunger=Math.max(0,r.hunger-45);r.money=Math.max(0,r.money-700);r.clutter=clamp(r.clutter+6,0,100);say(r,pick(['ついでにプリンも買った','（レジ袋ガサガサ）','新作のスナック出てた']));}
+  else if(p==='sento'){r.bathed=true;r.money=Math.max(0,r.money-550);r.mood+=8;say(r,pick(['いい湯だった','コーヒー牛乳は正義','番台のおばちゃん元気だった']));}
+  else if(p==='move'){say(r,'今日からお世話になります');schedule('welcome',r.id,19);}
+  else if(p==='hospital'){r.hospital=false;r.mood+=15;say(r,'わしがいないと寂しかったろう');log(`${r.sei}さんが退院してきた。「わしがいないと寂しかったろう」`,'life');}
+  chooseAct(r);
+}
+
+/* ---------- 1人ぶんの更新 ---------- */
+function updateRes(r,dt){
+  const asleep=r.act==='sleep'||r.act==='nap';
+  r.sleepy=clamp(r.sleepy+(asleep?-.3:.065)*dt,0,100);
+  r.hunger=clamp(r.hunger+.07*dt,0,100);
+  if(r.at==='walking'){if(stepPath(r,dt,r.hurry?13:6))arrive(r);return;}
+  if(r.at==='out'){
+    const sh=workNow(r);
+    const back=r.outPurpose==='work'?(!sh||!r.shift||sh.label!==r.shift.label):S.t>=r.outUntil;
+    if(back)startReturn(r);
+    return;
+  }
+  const sh=workNow(r);
+  if(sh){
+    if(r.act==='sleep'&&!r.lateChecked){r.lateChecked=true;if(has(r,'nebou')&&chance(.4)){r.late=true;r.until=S.t+randi(30,100);say(r,'…（目覚ましを止める）');}}
+    const over=r.act==='sleep'&&r.late&&S.t<r.until;
+    if(!over){
+      const late=!!r.late;r.late=false;
+      if(late)log(`${r.sei}さん、${sh.label}に寝坊。${pick(['寝ぐせのまま階段を駆け下りた','靴を片方しか履いていなかった','パンをくわえて走っていった'])}`);
+      startLeave(r,'work',late?'遅刻だーーっ！':pick(LEAVE_LINES),{shift:sh,hurry:late});
+      return;
+    }
+  }else r.lateChecked=false;
+  if(!asleep){const d=r.tx-r.x;if(Math.abs(d)>.3){r.x+=Math.sign(d)*Math.min(Math.abs(d),4*dt);r.dir=Math.sign(d);}}
+  const a=ACTS[r.act];
+  if(a&&a.lines&&!bubbleOn(r)&&chance((has(r,'hitorigoto')?.03:.014)*dt))say(r,pick(a.lines));
+  if(a&&a.noise&&chance(.012*a.noise*dt*(S.up.sound?.3:1)))noiseEvent(r);
+  if(S.t>=r.until){endAct(r);if(home(r))chooseAct(r);}
+}
+
+/* ---------- 1時間ごと・1日ごと ---------- */
+function comfortTarget(r){
+  let c=50;for(const u of UPG)if(S.up[u.id])c+=u.comfort;
+  if(S.up.cat&&has(r,'neko'))c+=8;
+  c-=(S.rent-28000)/700;c+=(r.mood-50)*.25;
+  return clamp(c,0,100);
+}
+function leaking(r){return S.weather==='rain'&&!S.up.leak&&r.room>=3&&home(r);}
+function onHour(hAbs){
+  const h=hAbs%24,d=Math.floor(hAbs/24)+1;
+  if(h===0)onDay(d);
+  if(h===10&&d%3===2)rentDay();
+  if(S.up.vend){const g=(h>=6&&h<23)?randi(60,240):randi(0,50);S.money+=g;S.vendDay+=g;}
+  for(const r of S.res){
+    if(home(r))r.clutter=clamp(r.clutter+(has(r,'katazuke')?1.3:.4),0,100);
+    r.mood=clamp(r.mood+(50-r.mood)*.06-(r.hunger>85?3:0),0,100);
+    r.comfort=clamp(r.comfort+(comfortTarget(r)-r.comfort)*.05-(leaking(r)?1.2:0),0,100);
+  }
+  const avg=S.res.length?S.res.reduce((s,r)=>s+r.comfort,0)/S.res.length:50;
+  let tgt=18+avg*.55-Math.max(0,(S.rent-30000)/900);for(const u of UPG)if(S.up[u.id])tgt+=u.rep;
+  S.rep=clamp(S.rep+(clamp(tgt,0,100)-S.rep)*.04,0,100);
+  S.offers=S.offers.filter(o=>S.t<o.until&&S.rooms[o.room]==null);
+  for(let i=0;i<6;i++)if(S.rooms[i]==null&&!S.offers.some(o=>o.room===i)){const p=.035*(S.rep/50)*clamp((38000-S.rent)/10000,.15,2);if(chance(p))makeOffer(i);}
+  if(catchup)for(const o of S.offers.slice())acceptOffer(o,0,true);
+  if(chance(.16))ambient(h);
+  if(S.up.board&&h===19&&chance(.35))nabe();
+  processEvents();
+  if(chance(.045))happening(h);
+  if(S.t-S.handT>=240){const k=Math.floor((S.t-S.handT)/240);S.hands=Math.min(3,S.hands+k);S.handT+=k*240;}
+  if(S.up.cat){
+    if(S.cat.room>=0&&(S.t>S.cat.until||!S.rooms[S.cat.room]))S.cat.room=-1;
+    else if(S.cat.room<0&&chance(.1)){const r=pickRes(x=>home(x)&&x.at===x.room&&(has(x,'neko')||chance(.3)));
+      if(r){S.cat.room=r.room;S.cat.until=S.t+randi(60,180);S.cat.rx=randi(8,60);say(r,has(r,'neko')?'お、来たか、ミケ（茶トラ）':'え、猫？');r.mood+=has(r,'neko')?10:3;
+        if(chance(.5))log(`茶トラが${r.sei}さんの部屋でくつろいでいる。${has(r,'neko')?'名前は勝手に「ミケ」になった':'追い出す気配はない'}`);}}
+  }
+}
+function onDay(d){
+  S.weather=chance(.25)?'rain':chance(.35)?'cloudy':'sunny';
+  const lines=[`── ${d}日目・${{sunny:'晴れ',cloudy:'くもり',rain:'雨'}[S.weather]} ──`];
+  log(lines[0],'day');
+  const age=buildAge(),prevAge=START_AGE+Math.floor((S.t-1440-S.t0)/(YEAR_DAYS*1440));
+  if(age>prevAge&&age>START_AGE){
+    log(`ひだまり荘、今日で築${age}年。${age<GOAL_AGE?pick(['だれも気づいていない','松の木だけが少し大きくなった','廊下の床がまた一段きしむようになった']):''}`,'rent');
+    if(age>=GOAL_AGE&&!S.decided)S.ceremony=true;
+  }
+  if(S.up.vend&&S.vendDay>0){log(`昨日の自販機の売上 ${yen(S.vendDay)}`);S.vendDay=0;}
+  if(S.weather==='rain'&&!S.up.leak&&S.res.some(r=>r.room>=3))log('雨。2階の住人がバケツを並べはじめた');
+  for(const r of S.res){if(!S.up.shower&&!r.bathed)r.mood-=4;r.bathed=false;}
+  lifeDaily();
+  if(chance(.1)){const c=pick([[1200,'廊下の蛍光灯が切れた'],[8000,'共用トイレが詰まった'],[3500,'郵便受けのフタが外れた'],[5000,'階段の手すりがぐらつく']]);S.money-=c[0];log(`${c[1]}。修理代 ${yen(c[0])}`,'cost');}
+}
+function rentDay(){
+  let got=0;const late=[];
+  for(const r of S.res){
+    const j=JOBS[r.job];
+    if(j.allowance)r.money+=j.allowance;
+    if(!isTenant(r))continue;
+    if(r.money>=S.rent*(1+r.arrears)){got+=S.rent*(1+r.arrears);r.money-=S.rent*(1+r.arrears);if(r.arrears>0)log(`${r.sei}さん、滞納分もまとめて払った。珍しい`);r.arrears=0;}
+    else if(r.money>=S.rent){got+=S.rent;r.money-=S.rent;}
+    else{r.arrears++;late.push(r);const ex=pick(EXCUSES);say(r,ex);log(`${r.sei}さん「${ex}」（滞納${r.arrears}回目）`,'cost');}
+  }
+  S.money+=got;
+  const n=S.res.filter(isTenant).length,fixed=60000+(buildAge()-START_AGE)*10000;
+  S.money-=fixed;
+  log(`家賃日。${n-late.length}部屋から ${yen(got)} を集金。固定資産税と修繕積立で ${yen(fixed)} 出ていった`,'rent');
+  for(const r of S.res.slice()){
+    if(r.leaving||!S.res.includes(r))continue;
+    const loyal=r.trust>=60;
+    if(r.arrears>=3&&chance(loyal?.15:.5))moveOut(r,'yonige');
+    else if(r.comfort<20&&chance(loyal?.15:.5))moveOut(r,'leave');
+    else if(chance(.02))moveOut(r,'home');
+  }
+}
+function moveOut(r,kind,text){
+  if(!S.res.includes(r))return;
+  const no=roomNo(r.room);
+  const thanks=r.trust>=60?pick(['「大家さんには、本当にお世話になりました」','最後に大家の手を両手で握った','「またここに住みたいです」と言った']):pick(['みんなで階段の下まで見送った','「また遊びに来ます」と言っていた']);
+  const txt={yonige:`${r.sei}さん（${no}）が夜逃げした。部屋には${pick(['ちゃぶ台と読みかけの漫画','「必ず返します」と書いたメモ','マヨネーズだけ入った冷蔵庫'])}が残っていた`,
+    leave:`${r.sei}さん（${no}）が「${pick(['ここ、壁が薄すぎます','もう少しちゃんとした所に住みます','家賃に見合ってないです'])}」と言い残して引っ越していった`,
+    home:`${r.sei}さん（${no}）が実家に帰ることになった。最後に菓子折りを置いていった`,
+    happy:`${r.sei}さん（${no}）が${text||'新しい暮らしに向けて'}ことになり、出ていった。${thanks}`}[kind];
+  log(txt,kind==='happy'?'life':'move');
+  if(kind==='yonige')S.stats.yonige++;
+  S.album.unshift({sei:r.sei,mei:r.mei,age:r.age,job:r.job,room:r.room,from:r.since,to:S.t,happy:kind==='happy',hl:(r.hl||[]).filter(t=>t!==txt).slice(-2),end:txt.replace(/^.*?さん（\d+）が/,'')});
+  if(S.album.length>60)S.album.length=60;
+  if(home(r)&&r.at===r.room)evictVisitors(r.room,r);
+  if(!catchup&&!r.hospital)walkers.push({L:r.look,prop:'box',path:exitPath(r.room),pi:0,x:exitPath(r.room)[0][0],y:exitPath(r.room)[0][1],dir:-1,spd:6});
+  const c=coupleOf(r),pt=partnerOf(r);
+  if(c){S.couples.splice(S.couples.indexOf(c),1);if(pt&&!pt.leaving){log(`${pt.sei}さんはひとりで残った`,'life');pt.mood-=25;}}
+  S.res=S.res.filter(x=>x!==r);
+  if(S.rooms[r.room]===r.id){const stay=S.res.find(x=>x.room===r.room);S.rooms[r.room]=stay?stay.id:null;}
+  S.events=S.events.filter(e=>e.id!==r.id);
+  if(S.sel===r.id)S.sel=null;
+  if(S.cat.room===r.room&&S.rooms[r.room]==null)S.cat.room=-1;
+}
+function makeOffer(room){
+  const present=S.res.map(r=>r.job).concat(S.offers.flatMap(o=>o.cands.map(c=>c.job)));
+  const pool=Object.keys(JOBS).filter(k=>k!=='freshman'&&!present.includes(k));
+  const src=pool.length>=2?pool:Object.keys(JOBS).filter(k=>k!=='freshman');
+  const j1=pick(src),j2=pick(src.filter(k=>k!==j1));
+  const c1=makeRes(j1),c2=makeRes(j2);
+  if(c2.sei===c1.sei)c2.sei=pick(SURN.filter(x=>x!==c1.sei&&!S.res.some(r=>r.sei===x)));
+  S.offers.push({room,cands:[c1,c2],until:S.t+1440});
+  log(`${roomNo(room)}号室に内見が2組来た。名簿から選べる（1日で他に決まってしまう）`,'move');
+}
+function acceptOffer(o,k,auto){
+  const r=o.cands[k];S.offers=S.offers.filter(x=>x!==o);
+  if(S.rooms[o.room]!=null)return;
+  r.since=S.t;r.room=o.room;S.rooms[o.room]=r.id;S.res.push(r);
+  r.outPurpose='move';startReturn(r);r.carry='box';
+  log(`${roomNo(o.room)}号室に${r.sei}さん（${r.age}歳・${JOBS[r.job].label}）が越してきた。荷物は段ボール${randi(2,14)}箱${auto?'（留守中に不動産屋が決めていた）':''}`,'move');
+}
+function ambient(h){
+  const E=[
+    ()=>{const r=pickRes(x=>x.at==='out');if(!r)return false;r.slips=(r.slips||1)+1;log(`${r.sei}さん宛の不在票、これで${r.slips}枚目`);return true;},
+    ()=>{if(!(h>=6&&h<10))return false;const old=pickRes(x=>JOBS[x.job].old&&home(x)),sus=pickRes(x=>!JOBS[x.job].old);if(!sus)return false;
+      log(`燃えないゴミが火曜に出ていた。${old?old.sei+'さんが犯人を捜している（たぶん'+sus.sei+'さん）':'たぶん'+sus.sei+'さん'}`);if(old)say(old,'誰だ、これ出したのは');return true;},
+    ()=>{const r=pickRes(()=>true);if(!r)return false;log(`回覧板が${r.sei}さんの部屋で${randi(3,9)}日止まっている`);return true;},
+    ()=>{if(S.weather!=='rain')return false;const r=pickRes(x=>home(x)&&awake(x));if(!r)return false;say(r,'あっ、洗濯物！');r.mood-=8;
+      log(`${r.sei}さん、雨に気づいたのは洗濯物を干して${randi(2,5)}時間後${S.up.washer?'':'（コインランドリーは駅の向こう）'}`);return true;},
+    ()=>{const r=pickRes(x=>x.job==='ronin'||x.job==='student');if(!r)return false;r.money+=5000;r.hunger=Math.max(0,r.hunger-20);log(`${r.sei}さんに実家から段ボール。米と手紙。手紙は読まずに米だけ出した`);return true;},
+    ()=>{const r=pickRes(x=>x.arrears>0&&x.money>3000);if(!r)return false;r.money-=3000;S.money+=3000;log(`${r.sei}さんが「とりあえず、これだけ」と ${yen(3000)} 持ってきた`,'rent');return true;},
+    ()=>{const r=pickRes(()=>true);if(!r)return false;log(`${r.sei}さんから旅行のお土産をもらった。${pick(['謎のキーホルダー','ご当地ペナント','賞味期限が明日の饅頭','「根性」と彫られた木刀'])}`);return true;},
+    ()=>{const a=pickRes(x=>home(x)&&awake(x)),b=a&&pickRes(x=>x!==a&&home(x)&&awake(x));if(!b)return false;a.mood+=6;b.mood+=6;bump(a,b,6);log(`${a.sei}さんと${b.sei}さん、ゴミ捨て場で${randi(5,40)}分立ち話していた`);return true;},
+    ()=>{if(!(h>=23||h<4))return false;const r=pickRes(x=>home(x)&&awake(x));if(!r)return false;say(r,'（ズルズル…）');r.hunger=Math.max(0,r.hunger-30);log(`${roomNo(r.room)}の換気扇から、深夜${h}時のカップ麺の匂い`);return true;},
+    ()=>{if(!S.up.vend)return false;const r=pickRes(x=>home(x)&&awake(x));if(!r)return false;r.money=Math.max(0,r.money-130);log(`${r.sei}さん、自販機のコーンスープの粒が出てこなくて${randi(3,10)}分振っていた`);return true;},
+    ()=>{if(!S.up.washer)return false;log(`階段下の洗濯機が脱水中。${pick(['2階の${n}さんの部屋のコップが鳴っている','建物ごと小刻みに揺れている','だれかの靴下が1枚だけ残されていた'])}`.replace('${n}',(pickRes(x=>x.room>=3)||{sei:'だれか'}).sei));return true;}
+  ];
+  for(let k=0;k<4;k++){if(pick(E)())return;}
+}
+
+/* ---------- 人生（出会いと別れ） ---------- */
+const rk=(a,b)=>a.id<b.id?a.id+'-'+b.id:b.id+'-'+a.id;
+const relOf=(a,b)=>(S.rel[rk(a,b)]||0);
+function bump(a,b,v){if(!a||!b||a===b)return;S.rel[rk(a,b)]=clamp(relOf(a,b)+v,0,100);}
+function bumpAll(ps,v){for(let i=0;i<ps.length;i++)for(let j=i+1;j<ps.length;j++)bump(ps[i],ps[j],v);}
+const coupleOf=r=>S.couples.find(c=>c.a===r.id||c.b===r.id);
+const partnerOf=r=>{const c=coupleOf(r);return c?getRes(c.a===r.id?c.b:c.a):null;};
+const isTenant=r=>S.rooms[r.room]===r.id;
+function nextAt(hour){let at=Math.floor(S.t/1440)*1440+hour*60;if(at<=S.t)at+=1440;return at;}
+function schedule(type,id,hour,data){S.events.push({type,id,at:nextAt(hour),data:data||{},tries:0});}
+function setJob(r,job){r.job=job;if(r.at==='out'&&r.outPurpose==='work'){r.shift=null;}}
+
+function gather(host,label,dur){
+  const ps=S.res.filter(r=>home(r)&&awake(r)&&r.act!=='sick');
+  if(!ps.includes(host))return [];
+  const rr=roomRect(host.room);
+  ps.forEach((p,k)=>{if(p.room!==host.room)p.visiting=true;p.at=host.room;startAct(p,'enkai',dur);p.partyName=label;p.x=p.tx=rr.x+12+k*(50/Math.max(1,ps.length-1||1));p.mood+=10;});
+  bumpAll(ps,4);
+  return ps;
+}
+function farewell(r,text){
+  if(r.leaving)return;
+  r.leaving=text;
+  const pt=partnerOf(r);if(pt&&(coupleOf(r).stage!=='crush'&&coupleOf(r).stage!=='dating'))pt.leaving=text;
+  log(`${r.sei}さん、${text}ことになった`,'life');
+  schedule('farewell',r.id,19);
+}
+function processEvents(){
+  for(const e of S.events.slice()){
+    if(S.t<e.at)continue;
+    S.events.splice(S.events.indexOf(e),1);
+    const r=getRes(e.id);if(!r)continue;
+    if(e.type==='welcome'){
+      if(!home(r)&&e.tries<3){e.tries++;e.at+=1440;S.events.push(e);continue;}
+      const ps=gather(r,'歓迎会',randi(90,140));
+      if(ps.length>1){log(`${r.sei}さんの歓迎会。会場は本人の部屋（本人の許可はない）。${pick(['酒は本人の冷蔵庫から出てきた','自己紹介が3回繰り返された','終わったのは朝の4時'])}`,'life');say(r,'あの、ここ僕の部屋…');}
+    }else if(e.type==='farewell'){
+      const ps=home(r)?gather(r,'送別会',randi(120,180)):[];
+      log(ps.length>1?`${r.sei}さんの送別会。${pick(['最後はみんなで校歌っぽい何かを歌った','思い出話の半分は家賃の滞納の話だった','誰も泣かないと言って、全員泣いた'])}`:`${r.sei}さんの送別会…のはずが、みんな出払っていた`,'life');
+      S.events.push({type:'depart',id:r.id,at:S.t+randi(12,15)*60,data:{},tries:0});
+    }else if(e.type==='depart'){
+      const pt=partnerOf(r),both=pt&&pt.leaving;
+      moveOut(r,'happy',r.leaving);if(both)moveOut(pt,'happy',pt.leaving);
+    }else if(e.type==='wedding'){
+      const pt=partnerOf(r);if(!pt)continue;
+      const ps=home(r)?gather(r,'結婚祝い',randi(150,220)):[];
+      log(`${r.sei}さんと${pt.sei}さんの結婚祝い。${ps.length}人でちゃぶ台を囲んだ。${pick(['ご祝儀袋の中身は全部小銭だった','大家がスピーチを頼まれて噛んだ','新郎新婦より先に酔いつぶれた人がいた'])}`,'life');
+    }
+  }
+}
+const CONFESS=['物干し場で','銭湯の帰り道に','停電のろうそくの前で','酔った勢いで（翌日覚えていなかったので、もう一度）','階段の踊り場で、洗濯かごを持ったまま'];
+const MISUNDER=[(a,b)=>`${a.sei}さん、${b.sei}さんが知らない人と歩いているのを見て落ち込んでいる（あとで兄だとわかった）`,
+  (a,b)=>`${a.sei}さん宛の手紙が${b.sei}さんに誤配された。中身を読んだかどうかで、ひと晩もめた`,
+  (a,b)=>`${a.sei}さんが${b.sei}さんに作った弁当を、別の住人が食べてしまった`];
+function lifeDaily(){
+  const alive=S.res.filter(r=>!r.leaving);
+  if(S.couples.length<2){
+    const cand=[];
+    for(let i=0;i<alive.length;i++)for(let j=i+1;j<alive.length;j++){const a=alive[i],b=alive[j];
+      if(coupleOf(a)||coupleOf(b)||JOBS[a.job].old||JOBS[b.job].old||Math.abs(a.age-b.age)>14)continue;
+      if(relOf(a,b)>=30)cand.push([a,b]);}
+    if(cand.length&&chance(.35)){const [a,b]=pick(cand);S.couples.push({a:a.id,b:b.id,stage:'crush',t:S.t});
+      log(`${a.sei}さん、最近${b.sei}さんの前だと口数が減る`,'life');}
+  }
+  for(const c of S.couples.slice()){
+    const a=getRes(c.a),b=getRes(c.b);if(!a||!b){S.couples.splice(S.couples.indexOf(c),1);continue;}
+    const d=(S.t-c.t)/1440;bump(a,b,3);
+    if(c.stage==='crush'){
+      if(chance(.2)){log(pick(MISUNDER)(a,b),'life');a.mood-=8;}
+      else if(d>=2&&relOf(a,b)>=45&&chance(.4)){c.stage='dating';c.t=S.t;log(`${a.sei}さんが${b.sei}さんに告白した。${pick(CONFESS)}。返事は「…はい」`,'life');a.mood=b.mood=95;}
+      else if(d>=6&&chance(.2)){S.couples.splice(S.couples.indexOf(c),1);log(`${a.sei}さんの片想い、言えないまま季節が変わった`,'life');}
+    }else if(c.stage==='dating'){
+      if(chance(.06)){S.couples.splice(S.couples.indexOf(c),1);S.rel[rk(a,b)]=10;a.mood-=20;b.mood-=20;log(`${a.sei}さんと${b.sei}さん、${pick(['どっちが醤油を切らしたかで大げんかして','記念日を忘れて'])}別れた。廊下ですれ違うと気まずい`,'life');}
+      else if(d>=4&&chance(.3)){
+        const [host,mover]=a.comfort>=b.comfort?[a,b]:[b,a];const old=mover.room;
+        if(home(mover)&&mover.at===mover.room)goHome(mover);
+        S.rooms[old]=null;mover.room=host.room;if(home(mover)){mover.at=host.room;mover.visiting=false;}
+        c.stage='living';c.t=S.t;log(`${mover.sei}さんが${host.sei}さんの部屋に転がり込んだ。${roomNo(old)}号室が空いた`,'life');
+      }
+    }else if(c.stage==='living'){
+      if(d>=5&&chance(.3)){c.stage='married';c.t=S.t;const h=getRes(S.rooms[a.room])||a;log(`${pick([a,b]).sei}さんがプロポーズした。${pick(['指輪はガチャガチャで出したやつ','ちゃぶ台の上で正座して','大家に先に報告しに来た（なぜ）'])}`,'life');schedule('wedding',h.id,18);}
+    }else if(c.stage==='married'){
+      if(d>=6&&chance(.3)){c.stage='baby';c.t=S.t;const h=getRes(S.rooms[a.room])||a;h.baby=true;log(`${a.sei}さんと${b.sei}さんに赤ちゃんが生まれた。夜泣きで壁ドンされても、誰も文句を言わない`,'life');for(const r of S.res)r.mood+=6;}
+    }else if(c.stage==='baby'){
+      if(d>=6&&chance(.3)){const h=getRes(S.rooms[a.room])||a;farewell(h,'家族3人で、郊外の2DKに引っ越す');}
+    }
+  }
+  for(const r of S.res.slice()){if(r.leaving)continue;r.days=(S.t-r.since)/1440;const f=ARCS[r.job];if(f&&S.t>=(r.arcAt||0))f(r);}
+}
+function arcLater(r,days){r.arcAt=S.t+days*1440;}
+const ARCS={
+  ronin:r=>{if(r.days<7)return;
+    if(!r.arc){r.arc=1;arcLater(r,1);log(`${r.sei}さん、明日が本番の試験らしい。${roomNo(r.room)}の電気が朝まで消えなかった`,'life');return;}
+    if(chance(.55)){log(`${r.sei}さん、合格！ 掲示板の前で泣いていたらしい。その夜は勝手に祝賀会になった`,'life');say(r,'受かった…受かったあああ');r.mood=100;setJob(r,'freshman');r.arc=0;schedule('welcome',r.id,19);}
+    else{r.arc=0;arcLater(r,12);r.mood-=30;log(`${r.sei}さん、不合格。${pick(['四浪が決まった','「来年こそ」が口癖に戻った'])}。隣の人が黙ってカップ麺を置いていった`,'life');const nb=pickRes(x=>x!==r&&home(x));if(nb)bump(r,nb,12);}},
+  band:r=>{if(r.days<9)return;
+    if(!r.arc){r.arc=1;arcLater(r,3);log(`${r.sei}さんのバンドに、レコード会社の人が来たらしい`,'life');r.mood+=20;return;}
+    r.arc=0;
+    if(chance(.3)){farewell(r,'メジャーデビューが決まって、都内のマンションに移る');}
+    else{r.fails=(r.fails||0)+1;
+      if(r.fails>=2){setJob(r,'salaryman');log(`${r.sei}さん、バンドを解散。髪を切って就職した。ギターは押し入れに入った`,'life');}
+      else{arcLater(r,9);r.mood-=25;log(`${r.sei}さんのデビューの話、流れた。その夜はひと晩中ギターが鳴っていた`,'life');}}},
+  mangaka:r=>{if(r.days<8)return;arcLater(r,7);const k=Math.random();
+    if(k<.25)farewell(r,'連載が決まって、仕事場の近くに引っ越す');
+    else if(k<.55){r.mood+=25;log(`${r.sei}さん、佳作に入選。賞金で全員にたい焼きを配った`,'life');}
+    else{r.mood-=15;log(`${r.sei}さん、${18+(r.tries=(r.tries||0)+1)}回目の持ち込みも不採用。帰りに缶コーヒーを2本買った`,'life');}},
+  salaryman:r=>{if(r.days<12||r.arc)return;r.arc=1;
+    if(chance(.4))farewell(r,'札幌への転勤辞令が出て、この町を出る');
+    else{r.money+=30000;r.mood+=15;log(`${r.sei}さん、係長になった。お祝いに自分で自分に寿司を買った`,'life');}},
+  oldman:r=>{if(r.days<6)return;arcLater(r,10);
+    if(!r.hospital&&chance(.5)){r.hospital=true;startLeave(r,'hospital','ちょっと病院に…',{dur:3*1440});log(`${r.sei}さんが入院した。住人が交代で見舞いに行っている`,'life');for(const x of S.res)if(x!==r)bump(r,x,10);}
+    else{log(`${r.sei}さんの孫が遊びに来た。${pick(['廊下でけん玉を披露していた','住人全員にお年玉をねだっていた','「おじいちゃんの部屋、くさい」と言った'])}`,'life');r.mood+=20;}},
+  youtuber:r=>{if(r.days<6)return;arcLater(r,8);
+    if(!r.buzz&&chance(.35)){r.buzz=true;r.money+=120000;log(`${r.sei}さんの動画「風呂なしアパートの一日」が30万回再生。住人全員が映っていた（無許可）`,'life');for(const x of S.res)if(x!==r)x.mood+=5;}
+    else if(r.buzz&&chance(.4))farewell(r,'配信で食べていけるようになって、タワーマンション（の1階）に移る');
+    else log(`${r.sei}さん、登録者が13人になった（1人増えた）`);},
+  pachinko:r=>{if(r.days<10||r.arc)return;r.arc=1;
+    if(chance(.5)){setJob(r,'konbini');log(`${r.sei}さん、パチンコから足を洗って夜勤を始めた。最初の給料で滞納分を持ってきた`,'life');S.money+=S.rent*r.arrears;r.arrears=0;}
+    else log(`${r.sei}さん、「今度こそやめる」と宣言した（7回目）`);},
+  student:r=>{if(r.days<8||r.arc)return;r.arc=1;
+    if(chance(.6)){log(`${r.sei}さん、9年目でついに卒業。卒業式にはサンダルで行った`,'life');setJob(r,'salaryman');}
+    else log(`${r.sei}さん、8年生が9年生になった。学生証の写真が本人と似ていない`);},
+  konbini:r=>{if(r.days<12||r.arc)return;r.arc=1;
+    if(chance(.4))farewell(r,'ずっと行きたかった調理の専門学校に受かって、学校の寮に移る');
+    else{log(`${r.sei}さん、店長代理になった。廃棄の弁当を持って帰れなくなった`,'life');}},
+  freshman:()=>{}
+};
+function happening(h){
+  S.hapCd=S.hapCd||{};
+  const H=[
+    ()=>{if(!(h>=19||h<2))return false;S.blackout=S.t+randi(40,90);const r=pickRes(x=>home(x)&&awake(x));log(`停電。${r?r.sei+'さんがろうそくを配って回った。':''}なぜか全員、廊下に出てきた`,'life');bumpAll(S.res.filter(home),5);return true;},
+    ()=>{const r=pickRes(x=>home(x)&&x.at===x.room&&awake(x)&&!x.visiting);if(!r)return false;startAct(r,'sick');
+      const n=S.res.filter(x=>x!==r).sort((a,b)=>relOf(r,b)-relOf(r,a))[0];
+      log(`${r.sei}さんが風邪で寝込んだ。${n?n.sei+'さんがおかゆを作りに来た（塩の量がおかしい）':'誰も気づいていない'}`,'life');if(n)bump(r,n,15);return true;},
+    ()=>{const a=pickRes(x=>x.at==='out'),b=a&&pickRes(x=>x!==a&&home(x));if(!b)return false;log(`${a.sei}さん、鍵をなくして${b.sei}さんの部屋の窓から自分の部屋に入ろうとした`,'life');bump(a,b,6);return true;},
+    ()=>{if(!(h>=0&&h<4))return false;log(`夜中に物音。全員で${pick(['ほうき','木刀','フライパン'])}を持って集まったら、${S.up.cat?'茶トラだった':'風で倒れたゴミ箱だった'}`,'life');bumpAll(S.res.filter(home),5);return true;},
+    ()=>{const a=pickRes(x=>x.act==='drunk'||x.beers>=2),b=a&&pickRes(x=>x!==a);if(!b)return false;log(`${a.sei}さん、酔って${b.sei}さんの部屋で朝まで寝ていた。${b.sei}さんは台所で寝た`,'life');bump(a,b,4);return true;},
+    ()=>{const a=pickRes(x=>isTenant(x)),nb=a&&neighbors(a.room).map(i=>S.rooms[i]).filter(id=>id!=null).map(getRes).filter(Boolean),b=nb&&nb.length?pick(nb):null;if(!b)return false;log(`${a.sei}さんと${b.sei}さんの部屋の間の壁に、小さな穴が開いているのが見つかった。直すまで、お互いの生活がちょっとだけ見える`,'life');bump(a,b,8);return true;}
+  ];
+  for(let k=0;k<3;k++){const i=Math.floor(Math.random()*H.length);if((S.hapCd[i]||0)>S.t)continue;if(H[i]()){S.hapCd[i]=S.t+randi(5,9)*1440;return;}}
+}
+
+/* ---------- 全体の更新 ---------- */
+function update(dt){
+  S.t+=dt;
+  const hAbs=Math.floor(S.t/60);
+  while(S.lastHour<hAbs){S.lastHour++;onHour(S.lastHour);}
+  for(const r of S.res.slice())if(S.res.includes(r))updateRes(r,dt);
+  if(S.pending.length){const now=S.pending.filter(p=>S.t>=p.at);S.pending=S.pending.filter(p=>S.t<p.at);now.forEach(p=>{const r=getRes(p.id);if(r)say(r,p.text);});}
+  if(S.up.cat&&S.cat.room<0){if(Math.abs(S.cat.tx-S.cat.x)<.5){if(chance(.02*dt))S.cat.tx=pick([34,34,60,120,200,250,290]);}else S.cat.x+=Math.sign(S.cat.tx-S.cat.x)*Math.min(Math.abs(S.cat.tx-S.cat.x),3*dt);}
+}
+function updateWalkers(gdt){
+  for(const w of walkers.slice())if(stepPath(w,gdt,w.spd))walkers.splice(walkers.indexOf(w),1);
+  const n=nightness(hourF());
+  if(walkers.length<3&&chance(.006*gdt*(n>.7?.25:1))){
+    const L={hair:pick(HAIR.concat(['#d8d4cc'])),skin:pick(SKIN),shirt:pick(SHIRT),pants:pick(PANTS),bald:false,long:chance(.3)};
+    const ltr=chance(.5),path=ltr?[[-12,182],[334,182]]:[[334,182],[-12,182]];
+    walkers.push({L,path,pi:0,x:path[0][0],y:path[0][1],dir:ltr?1:-1,spd:rand(4,7),dog:chance(.3),prop:chance(.2)?'bag':null});
+  }
+}
+
+/* ---------- 描画 ---------- */
+const SKY=[[0,'#141a33'],[4.5,'#1b2146'],[5.5,'#5a4a78'],[6.3,'#e59a72'],[7.5,'#9cc7e8'],[15.5,'#8fc2ea'],[17,'#e9b27a'],[18,'#c7667a'],[19,'#3a3563'],[20.5,'#171c3a'],[24,'#141a33']];
+function skyAt(h){for(let i=0;i<SKY.length-1;i++){const a=SKY[i],b=SKY[i+1];if(h>=a[0]&&h<=b[0])return mix(a[1],b[1],(h-a[0])/(b[0]-a[0]));}return SKY[0][1];}
+function nightness(h){if(h>=7&&h<16.5)return 0;if(h>=16.5&&h<20)return (h-16.5)/3.5;if(h>=20||h<4.5)return 1;return 1-(h-4.5)/2.5;}
+function curSky(){let s=skyAt(hourF());if(S.weather==='cloudy')s=mix(s,'#8a8f98',.35);if(S.weather==='rain')s=mix(s,'#5a6068',.5);return s;}
+
+function drawPerson(L,cx,fy,pose,fr,flip,prop){
+  cx=Math.round(cx);fy=Math.round(fy);
+  const sit=pose==='sit',top=fy-(sit?11:14),EYE='#2a1f1a',SHOE='#2a2522';
+  P(cx-2,top+1,5,5,L.skin);
+  if(L.bald){P(cx-3,top+2,1,2,L.hair);P(cx+3,top+2,1,2,L.hair);}
+  else{P(cx-2,top,5,1,L.hair);P(cx-3,top+1,7,1,L.hair);P(cx-3,top+2,1,L.long?4:2,L.hair);P(cx+3,top+2,1,L.long?4:2,L.hair);}
+  const ex=flip?-1:0;P(cx-1+ex,top+3,1,1,EYE);P(cx+1+ex,top+3,1,1,EYE);
+  const bh=sit?3:4;
+  P(cx-2,top+6,5,bh,L.shirt);P(cx-3,top+6,1,bh-1,L.shirt);P(cx+3,top+6,1,bh-1,L.shirt);
+  P(cx-3,top+5+bh,1,1,L.skin);P(cx+3,top+5+bh,1,1,L.skin);
+  if(sit){const lx=flip?cx-4:cx-2;P(lx,top+9,7,2,L.pants);P(flip?lx-1:lx+7,top+10,1,1,SHOE);}
+  else{const y=top+10;if(pose==='walk'&&fr){P(cx-3,y,2,3,L.pants);P(cx+2,y,2,3,L.pants);P(cx-3,y+3,2,1,SHOE);P(cx+2,y+3,2,1,SHOE);}
+    else{P(cx-2,y,2,3,L.pants);P(cx+1,y,2,3,L.pants);P(cx-2,y+3,2,1,SHOE);P(cx+1,y+3,2,1,SHOE);}}
+  const hx=flip?cx-4:cx+3,hy=top+5+bh;
+  if(prop==='phone'){P(hx,hy-3,2,3,'#1d1d22');P(hx,hy-3,2,2,'#9fe8ff');}
+  else if(prop==='can'){P(hx,hy-3,2,3,'#d8c24a');P(hx,hy-3,2,1,'#dddddd');}
+  else if(prop==='guitar'){const gx=flip?cx-4:cx-1;P(gx,top+7,6,4,'#a8642e');P(gx+2,top+8,2,2,'#3a2412');P(flip?gx-6:gx+6,top+6,6,1,'#5a3a1a');}
+  else if(prop==='dumbbell'){const yy=fr?top-2:top+5;P(cx-4,yy,9,1,'#8a8a8a');P(cx-5,yy-1,2,3,'#444444');P(cx+4,yy-1,2,3,'#444444');}
+  else if(prop==='can_water'){P(hx,hy-2,3,2,'#5f8f4a');P(flip?hx-2:hx+3,hy-3,2,1,'#5f8f4a');}
+  else if(prop==='pad'){P(cx-2,hy-1,5,2,'#2c2c34');}
+  else if(prop==='box'){P(cx-4,top+5,9,6,'#c49a5e');P(cx-4,top+7,9,1,'#a47c44');}
+  else if(prop==='basin'){P(hx-1,hy-1,4,2,'#f0cf3a');}
+  else if(prop==='bag'){P(hx,hy,3,3,'#f2f2ec');}
+}
+function drawLying(L,rx,ry){
+  P(rx+4,ry+32,4,4,L.skin);
+  if(!L.bald){P(rx+3,ry+31,5,1,L.hair);P(rx+3,ry+32,1,4,L.hair);}
+  P(rx+5,ry+34,2,1,'#2a1f1a');
+  P(rx+8,ry+33,19,5,L.blanket);P(rx+8,ry+37,19,1,shade(L.blanket,-25));P(rx+8,ry+33,19,1,shade(L.blanket,15));
+}
+function drawCat(x,y,fr){x=Math.round(x);y=Math.round(y);const c='#e39a45',d='#b86e2a';P(x-3,y-3,6,3,c);P(x-1,y-3,1,3,d);P(x+1,y-3,1,3,d);P(x+2,y-5,3,3,c);P(x+2,y-6,1,1,c);P(x+4,y-6,1,1,c);P(x+3,y-4,1,1,'#2a1f1a');P(x-4,fr?y-6:y-5,1,3,c);P(x-2,y,1,1,d);P(x+2,y,1,1,d);}
+
+function roomOcc(i){return S.res.filter(r=>r.at===i).sort((a,b)=>a.x-b.x);}
+function roomLit(i,n){if(n<.05||S.t<S.blackout)return false;const o=roomOcc(i);return o.some(awake)&&!o.some(x=>x.act==='night');}
+const HEART=['.X.X.','XXXXX','XXXXX','.XXX.','..X..'];
+function drawHeart(x,y,c){HEART.forEach((row,j)=>{for(let k=0;k<5;k++)if(row[k]==='X')P(x+k,y+j,1,1,c);});}
+
+function drawRoom(i,now,sky,lit){
+  const rr=roomRect(i),x=rr.x,y=rr.y,id=S.rooms[i],owner=id!=null?getRes(id):null,occ=roomOcc(i),fr=Math.floor(now/260)%2;
+  const acts=new Set(occ.map(o=>o.act));
+  const wall=S.up.paint?'#d8c9a4':'#c9b68f';
+  P(x,y,74,48,wall);
+  for(let k=3;k<74;k+=6)P(x+k,y+2,1,36,shade(wall,-6));
+  P(x,y,74,2,shade(wall,-30));
+  for(const s of STAINS[i])P(x+s[0],y+s[1],s[2],s[3],shade(wall,-18));
+  P(x+6,y+8,20,15,'#6b4b32');P(x+7,y+9,18,13,sky);P(x+16,y+9,1,13,'#6b4b32');P(x+5,y+22,22,1,'#5a3d28');
+  if(owner){P(x+7,y+9,4,13,owner.look.curtain);P(x+21,y+9,4,13,owner.look.curtain);}
+  else{P(x+10,y+11,12,9,'#f4f0e4');P(x+12,y+13,8,1,'#c44a3a');P(x+12,y+15,6,1,'#777777');P(x+12,y+17,7,1,'#777777');}
+  P(x+59,y+12,12,28,'#6e5035');P(x+60,y+13,10,26,'#8c6a48');P(x+61,y+26,1,1,'#e2c46a');P(x+62,y+15,6,2,'#e8e2d0');
+  P(x,y+38,74,10,'#b7ae6b');P(x,y+38,74,1,'#8e8547');for(const k of [18,37,56])P(x+k,y+38,1,10,'#9f9656');
+  const lx=x+37;P(lx,y+2,1,3,'#444444');P(lx-4,y+5,9,2,lit?'#fff6d8':'#bdb9ad');if(lit)P(lx-3,y+7,7,1,'#fff0b0');
+  if(i>=3&&S.weather==='rain'&&!S.up.leak&&owner){P(x+44,y+41,5,4,'#6f7f95');P(x+44,y+41,5,1,'#8a9ab0');const dy=(now/9)%38;P(x+46,y+3+dy,1,2,'#9fc4e8');}
+  if(owner){
+    const L=owner.look,job=owner.job;
+    if(job==='band'&&!acts.has('guitar')){P(x+54,y+22,1,10,'#5a3a1a');P(x+52,y+31,5,6,'#a8642e');P(x+54,y+33,1,2,'#3a2412');}
+    if(job==='salaryman'){P(x+30,y+8,1,1,'#555555');P(x+28,y+9,6,10,'#3a3f52');P(x+30,y+9,2,3,'#eeeeee');}
+    if(job==='konbini'){P(x+28,y+9,6,9,'#4a7ab0');P(x+28,y+12,6,1,'#e8e8e8');}
+    if(job==='oldman'){P(x+8,y+20,3,2,'#6b8f3a');P(x+8,y+22,3,1,'#a0522d');P(x+20,y+19,3,3,'#7fa64a');P(x+20,y+22,3,1,'#a0522d');}
+    if(job==='ronin'){P(x+29,y+8,7,10,'#f4f0e4');P(x+29,y+8,7,2,'#c44a3a');P(x+31,y+12,3,4,'#26222c');for(let k=0;k<4;k++)P(x+50,y+37-k*2,5,2,k%2?'#a84a4a':'#4a6fa8');}
+    if(job==='mangaka'){P(x+49,y+34,6,4,'#efeae0');P(x+50,y+32,6,2,'#e4ddcd');}
+    if(job==='pachinko'){P(x+29,y+8,7,9,'#e6d06a');P(x+30,y+12,5,2,'#5a3a1a');P(x+33,y+10,1,2,'#5a3a1a');}
+    if(job==='student'){P(x+29,y+9,7,9,'#3a3f52');P(x+30,y+11,5,4,'#d98a4a');P(x+50,y+42,7,2,'#d9b36a');}
+    if(job==='youtuber'){P(x+27,y+16,1,22,'#555555');const lc=acts.has('stream')?'#ffffff':'#bbbbbb';P(x+24,y+12,7,1,lc);P(x+24,y+18,7,1,lc);P(x+24,y+12,1,7,lc);P(x+30,y+12,1,7,lc);}
+    if(has(owner,'mikka')){if(owner.quitGym){P(x+48,y+40,8,1,'#777777');P(x+49,y+37,3,3,'#e0e0d8');P(x+53,y+37,2,3,'#6f9a5a');}else if(!acts.has('workout')){P(x+49,y+43,6,1,'#777777');P(x+48,y+42,2,3,'#444444');P(x+54,y+42,2,3,'#444444');}}
+    P(x+3,y+37,25,3,'#ece6d8');P(x+3,y+40,25,1,'#cfc8b8');P(x+3,y+35,5,2,'#f4f0e6');
+    if(!occ.some(o=>o===owner&&(o.act==='sleep'||o.act==='nap')))P(x+13,y+35,13,2,L.blanket);
+    const tvOn=acts.has('tv')||acts.has('game');
+    P(x+46,y+27,11,10,'#8d8a84');P(x+47,y+28,8,7,tvOn?pick(['#8fd3ff','#c9f0ff','#ffe39a','#b8f0c0']):'#2c3b3a');P(x+56,y+29,1,1,'#c44a3a');P(x+48,y+37,2,1,'#555555');P(x+53,y+37,2,1,'#555555');
+    if(job==='oldman'){P(x+48,y+24,6,3,'#6a4a2a');P(x+49,y+25,2,1,'#c9c0a0');}
+    const n=Math.min(8,Math.floor(owner.clutter/12));
+    const CL=[[20,43,'bag'],[57,43,'can'],[30,44,'mag'],[44,43,'can'],[10,44,'sock'],[62,41,'bag'],[36,44,'cup'],[25,43,'can']];
+    for(let k=0;k<n;k++){const c=CL[k],cx=x+c[0],cy=y+c[1];
+      if(c[2]==='bag'){P(cx,cy-3,5,5,'#e6e6e0');P(cx+2,cy-4,1,1,'#bbbbbb');}
+      else if(c[2]==='can')P(cx,cy,2,3,k%2?'#c9c24a':'#b9b9c9');
+      else if(c[2]==='mag')P(cx,cy,5,2,'#d86a6a');
+      else if(c[2]==='sock')P(cx,cy,3,1,'#ffffff');
+      else P(cx,cy,3,2,'#f0f0f0');}
+  }
+  if(S.up.cat&&S.cat.room===i)drawCat(x+(S.cat.rx||30),y+44,fr);
+  for(const o of occ){
+    const a=ACTS[o.act]||{},moving=Math.abs(o.tx-o.x)>.5&&a.pose!=='lie';
+    if(o.act==='night'){drawLying(o.look,x,S.rooms[i]===o.id?y:y-3);continue;}
+    if(a.pose==='lie'&&o.room===i){drawLying(o.look,x,S.rooms[i]===o.id?y:y-3);continue;}
+    const pose=moving?'walk':(a.pose==='lie'?'stand':a.pose||'stand');
+    drawPerson(o.look,o.x,y+45,pose,fr,o.dir<0,moving?null:a.prop);
+  }
+  P(x+31,y+33,15,2,'#7b4f2e');P(x+31,y+33,15,1,'#946340');P(x+33,y+35,1,4,'#5a3a22');P(x+43,y+35,1,4,'#5a3a22');
+  if(acts.has('ramen')||acts.has('moyashi')){P(x+34,y+30,3,3,'#f2efe6');P(x+34,y+31,3,1,'#c44a3a');if(fr)P(x+35,y+28,1,1,'#dddddd');else P(x+34,y+27,1,1,'#dddddd');}
+  if(acts.has('bento')){P(x+38,y+31,6,2,'#e8e0cf');P(x+39,y+31,2,1,'#c44a3a');}
+  if(acts.has('study')){P(x+37,y+31,5,2,'#4a6fa8');P(x+38,y+31,3,1,'#f4f0e4');}
+  if(acts.has('keiba')){P(x+36,y+30,7,3,'#d7d2c4');P(x+38,y+31,1,1,'#c44a3a');P(x+40,y+31,1,1,'#c44a3a');}
+  if(acts.has('draw')){P(x+35,y+31,8,2,'#fbfaf5');P(x+36,y+31,5,1,'#555555');}
+  if(acts.has('enkai')){P(x+33,y+29,2,4,'#3f7a4a');P(x+33,y+28,2,1,'#c9b04a');P(x+37,y+30,2,3,'#d8c24a');P(x+40,y+31,4,2,'#e8e0cf');P(x+44,y+29,1,4,'#8a4b2e');}
+  if(owner&&owner.baby){const bx=x+18,by=y+35;P(bx,by,5,3,'#f4f0e6');P(bx+1,by,2,2,owner.look.skin);if(fr&&chance(.02))P(bx-1,by-2,1,1,'#ffffff');}
+  if(acts.has('nabe')){P(x+34,y+30,10,3,'#3a3a40');P(x+35,y+29,8,1,'#5a5a60');const s=fr?0:1;P(x+36+s,y+26,1,2,'#e8e8e8');P(x+40-s,y+25,1,2,'#e8e8e8');}
+  if(acts.has('cook')){const k=Math.floor(now/200)%6;P(x+56,y+20-k,3,2,'#8a8a8a');P(x+54+(k%2),y+15-k,4,2,'#a0a0a0');}
+  if(acts.has('nimono')){const k=Math.floor(now/260)%4;P(x+56,y+22-k,1,2,'#e8e8e8');P(x+58,y+20-k,1,2,'#e8e8e8');}
+  if(lit){ctx.fillStyle='rgba(255,196,110,0.08)';ctx.fillRect(x,y,74,48);}
+  if(acts.has('night')){ctx.fillStyle='rgba(30,10,40,0.55)';ctx.fillRect(x,y,74,48);
+    for(let k=0;k<3;k++){const ph=((now/1400)+k/3)%1,hx=x+12+k*6+Math.round(Math.sin(now/500+k*2)*2),hy=y+30-Math.round(ph*24);ctx.globalAlpha=1-ph;drawHeart(hx,hy,k===1?'#ffb3c6':'#ff6f91');}ctx.globalAlpha=1;}
+}
+
+function drawScene(now){
+  const h=hourF(),n=nightness(h),sky=curSky(),fr=Math.floor(now/260)%2;
+  P(0,0,W,H,sky);
+  const hz=mix(sky,S.weather==='sunny'?'#ffd8a8':'#9aa0a8',.18*(1-n*.6));
+  for(let k=0;k<5;k++){ctx.globalAlpha=.25+k*.15;P(0,110+k*12,W,12,hz);}ctx.globalAlpha=1;
+  if(n>.3&&S.weather!=='rain')for(const s of STARS){ctx.globalAlpha=(n-.3)*(.5+.5*Math.sin(now/700+s[2]*20));P(s[0],s[1],1,1,'#ffffff');}ctx.globalAlpha=1;
+  if(n>.5&&S.weather!=='rain'){P(58,18,7,7,'#f4efd0');P(57,19,1,5,'#f4efd0');P(65,19,1,5,'#f4efd0');P(61,19,4,5,sky);}
+  else if(n<.6&&h>5&&h<19){const t=(h-5.5)/13,sx=20+t*280,sy=60-Math.sin(t*Math.PI)*48;P(sx-3,sy-3,7,7,S.weather==='sunny'?'#fff1c0':mix(sky,'#ffffff',.3));}
+  if(S.weather!=='sunny'){const cc=S.weather==='rain'?mix(sky,'#3c4048',.5):mix(sky,'#e8e8ec',.35);for(let k=0;k<5;k++){const cx=((k*97+now/1000*2)%420)-50,cy=10+k*9;P(cx,cy,34,6,cc);P(cx+6,cy-4,20,4,cc);}}
+  ctx.strokeStyle='#1e1c22';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(0,22.5);ctx.quadraticCurveTo(160,40,320,24.5);ctx.moveTo(0,27.5);ctx.quadraticCurveTo(160,45,320,29.5);ctx.stroke();
+  if(h>=5&&h<8){P(210,30,4,3,'#1a1a1f');P(213,29,2,2,'#1a1a1f');P(211,33,1,1,'#1a1a1f');}
+  const bgc=mix(sky,'#1c1f2a',.62);
+  for(const b of BG){const top=172-b.h;P(b.x,top,b.w,b.h,bgc);if(b.roof){for(let k=0;k<4;k++)P(b.x-1+k,top-4+k,b.w+2-2*k,1,bgc);}
+    if(n>.4)for(const w of b.wins)if(w[2])P(w[0],w[1],2,2,'#e9c877');}
+  const roof=S.up.paint?'#4f7f8a':'#65747c';
+  for(let r=0;r<14;r++)P(28-r,56+r,228+2*r,1,roof);
+  for(let xx=20;xx<266;xx+=5)P(xx,58,1,11,shade(roof,-18));
+  for(const q of [[60,60,6,3],[140,63,5,2],[210,59,7,4],[96,66,4,2]])P(q[0],q[1],q[2],q[3],S.up.paint?'#7a5a3e':'#8a4b2e');
+  P(14,69,256,1,'#3b3432');
+  P(120,50,1,6,'#3b2f2a');P(164,50,1,6,'#3b2f2a');P(111,39,62,13,'#3b2f2a');P(112,40,60,11,S.up.paint?'#f0e6c8':'#dccfae');
+  const siding=S.up.paint?'#b89c73':'#8a785c';
+  for(const q of [[24,4],[256,4],[102,3],[179,3]]){P(q[0],70,q[1],100,siding);P(q[0],70,1,100,shade(siding,-20));}
+  P(24,118,236,4,'#5a4636');P(24,121,236,1,'#3e3026');
+  P(22,170,240,4,'#7c7871');P(80,171,1,2,'#5c5852');P(81,172,2,1,'#5c5852');P(200,170,1,3,'#5c5852');
+  P(0,174,W,8,S.weather==='rain'?'#77736d':'#8f8a82');for(let k=0;k<W;k+=16)P(k,174,1,8,'#7a766e');P(0,182,W,1,'#6d6961');
+  P(0,183,W,17,S.weather==='rain'?'#3a3b42':'#4a4a50');for(let k=0;k<W;k+=20)P(k+4,192,10,1,'#c9c6b8');
+  P(260,118,22,3,'#6d5646');P(260,106,21,1,'#6d5646');for(const px of [260,270,280])P(px,106,1,12,'#6d5646');
+  for(let s=0;s<=24;s++){const sx=279+s,sy=120+s*52/24;P(sx,sy,2,2,s%7===3?'#9a5a3a':'#7a5040');P(sx,sy-11,1,1,'#6d5646');if(s%3===0)P(sx-3,sy,6,1,'#8a6a55');}
+  P(1,110,2,64,'#3d3f46');P(1,110,9,1,'#3d3f46');P(7,111,4,2,n>.2?'#fff4c8':'#d8d8d8');
+  if(S.up.shower){P(8,142,15,30,'#a9b8b6');P(6,140,19,3,'#5e6b73');P(12,150,6,22,'#7d8e8c');P(19,146,3,3,'#dfeef0');}
+  if(S.up.cat)P(30,176,5,1,'#c44a3a');
+  if(S.up.board){P(263,127,13,10,'#8a6a45');P(265,129,4,3,'#f3efe2');P(270,129,4,5,'#f7e7a0');P(265,133,3,2,'#f0c0c0');}
+  if(S.up.washer){const j=(h%1<.3&&fr)?1:0;P(265+j,158,11,12,'#e8e8e2');P(265+j,157,11,1,'#cccccc');P(268+j,161,5,5,'#8aa6b0');P(269+j,162,3,3,'#b8d0d8');}
+  if(S.up.vend){P(305,148,13,26,'#c43b3b');P(307,151,9,8,'#e6eef2');for(let k=0;k<4;k++)P(308+k*2,152,1,3,['#4a8ac4','#e0a040','#6ab04a','#d05050'][k]);P(308,163,7,2,'#2a2a30');P(309,168,5,2,'#1a1a1f');}
+  if(S.up.cat&&S.cat.room<0)drawCat(S.cat.x,178,fr);
+  const walkFr=Math.floor(now/180)%2;
+  for(const w of walkers){drawPerson(w.L,w.x,w.y,'walk',walkFr,w.dir<0,w.prop);if(w.dog){const dx=Math.round(w.x+(w.dir<0?-8:8)),dy=Math.round(w.y);P(dx-2,dy-3,5,2,'#f2efe6');P(w.dir<0?dx-3:dx+2,dy-4,2,2,'#f2efe6');P(dx-2,dy-1,1,1,'#8a7a6a');P(dx+2,dy-1,1,1,'#8a7a6a');}}
+  for(const r of S.res)if(r.at==='walking'){const pr=r.carry==='box'&&r.outPurpose==='move'?'box':(r.outPurpose==='sento'?'basin':(r.outPurpose==='konbini'&&r.walkMode==='return'?'bag':null));drawPerson(r.look,r.x,r.y,'walk',walkFr,r.dir<0,pr);}
+  if(S.weather==='rain'){ctx.fillStyle='rgba(170,200,235,0.55)';for(let k=0;k<90;k++){const rx=(k*37+now*0.06)%336-8,ry=(k*53+now*0.22)%210-10;ctx.fillRect(Math.round(rx),Math.round(ry),1,3);}}
+  const lits=[];
+  for(let i=0;i<6;i++){const lit=roomLit(i,n);if(lit)lits.push(i);else drawRoom(i,now,sky,false);}
+  if(n>0){ctx.fillStyle=`rgba(12,14,38,${(n*.55).toFixed(3)})`;ctx.fillRect(0,0,W,H);}
+  for(const i of lits){drawRoom(i,now,sky,true);const rr=roomRect(i);if(n>.3){P(rr.x+7,rr.y+9,18,13,mix('#f2d38a',sky,.35));const L=getRes(S.rooms[i]);if(L){P(rr.x+7,rr.y+9,4,13,L.look.curtain);P(rr.x+21,rr.y+9,4,13,L.look.curtain);}P(rr.x+16,rr.y+9,1,13,'#6b4b32');}}
+  if(n>.2){const g=ctx.createRadialGradient(9,113,1,9,150,48);g.addColorStop(0,`rgba(255,226,150,${(.32*n).toFixed(3)})`);g.addColorStop(1,'rgba(255,226,150,0)');ctx.fillStyle=g;ctx.fillRect(0,100,70,100);
+    if(S.up.vend){ctx.fillStyle=`rgba(230,240,255,${(.18*n).toFixed(3)})`;ctx.fillRect(300,144,20,34);P(307,151,9,8,'#f4fbff');}}
+  if(S.sel!=null){const r=getRes(S.sel);if(r&&(reduceMotion||Math.floor(now/500)%2===0||true)){ctx.strokeStyle=(reduceMotion||Math.floor(now/500)%2)?'#e7b25a':'#f6d68e';ctx.lineWidth=1;
+    if(home(r)){const rr=roomRect(r.at);ctx.strokeRect(rr.x+.5,rr.y+.5,73,47);}else if(r.at==='walking'){P(r.x-1,r.y-19,3,2,'#e7b25a');P(r.x,r.y-17,1,1,'#e7b25a');}}}
+}
+
+/* ---------- 吹き出し ---------- */
+const bubEls=new Map();
+function charPos(r){
+  if(r.at==='walking')return{x:r.x,y:r.y-16};
+  if(!home(r))return null;
+  const rr=roomRect(r.at),a=ACTS[r.act]||{};
+  if(a.pose==='lie'&&r.at===r.room)return{x:rr.x+10,y:rr.y+30};
+  return{x:r.x,y:rr.y+45-(a.pose==='sit'?12:15)-1};
+}
+function drawBubbles(){
+  const now=Date.now(),seen=new Set();
+  for(const r of S.res){
+    if(!r.bubble||r.bubble.until<now)continue;
+    const p=charPos(r);if(!p)continue;
+    seen.add(r.id);let el=bubEls.get(r.id);
+    if(!el){el=document.createElement('div');el.className='bubble';overlay.appendChild(el);bubEls.set(r.id,el);}
+    if(el.textContent!==r.bubble.text)el.textContent=r.bubble.text;
+    el.style.left=clamp(p.x/W*100,10,90)+'%';el.style.top=(p.y/H*100)+'%';
+  }
+  for(const [id,el] of bubEls)if(!seen.has(id)){el.remove();bubEls.delete(id);}
+}
+
+/* ---------- 画面の文字 ---------- */
+const $=id=>document.getElementById(id);
+const STAGE_LABEL={crush:'片想い',dating:'付き合っている',living:'同棲中',married:'新婚',baby:'子育て中'};
+function statusText(r){
+  if(r.at==='out')return r.outPurpose==='work'&&r.shift?`外出中（${r.shift.label}）`:({konbini:'外出中（コンビニ）',sento:'外出中（銭湯）',hospital:'入院中'}[r.outPurpose]||'外出中');
+  if(r.at==='walking')return r.outPurpose==='move'?'引っ越してくるところ':r.walkMode==='leave'?'出かけるところ':'帰り道';
+  if(r.act==='enkai')return r.partyName||'宴会';
+  if(r.visiting){const hr=getRes(S.rooms[r.at]);return r.act==='nabe'?'鍋パーティー':`${hr?hr.sei:'隣'}さんの部屋にいる`;}
+  return (ACTS[r.act]||{}).label||'';
+}
+function buildRoster(){
+  const box=$('roster');box.innerHTML='';
+  for(const i of ROOM_ORDER){const b=document.createElement('button');b.type='button';b.className='rc';b.id='rc'+i;
+    b.innerHTML='<span class="no"></span><span class="nm"></span><span class="st"></span>';
+    b.addEventListener('click',()=>{const id=S.rooms[i];S.sel=id!=null?id:null;S.selRoom=i;renderUI();});box.appendChild(b);}
+}
+function bar(label,v,cls){v=clamp(Math.round(v),0,100);return `<span>${label}</span><span class="bar"><i class="${cls||''}" style="width:${v}%"></i></span><span class="n">${v}</span>`;}
+const handsTxt=()=>'●'.repeat(S.hands)+'○'.repeat(3-S.hands);
+function actBtn(act,label,cost,dis){return `<button type="button" class="buy" data-act="${act}" ${dis?'disabled':''}>${label}${cost?'<br><small>'+cost+'</small>':''}</button>`;}
+let detailKey='';
+function renderDetail(force){
+  const d=$('detail');const r=S.sel!=null?getRes(S.sel):null;
+  if(!r){
+    const i=S.selRoom,o=i!=null&&S.offers.find(x=>x.room===i);
+    const key='v'+i+(o?o.cands.map(c=>c.id).join():'')+S.hands;
+    if(key===detailKey&&!force)return;detailKey=key;
+    if(i!=null&&S.rooms[i]==null){
+      d.innerHTML=`<h3>${roomNo(i)}号室<small>空室</small></h3>`+(o?`<p class="job">内見が2組。どちらを入れるかで、この先の暮らしが変わる</p>`+o.cands.map((c,k)=>`<div class="item"><div><b>${c.sei} ${c.mei}さん（${c.age}歳）</b><small>${JOBS[c.job].label}／${c.traits.map(t=>TRAITS[t].label).join('・')}</small><small>${c.memos[0]}</small></div><button type="button" class="buy" data-offer="${k}">入れる</button></div>`).join(''):`<p class="job">入居者募集中。窓に貼り紙がしてある</p><p class="hint">評判が上がるか家賃を下げると、内見が早く来る。</p>`);
+    }else d.innerHTML='<p class="hint">部屋か名簿を押すと、その住人のことがわかる。</p>';
+    return;
+  }
+  const pt=partnerOf(r),c=coupleOf(r);
+  const friends=S.res.filter(x=>x!==r).map(x=>[x,relOf(r,x)]).sort((p,q)=>q[1]-p[1]).slice(0,2).filter(p=>p[1]>=10);
+  const key=[r.id,Math.round(r.mood/5),Math.round(r.hunger/5),Math.round(r.sleepy/5),Math.round(r.comfort/5),Math.round(r.clutter/5),Math.round(r.trust/5),r.arrears,r.money,S.hands,statusText(r),c&&c.stage,friends.map(f=>f[0].id+':'+Math.round(f[1]/5)).join(),r.memos.length,S.intro,S.money>=1000].join('|');
+  if(key===detailKey&&!force)return;detailKey=key;
+  const noHand=S.hands<1;
+  const others=S.res.filter(x=>x!==r&&!JOBS[x.job].old);
+  d.innerHTML=`<h3>${roomNo(r.room)}号室 ${r.sei} ${r.mei}さん<small>${r.age}歳</small></h3>
+  <p class="job">${JOBS[r.job].label}／いま：${statusText(r)}${r.leaving?'／まもなく引っ越し':''}</p>
+  <h4>大家の手出し <small style="color:var(--muted);font-family:var(--f-body)">手のあき ${handsTxt()}（4時間で1つ戻る）</small></h4>
+  <div style="display:flex;flex-wrap:wrap;gap:6px">
+    ${actBtn('gift','差し入れ','¥1,000',noHand||S.money<1000)}
+    ${actBtn('listen','話を聞く','無料',noHand)}
+    ${r.arrears?actBtn('wait','家賃を待つ','滞納−1',noHand):''}
+    ${r.arrears?actBtn('press','催促する','信頼が減る',noHand):''}
+    ${others.length&&!JOBS[r.job].old?actBtn('intro','誰かに紹介','',noHand):''}
+  </div>
+  ${S.intro===r.id?`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">${others.map(o=>`<button type="button" class="buy" data-introto="${o.id}">${o.sei}さんに</button>`).join('')}</div>`:''}
+  <div class="bars" style="margin-top:10px">${bar('大家への信頼',r.trust,r.trust<20?'bad':'warm')}${bar('気分',r.mood,r.mood<30?'bad':'')}${bar('空腹',r.hunger,r.hunger>70?'bad':'warm')}${bar('住み心地',r.comfort,r.comfort<25?'bad':'')}${bar('散らかり',r.clutter,r.clutter>70?'bad':'warm')}</div>
+  <dl class="facts"><dt>所持金</dt><dd>${yen(r.money)}</dd><dt>家賃の滞納</dt><dd class="${r.arrears?'neg':''}">${r.arrears}回</dd>
+  ${c?`<dt>${c.stage==='crush'?'気になる人':'相手'}</dt><dd>${(getRes(c.a===r.id?c.b:c.a)||{}).sei||''}さん（${STAGE_LABEL[c.stage]}${c.stage==='crush'?'。たぶん':''}）</dd>`:''}
+  ${friends.length?`<dt>仲のいい人</dt><dd>${friends.map(f=>f[0].sei+'さん').join('、')}</dd>`:''}</dl>
+  <h4>だめなところ</h4><ul>${r.traits.map(t=>`<li><b>${TRAITS[t].label}</b>　${TRAITS[t].desc}</li>`).join('')}</ul>
+  <h4>大家が知っていること</h4><ul>${r.memos.map(m=>`<li>${m}</li>`).join('')}</ul>`;
+}
+function useHand(){if(S.hands<1)return false;S.hands--;if(S.hands===2)S.handT=S.t;return true;}
+function doAction(act,r,arg){
+  if(act==='gift'){if(S.money<1000||!useHand())return;S.money-=1000;r.hunger=Math.max(0,r.hunger-30);r.mood+=12;r.trust=clamp(r.trust+8,0,100);say(r,pick(['いいんですか！','大家さん…','これ、半額シール付いてません？']));log(`大家が${r.sei}さんに差し入れ（${pick(['コロッケ','おにぎり','肉じゃがの残り','みかん1袋'])}）`);}
+  else if(act==='listen'){if(!useHand())return;r.mood+=10;r.trust=clamp(r.trust+6,0,100);
+    const unknown=MEMOS.filter(m=>!r.memos.includes(m));
+    if(r.memos.length<5&&unknown.length){const m=pick(unknown);r.memos.push(m);log(`大家が${r.sei}さんの話を1時間聞いた。わかったこと：${m}`);}
+    else log(`大家が${r.sei}さんの話を聞いた。${pick(['同じ話を3回聞いた','最後は大家の身の上話になっていた','お茶がすっかり冷めた'])}`);
+    say(r,pick(['聞いてくれます？','実はですね…','大家さんだから話すんですけど']));}
+  else if(act==='wait'){if(!r.arrears||!useHand())return;r.arrears--;r.trust=clamp(r.trust+15,0,100);r.mood+=8;say(r,'ほ、本当ですか…！');log(`大家、${r.sei}さんの滞納を1回分待つことにした`,'rent');}
+  else if(act==='press'){if(!r.arrears||!useHand())return;
+    if(r.money>=S.rent){r.money-=S.rent;S.money+=S.rent;r.arrears--;r.trust=clamp(r.trust-8,0,100);say(r,'…払います');log(`大家が${r.sei}さんに催促。${yen(S.rent)} を回収した`,'rent');}
+    else{r.trust=clamp(r.trust-12,0,100);r.mood-=10;say(r,'す、すみません…');log(`大家が${r.sei}さんに催促。財布を逆さにしても小銭しか出てこなかった`,'cost');}}
+  else if(act==='intro'){S.intro=S.intro===r.id?null:r.id;}
+  else if(act==='introto'){const o=getRes(arg);if(!o||!useHand())return;S.intro=null;bump(r,o,15);r.trust=clamp(r.trust+3,0,100);log(`大家の紹介で、${r.sei}さんと${o.sei}さんが${pick(['初めてちゃんと話した','廊下で30分立ち話した','お互いの出身地が同じだとわかった'])}`,'life');}
+  renderUI(true);save();
+}
+function buildShop(){
+  const box=$('shop');box.innerHTML='';
+  const party=document.createElement('div');party.className='item';
+  party.innerHTML=`<div><b>みんなを集めて宴会</b><small>起きている住人を、いちばん広い心の持ち主の部屋に集める。仲が深まる（¥3,000・手のあき1つ）</small></div><button type="button" class="buy" id="buy-party">開く</button>`;
+  party.querySelector('button').addEventListener('click',()=>{
+    const ps=S.res.filter(r=>home(r)&&awake(r));if(S.money<3000||ps.length<2||S.hands<1)return;
+    const host=ps.filter(isTenant).sort((a,b)=>b.trust-a.trust)[0];if(!host)return;
+    useHand();S.money-=3000;const got=gather(host,'大家の宴会',randi(100,160));
+    log(`大家の呼びかけで、${host.sei}さんの部屋で宴会。${got.length}人。${pick(['大家が一番先に酔った','誰かが持ってきた一升瓶が空いた','最後は全員で「ひだまり荘」の歌（即興）を歌った'])}`,'life');renderUI(true);save();});
+  box.appendChild(party);
+  for(const u of UPG){const it=document.createElement('div');it.className='item';
+    it.innerHTML=`<div><b>${u.label}</b><small>${u.desc}</small></div><button type="button" class="buy" id="buy-${u.id}"></button>`;
+    it.querySelector('button').addEventListener('click',()=>{if(S.up[u.id]||S.money<u.cost)return;S.money-=u.cost;S.up[u.id]=true;log(`大家、${u.label}を決断（${yen(u.cost)}）`,'move');
+      if(u.id==='cat')log('さっそく茶トラが様子を見に来た');if(u.id==='shower')log('住人が銭湯の回数券を持て余している');renderUI(true);save();});
+    box.appendChild(it);}
+}
+let lastLogTop=null,lastLogLen=-1,seenLog=null;
+function renderLog(){
+  if(S.log[0]===lastLogTop&&S.log.length===lastLogLen)return;
+  lastLogTop=S.log[0];lastLogLen=S.log.length;
+  const box=$('log');const frag=document.createDocumentFragment();
+  for(const e of S.log.slice(0,90)){const p=document.createElement('p');p.className='ent '+e.kind;if(e.kind!=='day'){const ts=document.createElement('span');ts.className='ts';ts.textContent=fmtT(e.t,true);p.appendChild(ts);}p.appendChild(document.createTextNode(e.text));frag.appendChild(p);}
+  box.replaceChildren(frag);
+}
+let albumKey='';
+function renderAlbum(){
+  const cur=S.res.map(r=>({sei:r.sei,mei:r.mei,age:r.age,job:r.job,room:r.room,from:r.since,to:null,hl:(r.hl||[]).slice(-2),end:null}));
+  const all=cur.concat(S.album);
+  const key=all.map(a=>a.sei+a.to+a.hl.length+(a.hl[a.hl.length-1]||'').length).join();
+  if(key===albumKey)return;albumKey=key;
+  $('album').innerHTML=all.map(a=>{const days=Math.max(1,Math.round(((a.to??S.t)-a.from)/1440));
+    return `<article class="ac ${a.to==null?'':a.happy?'happy':'gone'}"><h3>${roomNo(a.room)} ${a.sei} ${a.mei}さん<small>${a.age}歳・${JOBS[a.job].label}</small></h3>
+    <p class="per">${fmtT(a.from).split(' ')[0]}〜${a.to==null?'住んでいる':fmtT(a.to).split(' ')[0]}（${days}日）</p>
+    ${a.hl.length?`<ul>${a.hl.map(h=>`<li>${h.replace(a.sei+'さん、','').replace(a.sei+'さん','')}</li>`).join('')}</ul>`:''}
+    ${a.end?`<p class="end">→ ${a.end}</p>`:''}</article>`;}).join('');
+}
+function setTab(t){S.tab=t;for(const b of document.querySelectorAll('.tabs button')){const on=b.dataset.pane===t;b.setAttribute('aria-selected',String(on));b.tabIndex=on?0:-1;$('pane-'+b.dataset.pane).hidden=!on;}
+  if(t==='log')seenLog=S.log[0];renderUI(true);}
+function renderUI(force){
+  $('age').textContent='築'+buildAge()+'年';
+  $('ageSub').textContent=S.decided?'記念日を過ぎた':'築50年まであと'+daysToGoal()+'日';
+  $('clock').textContent=fmtT(S.t);
+  $('weather').textContent={sunny:'晴れ',cloudy:'くもり',rain:'雨'}[S.weather];
+  const m=$('money');m.textContent=yen(S.money);m.classList.toggle('neg',S.money<0);
+  $('rep').textContent=Math.round(S.rep);
+  $('rentv').textContent=yen(S.rent);
+  $('spec').textContent=`木造2階建て・6室・${S.up.shower?'シャワー室あり':'風呂なし'}・家賃は3日ごとに集金`;
+  for(const s of [0,1,4,15])$('sp'+s).setAttribute('aria-pressed',String(S.speed===s));
+  for(const i of ROOM_ORDER){const b=$('rc'+i),id=S.rooms[i],r=id!=null?getRes(id):null,pt=r&&partnerOf(r),offer=S.offers.some(o=>o.room===i);
+    const liv=pt&&pt.room===i;
+    b.classList.toggle('vac',!r);b.setAttribute('aria-pressed',String(r?(S.sel===r.id||(liv&&S.sel===pt.id)):(S.sel==null&&S.selRoom===i)));
+    b.querySelector('.no').textContent=roomNo(i);b.querySelector('.nm').textContent=r?(liv?r.sei+'・'+pt.sei:r.sei+'さん'):(offer?'内見 2組':'空室');b.querySelector('.st').textContent=r?statusText(r):(offer?'押して選ぶ':'入居者募集中');}
+  const pb=$('buy-party');if(pb)pb.disabled=S.money<3000||S.hands<1;
+  for(const u of UPG){const b=$('buy-'+u.id);if(S.up[u.id]){b.textContent='設置済み';b.disabled=true;b.classList.add('done');}else{b.textContent=yen(u.cost);b.disabled=S.money<u.cost;b.classList.remove('done');}}
+  const dot=(id,on)=>{const b=$(id);let d=b.querySelector('.dot');if(on&&!d){d=document.createElement('span');d.className='dot';d.setAttribute('aria-label','新着');b.appendChild(d);}else if(!on&&d)d.remove();};
+  dot('tab-roster',S.offers.length>0&&S.tab!=='roster');
+  if(S.tab==='log')seenLog=S.log[0];
+  dot('tab-log',S.tab!=='log'&&seenLog!==S.log[0]);
+  if(S.tab==='roster')renderDetail(force);
+  if(S.tab==='log')renderLog();
+  if(S.tab==='album')renderAlbum();
+}
+
+/* ---------- 築50年の記念日と結末 ---------- */
+function showModal(title,html,btns){
+  $('evTitle').textContent=title;$('evBody').innerHTML=html;const box=$('evBtns');box.innerHTML='';
+  for(const b of btns){const el=document.createElement('button');el.type='button';el.textContent=b.label;if(b.alt)el.className='alt';el.addEventListener('click',b.fn);box.appendChild(el);}
+  $('event').hidden=false;box.querySelector('button')?.focus();
+}
+function showCeremony(){
+  S.speed=0;
+  const total=S.album.length+S.res.length,days=Math.floor((S.t-S.t0)/1440);
+  const VO=['50年も建ってたんですね、ここ','壁、薄いけど好きですよ','家賃…来月でいいですか','ここに来てよかったです','おめでとう、でいいのかな','50年後もカップ麺食べてそう'].sort(()=>Math.random()-.5);
+  const voices=S.res.slice(0,4).map((r,k)=>`<li>${r.sei}さん「${VO[k]}」</li>`).join('');
+  showModal('築50年の記念日',`<p>ひだまり荘は今日で築50年。大家になってから${days}日、ここには${total}人が住んだ（夜逃げ${S.stats.yonige}人、鍋${S.stats.nabe}回）。</p><ul>${voices}</ul>
+    <p>夕方、不動産会社の営業が菓子折りを持ってやってきた。「立ち退き料込みで、この土地を${yen(120000000)}で買わせてください。跡地はコインパーキングになります」</p>`,
+  [{label:'売る（ここで終わり）',fn:sellOut},{label:'断る（ひだまり荘を続ける）',alt:true,fn:()=>{S.decided=true;S.ceremony=false;S.speed=1;for(const r of S.res){r.mood+=10;r.trust=clamp(r.trust+10,0,100);}
+    log('買収の話を断った。営業は名刺だけ置いて帰った。その夜、住人が勝手に「築50年おめでとう会」を開いた','life');const h=S.res.find(isTenant);if(h)gather(h,'築50年おめでとう会',150);$('event').hidden=true;renderUI(true);save();}}]);
+}
+const DEST=['駅向こうの築52年のアパートに移った','実家に帰った','知り合いの家に転がり込んだ','少しいい部屋に引っ越した（風呂つき）','近所の別のボロアパートで、また隣同士になった'];
+function sellOut(){
+  const lines=S.res.map(r=>`<li>${r.sei}さんは${pick(DEST)}</li>`);
+  S.ended={html:`<p>ひだまり荘は取り壊された。</p><ul>${lines.join('')}</ul><p>${S.up.cat?'跡地のコインパーキングには、ときどき茶トラが座っている。':'跡地のコインパーキングの前を通ると、どこかからカップ麺の匂いがする気がする。'}</p><p>おしまい。</p>`};
+  S.ceremony=false;S.decided=true;S.speed=0;save();showEnding();
+}
+function showEnding(){showModal('それから',S.ended.html,[{label:'新しいボロアパートの大家になる（最初から）',fn:()=>{walkers.length=0;newGame();$('rent').value=S.rent;lastLogTop=null;albumKey='';$('event').hidden=true;renderUI(true);save();}}]);}
+
+/* ---------- 保存 ---------- */
+function save(){try{localStorage.setItem(KEY,JSON.stringify({S,saved:Date.now()}));}catch(e){}}
+function load(){try{const raw=localStorage.getItem(KEY);if(!raw)return null;const o=JSON.parse(raw);return o&&o.S&&o.S.v===1&&o.S.couples?o:null;}catch(e){return null;}}
+function catchUp(ms){
+  if(!(ms>0)||S.ended)return;
+  let mins=Math.min(ms/1000*MIN_PER_SEC,3*1440);if(mins<1)return;
+  const mark=S.log[0],money0=S.money;catchup=true;
+  while(mins>0){const s=Math.min(2,mins);update(s);mins-=s;}
+  catchup=false;
+  const idx=S.log.indexOf(mark),news=(idx<0?S.log:S.log.slice(0,idx)).filter(e=>e.kind!=='day');
+  if(ms<120000||!news.length)return;
+  const hrs=Math.floor(ms/3600000),mn=Math.floor(ms/60000)%60;
+  $('awayLead').textContent=`留守にしていた${hrs?hrs+'時間':''}${mn}分のあいだに、${news.length}件のできごとがあった。財布は ${yen(money0)} → ${yen(S.money)}。`;
+  const imp=news.filter(e=>e.kind==='life'||e.kind==='move').concat(news.filter(e=>e.kind!=='life'&&e.kind!=='move'));
+  $('awayList').replaceChildren(...imp.slice(0,8).map(e=>{const li=document.createElement('li');li.textContent=e.text;return li;}));
+  $('away').hidden=false;$('awayClose').focus();
+}
+
+/* ---------- 操作 ---------- */
+function bindUI(){
+  buildRoster();buildShop();
+  document.querySelectorAll('.speed button').forEach(b=>b.addEventListener('click',()=>{S.speed=Number(b.dataset.s);renderUI();}));
+  const tabs=[...document.querySelectorAll('.tabs button')];
+  tabs.forEach((b,k)=>{b.addEventListener('click',()=>setTab(b.dataset.pane));
+    b.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowLeft'){const n=tabs[(k+(e.key==='ArrowRight'?1:tabs.length-1))%tabs.length];n.focus();setTab(n.dataset.pane);}});});
+  const rent=$('rent');rent.value=S.rent;
+  rent.addEventListener('input',()=>{S.rent=Number(rent.value);renderUI();});
+  rent.addEventListener('change',()=>{log(`家賃を ${yen(S.rent)} に改定した`,'rent');renderUI();save();});
+  $('awayClose').addEventListener('click',()=>{$('away').hidden=true;});
+  $('detail').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+    if(b.dataset.offer!=null){const o=S.offers.find(x=>x.room===S.selRoom);if(o){acceptOffer(o,Number(b.dataset.offer));S.sel=S.rooms[o.room];renderUI(true);save();}return;}
+    const r=getRes(S.sel);if(!r)return;
+    if(b.dataset.introto)doAction('introto',r,Number(b.dataset.introto));else if(b.dataset.act)doAction(b.dataset.act,r);});
+  const rs=$('reset');let armT=0;
+  rs.addEventListener('click',()=>{if(!rs.classList.contains('arm')){rs.classList.add('arm');rs.textContent='本当にやり直す（もう一度押す）';clearTimeout(armT);armT=setTimeout(()=>{rs.classList.remove('arm');rs.textContent='最初からやり直す';},4000);return;}
+    rs.classList.remove('arm');rs.textContent='最初からやり直す';walkers.length=0;newGame();rent.value=S.rent;lastLogTop=null;albumKey='';renderUI(true);save();});
+  cv.addEventListener('click',e=>{
+    const b=cv.getBoundingClientRect(),x=(e.clientX-b.left)/b.width*W,y=(e.clientY-b.top)/b.height*H;
+    let hit=null;
+    for(const r of S.res)if(r.at==='walking'&&Math.abs(r.x-x)<7&&y>r.y-18&&y<r.y+3){hit=r;break;}
+    if(!hit)for(let i=0;i<6;i++){const rr=roomRect(i);if(x>=rr.x&&x<rr.x+rr.w&&y>=rr.y&&y<rr.y+rr.h){
+      const here=roomOcc(i).sort((a,b)=>Math.abs(a.x-x)-Math.abs(b.x-x));hit=here[0]||(S.rooms[i]!=null?getRes(S.rooms[i]):null);S.selRoom=i;
+      if(!hit){S.sel=null;setTab('roster');return;}break;}}
+    if(hit){S.sel=hit.id;S.selRoom=hit.room;setTab('roster');}
+  });
+  document.addEventListener('visibilitychange',()=>{
+    if(document.hidden){S.hiddenAt=Date.now();save();}
+    else if(S.hiddenAt){const ms=Date.now()-S.hiddenAt;S.hiddenAt=0;catchUp(ms);lastT=performance.now();renderUI(true);}
+  });
+  window.addEventListener('pagehide',save);
+}
+
+let lastT=0,uiAcc=0,saveAcc=0;
+function frame(now){
+  const dt=Math.min(.25,(now-lastT)/1000);lastT=now;
+  let g=dt*MIN_PER_SEC*S.speed;const gAll=g;
+  while(g>0){const s=Math.min(2,g);update(s);g-=s;}
+  updateWalkers(gAll);
+  drawScene(now);drawBubbles();
+  if(S.ceremony&&!S.ended&&$('event').hidden){showCeremony();renderUI(true);}
+  uiAcc+=dt;if(uiAcc>.3){uiAcc=0;renderUI();}
+  saveAcc+=dt;if(saveAcc>5){saveAcc=0;save();}
+  requestAnimationFrame(frame);
+}
+
+function start(data){
+  let away=0;
+  if(data&&data.S){S=data.S;}
+  else{const o=load();if(o){S=o.S;away=Date.now()-o.saved;}else newGame();}
+  if(S.speed==null)S.speed=1;
+  bindUI();
+  if(S.ended){S.speed=0;showEnding();}
+  else if(away>0)catchUp(away);
+  setTab(S.tab||'roster');
+  window.claude?.hot?.snapshot?.(()=>({S}));
+  lastT=performance.now();requestAnimationFrame(frame);
+}
+const hot=window.claude?.hot;
+hot?.ready?hot.ready(start):start(hot?.data??{});
+})();
+</script>
