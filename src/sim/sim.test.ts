@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { createRng, newGame, step, hourOf, dayOf, ROOM_COUNT } from "@/sim";
-import type { GameState } from "@/sim";
+import type { GameState, Rng } from "@/sim";
+import { onlyJobs } from "@/test/content";
 
 /** A1 の不変条件: 居場所は 4 種類のどれかで、部屋の表と住人の表が食い違わない */
 function invariantErrors(s: GameState): string[] {
@@ -83,30 +84,69 @@ describe("A2: 決定性", () => {
 });
 
 describe("A3: 会社員（平日 7:30〜22:30 勤務）", () => {
+  const SEEDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+  const content = onlyJobs(["salaryman", "konbini", "band", "ronin"]);
+
+  /** 会社員が初期住人にいれば、寝坊と予約済みの出来事を外した状態で返す。いなければ null */
+  function withSalaryman(seed: number): { s: GameState; rng: Rng } | null {
+    const rng = createRng(seed);
+    const s = newGame(rng, content);
+    const man = s.res.find((r) => r.job === "salaryman");
+    if (!man) return null;
+    man.traits = man.traits.filter((t) => t !== "nebou");
+    s.booked = s.booked.filter((b) => b.roles.a !== man.id && b.roles.b !== man.id);
+    return { s, rng };
+  }
+
   it("勤務時間中は外出中で、勤務後に帰宅している", { timeout: 60_000 }, () => {
-    // 種類を足して抽選の並びが変わったため、会社員が初期住人にいる最小の近傍シードへ変更（4241 -> 4242）
-    const rng = createRng(4242);
-    let s = newGame(rng);
-    const man = () => s.res.find((r) => r.job === "salaryman")!;
-    expect(man()).toBeDefined();
+    for (const seed of SEEDS) {
+      const g = withSalaryman(seed);
+      if (!g) continue;
+      const { rng } = g;
+      let s = g.s;
+      const id = s.res.find((r) => r.job === "salaryman")!.id;
+      const man = () => s.res.find((r) => r.id === id)!;
 
-    // 2 日目（平日）の朝 6:00 まで進める
-    while (!(dayOf(s.t) === 2 && hourOf(s.t) >= 6)) s = step(s, 1, rng);
-    expect(dayOf(s.t) % 7).not.toBe(0);
-    expect(dayOf(s.t) % 7).not.toBe(6);
+      // 2 日目（平日）の朝 6:00 まで進める
+      while (!(dayOf(s.t) === 2 && hourOf(s.t) >= 6)) s = step(s, 1, rng);
+      expect(dayOf(s.t) % 7).not.toBe(0);
+      expect(dayOf(s.t) % 7).not.toBe(6);
 
-    let outAllDay = true;
-    let backHome = false;
-    while (dayOf(s.t) === 2) {
-      s = step(s, 1, rng);
-      const h = hourOf(s.t);
-      if (h >= 8.5 && h < 22) {
-        if (man().at !== "out") outAllDay = false;
+      let outAfterNine = true;
+      let noRoomWhileAway = true;
+      let backHome = false;
+      let firstOut: number | null = null;
+      while (dayOf(s.t) === 2) {
+        s = step(s, 1, rng);
+        const h = hourOf(s.t);
+        if (firstOut === null && man().at === "out") firstOut = h;
+        // 7:30 に出てから階段を歩き終えるまで out にならない時間があるので、部屋にいないことと 9:00 以降の out を分けて見る
+        if (h > 7.5 && h < 22 && typeof man().at === "number") noRoomWhileAway = false;
+        if (h >= 9 && h < 22 && man().at !== "out") outAfterNine = false;
+        if (h >= 22.5 && typeof man().at === "number") backHome = true;
+        expect(man().job).toBe("salaryman");
       }
-      if (h >= 22.5 && typeof man().at === "number") backHome = true;
+      expect(noRoomWhileAway).toBe(true);
+      expect(outAfterNine).toBe(true);
+      expect(firstOut).not.toBeNull();
+      expect(firstOut!).toBeGreaterThan(7.5);
+      expect(firstOut!).toBeLessThan(9);
+      expect(backHome).toBe(true);
     }
-    expect(outAllDay).toBe(true);
-    expect(backHome).toBe(true);
+  });
+
+  it("会社員が初期住人にいるシードが 3 つ以上あり、初期の部屋は 2 種類以上ある（空回りしない）", () => {
+    const rooms: number[] = [];
+    let count = 0;
+    for (const seed of SEEDS) {
+      const s = newGame(createRng(seed), content);
+      const man = s.res.find((r) => r.job === "salaryman");
+      if (!man) continue;
+      count++;
+      rooms.push(man.room);
+    }
+    expect(count).toBeGreaterThanOrEqual(3);
+    expect(new Set(rooms).size).toBeGreaterThanOrEqual(2);
   });
 });
 
