@@ -55,7 +55,8 @@
     "shifts": [{ "days": { "every": 1, "on": [0] }, "start": 5.5, "end": 7, "label": "朝の散歩", "pay": 0 }],
     "hobbies": { "plants": 3, "radio": 3, "tv": 3, "stare": 1 },
     "traits": ["neko", "hitorigoto"],
-    "arc": "oldman-fall-ill",    "decor": { "required": ["tansu", "kamidana", "radio-old"], "pool": ["plant-pots", "clock-wall", "photo-frame"], "pick": [2, 3] }
+    "arc": "oldman-fall-ill",
+    "decor": { "required": ["tansu", "kamidana", "radio-old"], "pool": ["plant-pots", "clock-wall", "photo-frame"], "pick": [2, 3] }
   },
   {
     "id": "salaryman",
@@ -89,7 +90,8 @@
     "shifts": [{ "days": { "every": 3, "on": [2] }, "start": 10, "end": 18, "label": "倉庫バイト", "pay": 9000 }],
     "hobbies": { "draw": 6, "phone": 2, "stare": 2, "nap": 1 },
     "traits": ["nebou", "jisui"],
-    "arc": "mangaka-pitch",    "decor": { "required": ["drawing-desk", "magazine-pile", "book-tower"], "pool": ["cup-noodle", "bottle-tower", "fan"], "pick": [2, 3] }
+    "arc": "mangaka-pitch",
+    "decor": { "required": ["drawing-desk", "magazine-pile", "book-tower"], "pool": ["cup-noodle", "bottle-tower", "fan"], "pick": [2, 3] }
   },
   {
     "id": "pachinko",
@@ -101,7 +103,8 @@
     "shifts": [{ "days": { "every": 2, "on": [0] }, "start": 10, "end": 21, "label": "パチンコ", "pay": "gamble" }],
     "hobbies": { "keiba": 4, "beer": 3, "tv": 2, "phone": 1 },
     "traits": ["kinketsu", "mie"],
-    "arc": "pachinko-slump",    "decor": { "required": ["magazine-pile", "bottle-tower", "notice-paper"], "pool": ["calendar", "cup-noodle", "clock-wall", "poster-idol"], "pick": [2, 3] }
+    "arc": "pachinko-slump",
+    "decor": { "required": ["magazine-pile", "bottle-tower", "notice-paper"], "pool": ["calendar", "cup-noodle", "clock-wall", "poster-idol"], "pick": [2, 3] }
   },
   {
     "id": "student",
@@ -117,7 +120,8 @@
     ],
     "hobbies": { "phone": 4, "game": 4, "beer": 2, "nap": 3, "guitar": 1 },
     "traits": ["katazuke", "nebou"],
-    "arc": "student-credits",    "decor": { "required": ["low-desk", "book-tower", "calendar"], "pool": ["cup-noodle", "color-box", "poster-idol", "fan", "mini-fridge"], "pick": [2, 3] }
+    "arc": "student-credits",
+    "decor": { "required": ["low-desk", "book-tower", "calendar"], "pool": ["cup-noodle", "color-box", "poster-idol", "fan", "mini-fridge"], "pick": [2, 3] }
   },
   {
     "id": "youtuber",
@@ -129,8 +133,12 @@
     "shifts": [{ "days": { "every": 5, "on": [3] }, "start": 14, "end": 22, "label": "倉庫バイト", "pay": 9000 }],
     "hobbies": { "stream": 5, "phone": 3, "stare": 1 },
     "traits": ["hitorigoto", "jisui"],
-    "decor": { "required": ["pc-desk", "streaming-set", "cup-noodle"], "pool": ["poster-idol", "photo-frame", "fan", "bottle-tower", "laundry-line"], "pick": [2, 3] },
-    "arc": "youtuber-viral"
+    "arc": "youtuber-viral",
+    "decor": {
+      "required": ["pc-desk", "streaming-set", "cup-noodle"],
+      "pool": ["poster-idol", "photo-frame", "fan", "bottle-tower", "laundry-line"],
+      "pick": [2, 3]
+    }
   },
   {
     "id": "senmon",
@@ -148,28 +156,20 @@
     "hobbies": { "draw": 3, "phone": 3, "game": 2, "nap": 2, "stare": 1 },
     "traits": ["nebou", "jisui"],
     "arc": "senmon-term",
-    "decor": {"required": ["low-desk", "book-tower", "calendar"], "pool": ["cup-noodle", "fan", "poster-idol"], "pick": [2, 3] }
+    "decor": { "required": ["low-desk", "book-tower", "calendar"], "pool": ["cup-noodle", "fan", "poster-idol"], "pick": [2, 3] }
   },
   {
     "id": "yamikin",
     "label": "闇金に借りている人（電話は出ない）",
-    "age": [
-      32,
-      54
-    ],
-    "sleep": [
-      2,
-      10
-    ],
+    "age": [32, 54],
+    "sleep": [2, 10],
     "eat": "bento",
     "startMoney": 4000,
     "shifts": [
       {
         "days": {
           "every": 2,
-          "on": [
-            1
-          ]
+          "on": [1]
         },
         "start": 8,
         "end": 17,
@@ -184,41 +184,19 @@
       "tv": 2,
       "stare": 2
     },
-    "traits": [
-      "rusu",
-      "kinketsu",
-      "mie"
-    ],
+    "traits": ["rusu", "kinketsu", "mie"],
     "arc": "yamikin-notice",
     "decor": {
-      "required": [
-        "notice-paper",
-        "magazine-pile",
-        "cup-noodle"
-      ],
-      "pool": [
-        "calendar",
-        "bottle-tower",
-        "clock-wall",
-        "laundry-pile"
-      ],
-      "pick": [
-        2,
-        3
-      ]
+      "required": ["notice-paper", "magazine-pile", "cup-noodle"],
+      "pool": ["calendar", "bottle-tower", "clock-wall", "laundry-pile"],
+      "pick": [2, 3]
     }
   },
   {
     "id": "rakugo",
     "label": "万年前座の落語家志望",
-    "age": [
-      24,
-      38
-    ],
-    "sleep": [
-      2,
-      9.5
-    ],
+    "age": [24, 38],
+    "sleep": [2, 9.5],
     "eat": "ramen",
     "startMoney": 7000,
     "allowance": 10000,
@@ -226,9 +204,7 @@
       {
         "days": {
           "every": 2,
-          "on": [
-            0
-          ]
+          "on": [0]
         },
         "start": 13,
         "end": 22,
@@ -238,9 +214,7 @@
       {
         "days": {
           "every": 4,
-          "on": [
-            1
-          ]
+          "on": [1]
         },
         "start": 8,
         "end": 15,
@@ -255,40 +229,19 @@
       "nap": 2,
       "beer": 2
     },
-    "traits": [
-      "honki",
-      "hitorigoto"
-    ],
+    "traits": ["honki", "hitorigoto"],
     "arc": "rakugo-stage",
     "decor": {
-      "required": [
-        "low-desk",
-        "book-tower",
-        "hanger-rack"
-      ],
-      "pool": [
-        "radio-old",
-        "calendar",
-        "cup-noodle",
-        "photo-frame"
-      ],
-      "pick": [
-        2,
-        3
-      ]
+      "required": ["low-desk", "book-tower", "hanger-rack"],
+      "pool": ["radio-old", "calendar", "cup-noodle", "photo-frame"],
+      "pick": [2, 3]
     }
   },
   {
     "id": "busybody",
     "label": "世話焼きのおばちゃん",
-    "age": [
-      48,
-      65
-    ],
-    "sleep": [
-      23,
-      5.5
-    ],
+    "age": [48, 65],
+    "sleep": [23, 5.5],
     "eat": "nimono",
     "startMoney": 40000,
     "allowance": 30000,
@@ -296,13 +249,7 @@
       {
         "days": {
           "every": 7,
-          "on": [
-            1,
-            2,
-            3,
-            4,
-            5
-          ]
+          "on": [1, 2, 3, 4, 5]
         },
         "start": 9,
         "end": 15,
@@ -316,50 +263,26 @@
       "plants": 2,
       "phone": 2
     },
-    "traits": [
-      "osekkai",
-      "hitorigoto"
-    ],
+    "traits": ["osekkai", "hitorigoto"],
     "arc": "busybody-stew",
     "decor": {
-      "required": [
-        "tansu",
-        "calendar",
-        "plant-pots"
-      ],
-      "pool": [
-        "photo-frame",
-        "clock-wall",
-        "mini-fridge",
-        "fish-tank"
-      ],
-      "pick": [
-        2,
-        3
-      ]
+      "required": ["tansu", "calendar", "plant-pots"],
+      "pool": ["photo-frame", "clock-wall", "mini-fridge", "fish-tank"],
+      "pick": [2, 3]
     }
   },
   {
     "id": "taxi",
     "label": "夜勤明けのタクシー運転手",
-    "age": [
-      42,
-      60
-    ],
-    "sleep": [
-      9,
-      16
-    ],
+    "age": [42, 60],
+    "sleep": [9, 16],
     "eat": "bento",
     "startMoney": 50000,
     "shifts": [
       {
         "days": {
           "every": 3,
-          "on": [
-            0,
-            1
-          ]
+          "on": [0, 1]
         },
         "start": 20,
         "end": 7,
@@ -374,53 +297,26 @@
       "keiba": 2,
       "beer": 2
     },
-    "traits": [
-      "sake",
-      "hitorigoto"
-    ],
+    "traits": ["sake", "hitorigoto"],
     "arc": "taxi-passenger",
     "decor": {
-      "required": [
-        "radio-old",
-        "hanger-rack",
-        "calendar"
-      ],
-      "pool": [
-        "bottle-tower",
-        "magazine-pile",
-        "clock-wall",
-        "photo-frame"
-      ],
-      "pick": [
-        2,
-        3
-      ]
+      "required": ["radio-old", "hanger-rack", "calendar"],
+      "pool": ["bottle-tower", "magazine-pile", "clock-wall", "photo-frame"],
+      "pick": [2, 3]
     }
   },
   {
     "id": "guarantor",
     "label": "断れない保証人のお人好し",
-    "age": [
-      33,
-      55
-    ],
-    "sleep": [
-      0.5,
-      6.5
-    ],
+    "age": [33, 55],
+    "sleep": [0.5, 6.5],
     "eat": "bento",
     "startMoney": 35000,
     "shifts": [
       {
         "days": {
           "every": 7,
-          "on": [
-            1,
-            2,
-            3,
-            4,
-            5
-          ]
+          "on": [1, 2, 3, 4, 5]
         },
         "start": 7.5,
         "end": 19,
@@ -435,53 +331,26 @@
       "nap": 2,
       "stare": 1
     },
-    "traits": [
-      "kotowarenai",
-      "samishi"
-    ],
+    "traits": ["kotowarenai", "samishi"],
     "arc": "guarantor-stamp",
     "decor": {
-      "required": [
-        "hanger-rack",
-        "calendar",
-        "notice-paper"
-      ],
-      "pool": [
-        "tansu",
-        "photo-frame",
-        "magazine-pile",
-        "mini-fridge"
-      ],
-      "pick": [
-        2,
-        3
-      ]
+      "required": ["hanger-rack", "calendar", "notice-paper"],
+      "pool": ["tansu", "photo-frame", "magazine-pile", "mini-fridge"],
+      "pick": [2, 3]
     }
   },
   {
     "id": "konkatsu",
     "label": "婚活中の公務員",
-    "age": [
-      30,
-      42
-    ],
-    "sleep": [
-      23,
-      6.5
-    ],
+    "age": [30, 42],
+    "sleep": [23, 6.5],
     "eat": "cook",
     "startMoney": 80000,
     "shifts": [
       {
         "days": {
           "every": 7,
-          "on": [
-            1,
-            2,
-            3,
-            4,
-            5
-          ]
+          "on": [1, 2, 3, 4, 5]
         },
         "start": 7.5,
         "end": 19,
@@ -496,41 +365,19 @@
       "study": 2,
       "beer": 1
     },
-    "traits": [
-      "mie",
-      "samishi"
-    ],
+    "traits": ["mie", "samishi"],
     "arc": "konkatsu-profile",
     "decor": {
-      "required": [
-        "hanger-rack",
-        "color-box",
-        "calendar"
-      ],
-      "pool": [
-        "plant-pots",
-        "photo-frame",
-        "fan",
-        "mini-fridge",
-        "book-tower"
-      ],
-      "pick": [
-        2,
-        3
-      ]
+      "required": ["hanger-rack", "color-box", "calendar"],
+      "pool": ["plant-pots", "photo-frame", "fan", "mini-fridge", "book-tower"],
+      "pick": [2, 3]
     }
   },
   {
     "id": "sento",
     "label": "銭湯の跡継ぎ（実家は廃業）",
-    "age": [
-      25,
-      38
-    ],
-    "sleep": [
-      0.5,
-      8
-    ],
+    "age": [25, 38],
+    "sleep": [0.5, 8],
     "eat": "ramen",
     "startMoney": 20000,
     "allowance": 12000,
@@ -538,9 +385,7 @@
       {
         "days": {
           "every": 3,
-          "on": [
-            0
-          ]
+          "on": [0]
         },
         "start": 10,
         "end": 19,
@@ -555,49 +400,26 @@
       "game": 1,
       "beer": 2
     },
-    "traits": [
-      "samishi",
-      "engi"
-    ],
+    "traits": ["samishi", "engi"],
     "arc": "sento-closed",
     "decor": {
-      "required": [
-        "cardboard-stack",
-        "tansu",
-        "clock-wall"
-      ],
-      "pool": [
-        "fan",
-        "photo-frame",
-        "bottle-tower",
-        "laundry-pile"
-      ],
-      "pick": [
-        2,
-        3
-      ]
+      "required": ["cardboard-stack", "tansu", "clock-wall"],
+      "pool": ["fan", "photo-frame", "bottle-tower", "laundry-pile"],
+      "pick": [2, 3]
     }
   },
   {
     "id": "uranai",
     "label": "路上の占い師（自分の運勢は見ない）",
-    "age": [
-      29,
-      52
-    ],
-    "sleep": [
-      3,
-      11
-    ],
+    "age": [29, 52],
+    "sleep": [3, 11],
     "eat": "ramen",
     "startMoney": 25000,
     "shifts": [
       {
         "days": {
           "every": 2,
-          "on": [
-            1
-          ]
+          "on": [1]
         },
         "start": 18,
         "end": 23,
@@ -613,27 +435,12 @@
       "stare": 3,
       "plants": 1
     },
-    "traits": [
-      "engi",
-      "hitorigoto"
-    ],
+    "traits": ["engi", "hitorigoto"],
     "arc": "uranai-reading",
     "decor": {
-      "required": [
-        "kamidana",
-        "low-desk",
-        "pennant"
-      ],
-      "pool": [
-        "fish-tank",
-        "plant-pots",
-        "clock-wall",
-        "photo-frame"
-      ],
-      "pick": [
-        2,
-        3
-      ]
+      "required": ["kamidana", "low-desk", "pennant"],
+      "pool": ["fish-tank", "plant-pots", "clock-wall", "photo-frame"],
+      "pick": [2, 3]
     }
   }
 ]
