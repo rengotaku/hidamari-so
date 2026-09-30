@@ -84,6 +84,7 @@ localStorage の 1 つのキー（`hidamari-so-save`）に、`schemaVersion`・`
 | 退去後の片付け・入居・模様替え | `src/sim/landlord.ts`、`src/sim/decor.ts` |
 | 保存の項目を足す | `src/save/schema.ts`（欠けた保存の既定値または `fillHouse` も）。判断は ADR 0002 |
 | 保存の版を上げる | `src/save/migrate.ts` の `MIGRATIONS` に移行関数を 1 件足し、`SCHEMA_VERSION` を上げる |
+| 積雪・雪かき（積雪は実際に雪が降った日数 `GameState.snowDays` で決まり、雪かき役は家にいる人のうち id が最小の人。雪かき中はその人を部屋に描かない） | `src/sim/world.ts`（`onDay`）、`src/render/season.ts`（`snowCover` / `pickShoveler`）、`src/render/room.ts`（`roomOccupants`） |
 | 全体図の絵（建物・空・季節） | `src/render/scene.ts`、`src/render/season.ts`、`src/render/sky.ts` |
 | 全体図の装飾の置き場所（区画） | `src/render/decor.ts` |
 | 大写しの絵 | `src/render/closeup.ts` |

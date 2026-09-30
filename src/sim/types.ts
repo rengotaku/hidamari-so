@@ -230,6 +230,8 @@ export interface GameState {
   /** ゲーム開始時刻（築年数の基準） */
   t0: number;
   weather: Weather;
+  /** 冬のあいだに実際に雪が降った日の数（冬でなければ 0。積雪の元） */
+  snowDays: number;
   res: Resident[];
   /** 部屋 → 入居者 id（空室は null） */
   rooms: (number | null)[];

@@ -21,6 +21,7 @@ import { LANDLORD_LOOK, drawRoom, roomLit } from "./room";
 import {
   drawSeasonBack,
   drawSeasonFront,
+  pickShoveler,
   seasonLook,
   seasonPhase,
   shovelerAt,
@@ -225,12 +226,8 @@ export function drawScene(
   drawAging(ctx, aging);
   drawSeasonFront(ctx, s, now, n);
   const shoveler = shovelerAt(s);
-  // 雪かき役は、その時間に屋外を歩いていない住人のうち id が最小の人。いなければ出さない
-  const first = sv.res
-    .filter((r) => r.at !== "walking")
-    .reduce<
-      (typeof sv.res)[number] | undefined
-    >((m, r) => (m && m.id <= r.id ? m : r), undefined);
+  // 雪かき役は、家にいる住人のうち id が最小の人（部屋では描かれない）。いなければ出さない
+  const first = pickShoveler(sv.res);
   if (shoveler && first)
     drawPerson(
       ctx,

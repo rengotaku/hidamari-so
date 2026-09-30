@@ -170,3 +170,18 @@ describe("追加: タブが非表示だった時間", () => {
     expect(t.show()).toBe(0);
   });
 });
+
+describe("S7: snowDays を持たない古い保存", () => {
+  it("読めて、snowDays は 0 で補われる", () => {
+    const { s } = savedSample();
+    const env = JSON.parse(localStorage.getItem(SAVE_KEY)!) as {
+      state: Record<string, unknown>;
+    };
+    expect(env.state.snowDays).toBe(s.snowDays);
+    delete env.state.snowDays;
+    localStorage.setItem(SAVE_KEY, JSON.stringify(env));
+    const loaded = loadGame(localStorage);
+    expect(loaded).not.toBeNull();
+    expect(loaded!.state.snowDays).toBe(0);
+  });
+});

@@ -7,6 +7,8 @@ import {
   seasonOf,
   SEASONS,
   step,
+  YEAR_DAYS,
+  DAY_MIN,
 } from "@/sim";
 import type { Season, Weather } from "@/sim";
 
@@ -115,5 +117,32 @@ describe("追加: 季節の節目の日誌", () => {
         )
           expect(seasonOf(Math.floor(e.t / 1440) + 1)).toBe("winter");
     }
+  });
+});
+
+describe("S6: 積雪の日数 snowDays", () => {
+  it("冬以外は常に 0。冬は前日の値 + (その日が雪なら 1) で、春の初日に 0 に戻る", () => {
+    const rng = createRng(2026);
+    let s = newGame(rng);
+    let prev = s.snowDays;
+    let lastDay = Math.floor(s.t / DAY_MIN);
+    let checked = 0;
+    let sawSnow = false;
+    for (let i = 0; i < 3 * YEAR_DAYS * 24 * 2; i++) {
+      s = step(s, 30, rng);
+      const day = Math.floor(s.t / DAY_MIN);
+      if (day === lastDay) continue;
+      lastDay = day;
+      const sd = seasonDay(day + 1);
+      if (sd.season === "winter") {
+        const snow = s.weather === "snow";
+        sawSnow ||= snow;
+        expect(s.snowDays).toBe(prev + (snow ? 1 : 0));
+      } else expect(s.snowDays).toBe(0);
+      prev = s.snowDays;
+      checked++;
+    }
+    expect(checked).toBeGreaterThanOrEqual(3 * YEAR_DAYS - 1);
+    expect(sawSnow).toBe(true);
   });
 });

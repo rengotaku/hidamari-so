@@ -1,4 +1,12 @@
-import { dayOf, hourOf, seasonDay, type GameState, type Look, type Season } from "@/sim";
+import {
+  dayOf,
+  hourOf,
+  seasonDay,
+  type GameState,
+  type Look,
+  type Resident,
+  type Season,
+} from "@/sim";
 import { P, mix } from "./palette";
 
 /** 決定的な 0〜1 の疑似乱数（描画専用。状態にも乱数列にも触れない） */
@@ -24,12 +32,11 @@ export function seasonSky(sky: string, season: Season): string {
   return mix(sky, c, a);
 }
 
-/** 積雪 0〜1。冬のあいだ日ごとに積もり、春になると消える */
-export function snowCover(s: Pick<GameState, "t" | "weather">): number {
+/** 積雪 0〜1。実際に雪が降った日数 snowDays に応じて増え、春になると消える */
+export function snowCover(s: Pick<GameState, "t" | "snowDays">): number {
   const { season } = seasonPhase(s);
-  if (season !== "winter") return 0;
-  const sd = seasonDay(dayOf(s.t));
-  return Math.min(1, 0.3 + 0.3 * sd.index + (s.weather === "snow" ? 0.1 : 0));
+  if (season !== "winter" || s.snowDays <= 0) return 0;
+  return Math.min(1, 0.2 + 0.3 * s.snowDays);
 }
 
 const SEASON_SHIRT: Partial<Record<Season, [string, number]>> = {
@@ -170,12 +177,25 @@ const SHOVEL_TO = 9.5;
 const PATH_X0 = 230;
 const PATH_X1 = 312;
 
+/** 雪かきをする人: 家にいる人（部屋番号の居場所）のうち id が最小の人。いなければ null */
+export function pickShoveler(res: readonly Resident[]): Resident | null {
+  return res.reduce<Resident | null>(
+    (m, r) => (typeof r.at === "number" && (!m || r.id < m.id) ? r : m),
+    null
+  );
+}
+
 /** 雪かきの担い手の位置（雪かき中のときだけ）。描くのは scene 側 */
-export function shovelerAt(s: GameState): { x: number } | null {
+export function shovelerAt(s: Pick<GameState, "t" | "snowDays">): { x: number } | null {
   const h = hourOf(s.t);
   if (snowCover(s) <= 0 || h < SHOVEL_FROM || h >= SHOVEL_TO) return null;
   const q = (h - SHOVEL_FROM) / (SHOVEL_TO - SHOVEL_FROM);
   return { x: PATH_X0 + q * (PATH_X1 - PATH_X0) };
+}
+
+/** いま雪かきで屋外に出ている住人（部屋では描かない）。雪かき中でなければ null */
+export function shovelingResident(s: GameState): Resident | null {
+  return shovelerAt(s) ? pickShoveler(s.res) : null;
 }
 
 /** 建物の手前に描く季節のもの: 屋根と歩道の雪、雪かきの道、落ち葉・花びら、蝉、降るもの */

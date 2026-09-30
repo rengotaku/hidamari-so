@@ -4,7 +4,7 @@ import { ROMANCE_STAGES, WEATHER_IDS } from "@/content/schema";
 
 /**
  * 2: 日誌を構造（出来事 id・役割・言い回し）で持つ形にし、関係・予約・出来事の履歴を足した
- * 部屋の装飾・退去後の部屋・大家・町並みの変化・速さ・大家の所持金・出ていった住人の記録・築 50 年の買収提案の状態は、版を上げずに足した（欠けていれば読み込み時に補う）
+ * 雪の積もった日数・部屋の装飾・退去後の部屋・大家・町並みの変化・速さ・大家の所持金・出ていった住人の記録・築 50 年の買収提案の状態は、版を上げずに足した（欠けていれば読み込み時に補う）
  */
 export const SCHEMA_VERSION = 2;
 
@@ -133,6 +133,8 @@ const gameState = z
     t: nonNeg,
     t0: nonNeg,
     weather: z.enum(WEATHER_IDS),
+    // 足す前の保存（版 2）には無いので、欠けていれば 0
+    snowDays: nonNegInt.default(0),
     res: z.array(resident),
     rooms: z.array(nonNegInt.max(1_000_000).nullable()).length(6),
     log: z.array(logEntry),
