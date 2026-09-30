@@ -9,28 +9,44 @@ const ids = (s: GameState): string[] =>
   s.log.filter((e): e is StoryletEntry => "storyletId" in e).map((e) => e.storyletId);
 
 describe("入居の一本化: 大家が新入居者を連れて来る", () => {
-  it("退去の数日後に大家が新入居者を連れて来て、入居の日誌は 1 回だけ出て、歓迎会が開かれる", () => {
-    const rng = createRng(15);
-    let s = newGame(rng);
-    const target = s.res[0]!;
-    s.booked = [{ id: "moveout-good", at: s.t + 60, roles: { a: target.id }, tries: 0 }];
-    const moveIns: StoryletEntry[] = [];
-    const seen = new Set<string>();
-    for (let i = 0; i < 14 * 24; i++) {
-      const before = s.t;
-      s = step(s, 60, rng);
-      for (const e of s.log)
-        if ("storyletId" in e && e.t > before) {
-          seen.add(e.storyletId);
-          if (e.storyletId === "room-move-in") moveIns.push(e);
-        }
+  it("退去の数日後に大家が新入居者を連れて来て、入居の日誌は住人ごとに重複せず、歓迎会が開かれる", () => {
+    let newcomerLeft = 0;
+    for (let seed = 1; seed <= 10; seed++) {
+      const rng = createRng(seed);
+      let s = newGame(rng);
+      const target = s.res[0]!;
+      const targetRoom = target.room;
+      s.booked = [
+        { id: "moveout-good", at: s.t + 60, roles: { a: target.id }, tries: 0 },
+      ];
+      const moveIns: StoryletEntry[] = [];
+      const seen = new Set<string>();
+      for (let i = 0; i < 14 * 24; i++) {
+        const before = s.t;
+        s = step(s, 60, rng);
+        for (const e of s.log)
+          if ("storyletId" in e && e.t > before) {
+            seen.add(e.storyletId);
+            if (e.storyletId === "room-move-in") moveIns.push(e);
+          }
+      }
+      expect(s.res.some((r) => r.id === target.id)).toBe(false);
+      // 新入居者が期間内に退去して次の入居が起きるシードもあるので、件数ではなく重複の有無を見る
+      expect(moveIns.length).toBeGreaterThanOrEqual(1);
+      const moved = moveIns.map((e) => e.roles.a!.id);
+      expect(new Set(moved).size).toBe(moved.length);
+      expect(moveIns[0]!.roles.a!.room).toBe(targetRoom);
+      expect(seen.has("welcome-party")).toBe(true);
+      const newcomerId = moved[0]!;
+      const newcomer =
+        s.res.find((r) => r.id === newcomerId) ??
+        s.departed.find((r) => r.id === newcomerId);
+      expect(newcomer).toBeDefined();
+      expect(defaultContent.archetypes[newcomer!.job]!.tags).not.toContain("arc-only");
+      if (s.departed.some((r) => r.id === newcomerId)) newcomerLeft++;
     }
-    expect(s.res.some((r) => r.id === target.id)).toBe(false);
-    expect(moveIns.length).toBe(1);
-    expect(seen.has("welcome-party")).toBe(true);
-    const newcomer = s.res.find((r) => r.id === moveIns[0]!.roles.a!.id);
-    expect(newcomer).toBeDefined();
-    expect(defaultContent.archetypes[newcomer!.job]!.tags).not.toContain("arc-only");
+    // 新入居者が期間内に退去するシードを含む（件数で見ていた頃に赤になる形を塞ぐ）
+    expect(newcomerLeft).toBeGreaterThanOrEqual(1);
   });
 
   it("同棲で空いた部屋にも、大家が片付けてから新入居者を連れて来る", () => {
