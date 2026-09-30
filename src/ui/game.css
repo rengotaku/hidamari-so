@@ -1,0 +1,255 @@
+/* 1 画面固定。PC は左に建物・右に日誌、スマホ（狭い画面）は上に建物・下に日誌。ページ全体はスクロールしない */
+:root {
+  --g-bg: #1d1b24;
+  --g-panel: #28252e;
+  --g-line: #403a48;
+  --g-ink: #eee4cf;
+  --g-muted: #a9a091;
+  --g-accent: #6fb3a6;
+  --g-bulb: #e7b25a;
+  --g-paper: #ebe3cb;
+  --g-paper-ink: #2f2b35;
+  --g-rule: #aebfd2;
+  --g-margin: #d68f8f;
+  --g-pixel: "DotGothic16", "MS Gothic", "Osaka-mono", monospace;
+  --g-body: "M PLUS 1p", "Hiragino Sans", "Noto Sans JP", sans-serif;
+}
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+body {
+  background: var(--g-bg);
+  color: var(--g-ink);
+  font-family: var(--g-body);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.game {
+  height: 100dvh;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 10px;
+  padding: 10px 16px 12px;
+  max-width: 1500px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  color-scheme: dark;
+}
+.top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+  align-items: baseline;
+  font-family: var(--g-pixel);
+  font-size: clamp(16px, 2vw, 22px);
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+}
+.top .age {
+  color: var(--g-muted);
+}
+.main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 370px;
+  gap: 14px;
+  min-height: 0;
+}
+.stageWrap {
+  container-type: size;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.stage {
+  position: relative;
+  width: min(100cqw, 160cqh);
+  aspect-ratio: 320 / 200;
+  max-width: 100%;
+  border: 4px solid #0d0c11;
+  background: #0d0c11;
+  box-shadow: 0 0 0 2px var(--g-line);
+}
+.stage canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
+  cursor: pointer;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.sign {
+  position: absolute;
+  left: 44.375%;
+  top: 22.75%;
+  transform: translate(-50%, -50%);
+  font-family: var(--g-pixel);
+  color: #3b2f2a;
+  font-size: clamp(7px, 1.1vw, 13px);
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+}
+.bubble {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  background: #fbf8ec;
+  color: #26222c;
+  font-family: var(--g-pixel);
+  font-size: clamp(9px, 1.05vw, 13px);
+  line-height: 1.25;
+  padding: 2px 6px;
+  border: 2px solid #26222c;
+  white-space: nowrap;
+  max-width: 46%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  min-width: 0;
+}
+.hint {
+  margin: 0;
+  color: var(--g-muted);
+  font-size: 12px;
+}
+.profile {
+  background: var(--g-panel);
+  border: 2px solid var(--g-line);
+  padding: 8px 12px;
+  overflow: auto;
+  max-height: 45%;
+  flex: none;
+}
+.profile h2 {
+  margin: 0;
+  font-size: 16px;
+  text-wrap: balance;
+}
+.profile h2 small {
+  font-weight: 400;
+  color: var(--g-muted);
+  font-size: 12px;
+  margin-left: 6px;
+}
+.profile .job {
+  margin: 2px 0 4px;
+  color: var(--g-accent);
+  font-size: 12.5px;
+}
+.profile .now {
+  margin: 0 0 4px;
+  font-size: 12.5px;
+}
+.profile h3 {
+  font-family: var(--g-pixel);
+  font-weight: 400;
+  font-size: 13px;
+  color: var(--g-bulb);
+  margin: 6px 0 2px;
+  letter-spacing: 0.06em;
+}
+.profile ul {
+  margin: 0;
+  padding-left: 1.1em;
+}
+.profile li {
+  margin: 1px 0;
+  font-size: 12.5px;
+}
+.journal {
+  flex: 1;
+  min-height: 0;
+  background: var(--g-panel);
+  border: 2px solid var(--g-line);
+  display: flex;
+}
+.note {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  background-color: var(--g-paper);
+  color: var(--g-paper-ink);
+  background-image:
+    linear-gradient(
+      to right,
+      transparent 57px,
+      var(--g-margin) 57px,
+      var(--g-margin) 59px,
+      transparent 59px
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 25px,
+      var(--g-rule) 25px,
+      var(--g-rule) 26px
+    );
+  background-attachment: local;
+  line-height: 26px;
+  font-size: 13px;
+  padding: 0 10px 0 66px;
+}
+.note:focus-visible {
+  outline: 2px solid var(--g-bulb);
+  outline-offset: 2px;
+}
+.ent {
+  margin: 0;
+  position: relative;
+}
+.ent .ts {
+  position: absolute;
+  left: -64px;
+  width: 54px;
+  font-family: var(--g-pixel);
+  font-size: 10px;
+  color: #6c6475;
+  text-align: right;
+  white-space: nowrap;
+}
+.ent.day {
+  color: #6c6475;
+  font-family: var(--g-pixel);
+  font-size: 12px;
+}
+.ent.move {
+  color: #1f6b5f;
+  font-weight: 700;
+}
+/* 縦積みは縦長の狭い画面だけ。横向きのスマホは左右2列のままにして日誌の高さを確保する */
+@media (max-width: 760px) and (orientation: portrait) {
+  .game {
+    gap: 6px;
+    padding: 6px 10px 8px;
+  }
+  .main {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 8px;
+  }
+  .stageWrap {
+    container-type: normal;
+  }
+  .stage {
+    width: 100%;
+  }
+  .bubble {
+    font-size: 9px;
+  }
+}
