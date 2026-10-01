@@ -9,3 +9,9 @@ export {
 export { drawStage, type ViewFrame, type Scratch } from "./view";
 export { createAmbient, updateAmbient, ambientRng, type Ambient } from "./ambient";
 export { hitTest, bubbleAnchor, toScene, roomAt, residentOfRoom, type Hit } from "./hit";
+export {
+  applyDrawPositions,
+  createDrawPositions,
+  updateDrawPositions,
+  type DrawPositions,
+} from "./smooth";

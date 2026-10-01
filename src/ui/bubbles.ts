@@ -1,4 +1,9 @@
-import { bubbleAnchor, closeupBubbleAnchor } from "@/render";
+import {
+  applyDrawPositions,
+  bubbleAnchor,
+  closeupBubbleAnchor,
+  type DrawPositions,
+} from "@/render";
 import type { GameState, Resident } from "@/sim";
 import type { ZoomState } from "./zoom";
 
@@ -45,11 +50,14 @@ export const bubbleHoldMs = (text: string): number => (2.4 + text.length * 0.11)
  */
 export function bubbleAnchors(
   state: GameState,
-  zoom: ZoomState
+  zoom: ZoomState,
+  drawPos?: DrawPositions
 ): ReadonlyMap<number, Pos | null> {
+  // 全体図では、住人が描かれている位置（drawPos）に付ける
+  const drawn = drawPos ? applyDrawPositions(state.res, drawPos) : state.res;
   return new Map(
-    state.res.map((r) => {
-      if (zoom.phase === "overview") return [r.id, bubbleAnchor(r)] as const;
+    state.res.map((r, i) => {
+      if (zoom.phase === "overview") return [r.id, bubbleAnchor(drawn[i]!)] as const;
       if (zoom.phase === "closeup" && zoom.room !== null && r.at === zoom.room)
         return [r.id, closeupBubbleAnchor(state, zoom.room, r)] as const;
       return [r.id, null] as const;

@@ -18,7 +18,12 @@ afterEach(() => {
   localStorage.clear();
 });
 
-const open = (seed = 7) => GameEngine.open(localStorage, seed, 1000);
+/** 新規ゲームは 15 倍で始まるので、これらのテストは 1 倍に切り替えて始める */
+const open = (seed = 7) => {
+  const e = GameEngine.open(localStorage, seed, 1000);
+  e.setSpeed(1);
+  return e;
+};
 
 describe("時間の速さ（#14 事前設計）", () => {
   it("S1: 同じ実時間ぶん tick すると、速さ 4 は速さ 1 の 4 倍進む", () => {
@@ -98,6 +103,7 @@ describe("時間の速さ（#14 事前設計）", () => {
   });
 
   it("S8: 押したボタンだけ aria-pressed=true になる（role=group の「時間の速さ」の中）", () => {
+    open(1).save(localStorage, 5000); // 1 倍で保存したゲームを開く（新規は 15 倍で始まる）
     render(<GameScreen seed={1} storage={localStorage} now={() => 5000} />);
     const group = screen.getByRole("group", { name: "時間の速さ" });
     const buttons = within(group).getAllByRole("button");

@@ -7,6 +7,7 @@ import {
   type GameState,
   type Resident,
 } from "@/sim";
+import { applyDrawPositions, type DrawPositions } from "./smooth";
 
 export interface Hit {
   /** 押された住人（空室・誰もいない部屋なら null） */
@@ -15,9 +16,18 @@ export interface Hit {
   room: number | null;
 }
 
-/** 場面の座標（0〜320 × 0〜200）から、押されたものを引く */
-export function hitTest(s: GameState, x: number, y: number): Hit | null {
-  for (const r of s.res) {
+/**
+ * 場面の座標（0〜320 × 0〜200）から、押されたものを引く。
+ * drawPos があれば、描かれている位置（ゲームの中の位置ではなく）で判定する
+ */
+export function hitTest(
+  s: GameState,
+  x: number,
+  y: number,
+  drawPos?: DrawPositions
+): Hit | null {
+  const res = drawPos ? applyDrawPositions(s.res, drawPos) : s.res;
+  for (const r of res) {
     if (r.at === "walking" && Math.abs(r.x - x) < 7 && y > r.y - 18 && y < r.y + 3) {
       return { residentId: r.id, room: r.room };
     }
@@ -25,7 +35,7 @@ export function hitTest(s: GameState, x: number, y: number): Hit | null {
   for (let i = 0; i < ROOM_COUNT; i++) {
     const rr = roomRect(i);
     if (x >= rr.x && x < rr.x + rr.w && y >= rr.y && y < rr.y + rr.h) {
-      const here = s.res
+      const here = res
         .filter((r) => r.at === i)
         .sort((a, b) => Math.abs(a.x - x) - Math.abs(b.x - x));
       const ownerId = s.rooms[i] ?? null;

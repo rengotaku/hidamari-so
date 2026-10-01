@@ -2,6 +2,7 @@ import { SCENE_H, SCENE_W, roomRect, type GameState } from "@/sim";
 import type { Ambient } from "./ambient";
 import { drawCloseup } from "./closeup";
 import { drawScene } from "./scene";
+import type { DrawPositions } from "./smooth";
 
 /**
  * 画面の見せ方の 1 コマ。全体図から部屋へ寄り（zoom）、寄った絵から大写しへ溶け（fade）、大写しになる。
@@ -54,7 +55,8 @@ export function drawStage(
   now: number,
   selectedId: number | null,
   frame: ViewFrame,
-  scratch: Scratch | null
+  scratch: Scratch | null,
+  drawPos?: DrawPositions
 ): void {
   if (frame.kind === "closeup") {
     drawCloseup(ctx, s, frame.room, now);
@@ -62,10 +64,10 @@ export function drawStage(
   }
   if (frame.kind === "overview" || !scratch) {
     if (frame.kind === "fade") drawCloseup(ctx, s, frame.room, now);
-    else drawScene(ctx, s, ambient, now, selectedId);
+    else drawScene(ctx, s, ambient, now, selectedId, drawPos);
     return;
   }
-  drawScene(scratch.ctx, s, ambient, now, selectedId);
+  drawScene(scratch.ctx, s, ambient, now, selectedId, drawPos);
   if (frame.kind === "zoom") {
     drawCrop(ctx, scratch, frame.room, frame.k);
     return;

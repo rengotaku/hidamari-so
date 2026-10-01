@@ -48,7 +48,7 @@ export function GameScreen({ seed, storage, now = systemNow }: Props) {
       engine.state.res,
       engine.state.t,
       performance.now(),
-      bubbleAnchors(engine.state, initialZoom),
+      bubbleAnchors(engine.state, initialZoom, engine.drawPos),
       screenKey(initialZoom)
     )
   );
@@ -71,7 +71,7 @@ export function GameScreen({ seed, storage, now = systemNow }: Props) {
       engine.state.res,
       engine.state.t,
       performance.now(),
-      bubbleAnchors(engine.state, zoomRef.current),
+      bubbleAnchors(engine.state, zoomRef.current, engine.drawPos),
       screenKey(zoomRef.current)
     );
     heldRef.current = next.held;
@@ -127,7 +127,7 @@ export function GameScreen({ seed, storage, now = systemNow }: Props) {
       pressView(null);
       return;
     }
-    const hit = hitTest(engine.state, x, y);
+    const hit = hitTest(engine.state, x, y, engine.drawPos);
     setSelectedId(hit?.residentId ?? null);
     setDepartedId(null);
     setState(engine.state);

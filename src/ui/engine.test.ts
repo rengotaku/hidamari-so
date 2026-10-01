@@ -17,6 +17,7 @@ describe("追加: GameEngine", () => {
 
   it("tick でゲーム内時間が進み、save → open で続きから再開する", () => {
     const e = GameEngine.open(localStorage, 5, 1000);
+    e.setSpeed(1); // 新規は 15 倍で始まる
     const t0 = e.state.t;
     e.tick(30);
     expect(e.state.t).toBe(t0 + 30);

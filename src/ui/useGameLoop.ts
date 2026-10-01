@@ -64,6 +64,7 @@ export function useGameLoop({
       last = t;
       // 大写し中も時間は止めない（遷移や表示の切り替えに関係なく、毎フレーム進める）
       engine.tick(dt * MIN_PER_SEC);
+      engine.followDraw(dt);
       const z = advance(zoomRef.current, t, prefersReducedMotion());
       if (z !== zoomRef.current) onZoom(z);
       const vf = viewFrame(z, t);
@@ -75,7 +76,8 @@ export function useGameLoop({
           t,
           selectedIdRef.current,
           vf,
-          vf.kind === "zoom" || vf.kind === "fade" ? scratchFor() : null
+          vf.kind === "zoom" || vf.kind === "fade" ? scratchFor() : null,
+          engine.drawPos
         );
       uiAcc += dt;
       if (uiAcc > UI_INTERVAL_S) {
