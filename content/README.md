@@ -105,6 +105,8 @@
 
 `book` で続きを予約する出来事（連鎖の先頭）の `cooldownDays` × 1440 は、予約をたどった最長の経路（各 `afterMinutes` の上限の合計）以上にする。短いと、前の連鎖が終わる前に同じ連鎖がもう一本走る。`cooldownDays` を書かない先頭は 0 日として扱い、検査に落ちる。`src/content/love-reach.test.ts` が確かめる。
 
+例外は、恋の段階を進める先頭（`lv-cooked-for`・`crush-start`）。同じ組には段階の条件で二度起きないので、検査の対象から外している。足すときは `love-reach.test.ts` の `STAGE_GATED_HEADS` に書く。
+
 ## 種類（archetype）を足す
 
 `archetypes.json` に 1 件足す。`traits` は `traits.json` に存在する id、`arc` は人生の筋の入口にする storylet の id（`trigger: "book"`）。`tags` に `arc-only` を付けた種類は、人生の筋の途中（`changeJob`）でだけなる種類で、新しい入居者としては抽選されない（例: 浪人生が専門学校に進んだときの専門学校生）。
