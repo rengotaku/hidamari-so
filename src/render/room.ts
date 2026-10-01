@@ -239,6 +239,8 @@ export function drawRoom(
   drawBackDecor(ctx, s, i, x, y, acts);
   if (owner) drawOwnerFurniture(ctx, owner, x, y, acts, occ, now);
   drawFloorDecor(ctx, s, i, x, y, acts);
+  // ちゃぶ台は住人より奥にあるので、住人より先に描く
+  drawTableThings(ctx, x, y, acts, frame, now);
   for (const o of occ) {
     const a = o.act in ACTS ? ACTS[o.act as keyof typeof ACTS] : undefined;
     const moving = Math.abs(o.tx - o.x) > 0.5 && a?.pose !== "lie";
@@ -249,7 +251,6 @@ export function drawRoom(
     const pose = moving ? "walk" : a?.pose === "lie" ? "stand" : (a?.pose ?? "stand");
     drawPerson(ctx, o.look, o.x, y + 45, pose, frame, o.dir < 0, moving ? null : a?.prop);
   }
-  drawTableThings(ctx, x, y, acts, frame, now);
   if (s.landlord.phase === "clearing" && s.landlord.room === i) {
     drawLandlordSweeping(ctx, x, y, frame);
   }
