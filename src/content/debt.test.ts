@@ -248,12 +248,30 @@ function withYamikinArc(seed: number): GameState {
   return s;
 }
 
+/** debt-swell の条件（お金 3000 以下・気分 45 以下・入居 16 日以上）を満たす闇金の住人。シードの当たりに頼らず debt-taken の筋へ入れる */
+function withSwellReady(seed: number): GameState {
+  const rng = createRng(seed);
+  const s = newGame(rng);
+  const r = s.res[0]!;
+  r.job = "yamikin";
+  r.money = 0;
+  r.mood = 20;
+  r.since = s.t - 20 * 1440;
+  // 気分とお金は日が進むと戻るので、条件を満たしているうちに debt-swell を予約で起こす（条件と chance は起きる時点で見る）
+  s.booked.push({ id: "debt-swell", at: s.t + 60, roles: { a: r.id }, tries: 0 });
+  return s;
+}
+
 describe("追加: 片付く筋と連れて行かれる筋が両立する", () => {
   it("seed 1〜10 で 60 日進めると、yamikin-clear と debt-taken の両方が起きる。後日談は debt-taken のあとだけ", () => {
     let cleared = 0;
     let taken = 0;
-    for (let seed = 1; seed <= 10; seed++) {
-      const { entries } = run(withYamikinArc(seed), 60, seed);
+    const starts = Array.from({ length: 10 }, (_, k) => k + 1).flatMap((seed) => [
+      { seed, start: withYamikinArc(seed) },
+      { seed, start: withSwellReady(seed) },
+    ]);
+    for (const { seed, start } of starts) {
+      const { entries } = run(start, 60, seed);
       const ids = new Set(entries.map((e) => e.storyletId));
       if (ids.has("yamikin-clear")) cleared++;
       if (ids.has("debt-taken")) taken++;

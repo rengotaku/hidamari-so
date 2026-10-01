@@ -50,7 +50,7 @@
 | `trigger` | いつ抽選されるか（下の表） |
 | `act` | `trigger` が `act-end` のときだけ。どの行動が終わったときか |
 | `chance` | 選ばれたあと実際に起きる確率（0〜1、既定 1） |
-| `weight` | 候補が複数あるときの重み（既定 1） |
+| `weight` | 候補が複数あるときの重み（既定 1）。`trigger` が同じ出来事どうしで、条件を満たした中から重みに比例して 1 件選ばれる。`chance` が 1 の出来事は選ばれたら必ず起きるので、重みを上げた分だけ増える。`chance` が 1 未満の出来事は、選ばれても外れるとその時間は何も起きない（空振り）ので、重みは 4 程度に抑える |
 | `when` | `hours`: `[開始時, 終了時)`（`[23, 4]` のように日をまたげる）、`weather`: `sunny` / `cloudy` / `rain` / `snow`、`season`: `spring` / `tsuyu` / `summer` / `autumn` / `winter`、`days`: ゲーム開始からの日数の範囲 `{min, max}`（設備が年月とともに増える出来事に使う。例 `"when": { "days": { "min": 18 } }`） |
 | `roles` | 登場人物の条件。`a`・`b` のうち宣言した役割だけが登場する（下の表） |
 | `cooldownDays` | 同じ出来事が再び起きるまでの最短日数 |
@@ -100,6 +100,10 @@
 | `cohabit` | `role` の住人が、もう一方の部屋へ移って一緒に住む。元の部屋は空室になり、大家が片付けて次の入居者を迎える。`roles.a` と `roles.b` が要る。恋の段階は別に `romance` で `cohabiting` にする |
 | `party` | a の部屋に、起きて自室にいる住人が集まって宴会になる。全員の仲の良さを `bond`、気分を `mood` だけ増減する。財布は動かない。例 `{ "type": "party", "bond": 8, "mood": 8 }` |
 | `decorAdd` / `decorRemove` | `role` の部屋に装飾（`decor.json` の id）を足す / 外す。外すと、これから置く予定だった分も取り消す |
+
+### 連鎖の先頭の cooldown
+
+`book` で続きを予約する出来事（連鎖の先頭）の `cooldownDays` × 1440 は、予約をたどった最長の経路（各 `afterMinutes` の上限の合計）以上にする。短いと、前の連鎖が終わる前に同じ連鎖がもう一本走る。`cooldownDays` を書かない先頭は 0 日として扱い、検査に落ちる。`src/content/love-reach.test.ts` が確かめる。
 
 ## 種類（archetype）を足す
 
