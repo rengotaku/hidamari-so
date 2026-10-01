@@ -19,7 +19,7 @@ last_verified: 2026-10-01
 | 状態と規則 | `src/sim/` | ゲームの状態 `GameState` と、それを進める規則。純粋な TypeScript で、乱数は引数で受け取る | `types.ts`（状態の型）、`init.ts`（新規ゲーム）、`step.ts`（時間を進める入口）、`world.ts`（1 刻みの更新）、`behavior.ts`（住人の行動）、`storylets.ts`（出来事の抽選・効果・日誌の組み立て）、`landlord.ts` / `decor.ts`（退去・片付け・入居・模様替え）、`buyout.ts`（築 50 年の買収提案）、`town.ts`（町並みの変化）、`clock.ts`（時計） |
 | 出来事のデータ | `content/` と `src/content/` | 住人の種類・癖・装飾・出来事・町並みの変化は `content/` の JSON。`src/content/` が zod で検証して `Content` にする | `src/content/schema.ts`（スキーマ）、`src/content/index.ts`（読み込みと検証）、`src/content/decor25.ts`（装飾の箱と全体図の矩形） |
 | 保存 | `src/save/` | localStorage への読み書き、古い保存の補完、留守中の進行 | `schema.ts`（保存の検証）、`storage.ts`（保存・読み込み・`catchUp`）、`migrate.ts`（版の移行と `fillHouse`）、`away.ts`（タブが隠れていた時間の計測） |
-| 描画 | `src/render/` | `GameState` を読んで Canvas に描く | `view.ts`（`drawStage`: 全体図・ズーム・フェード・大写しの切り替え）、`scene.ts`（全体図）、`closeup.ts`（2.5D の大写し）、`decor.ts`（全体図の装飾）、`person.ts`、`room.ts`、`season.ts`、`town.ts`、`night.ts`、`collector.ts`、`hit.ts`（押した場所の判定） |
+| 描画 | `src/render/` | `GameState` を読んで Canvas に描く | `view.ts`（`drawStage`: 全体図・ズーム・フェード・大写しの切り替え）、`scene.ts`（全体図）、`closeup.ts`（2.5D の大写し）、`decor.ts`（全体図の装飾）、`person.ts`、`room.ts`、`season.ts`、`town.ts`、`night.ts`、`sights.ts`（空の風景: 飛行機雲・カラス・流れ星・虹。ほかの風景も使う、日付から決定的な値を返す `dayRoll` もここ）、`collector.ts`、`hit.ts`（押した場所の判定） |
 | 画面 | `src/ui/` | React の 1 画面と、ゲームループ | `GameScreen.tsx`（画面の組み立て）、`engine.ts`（`GameEngine`: 状態・乱数・速さを持つ入れ物）、`useGameLoop.ts`（フレームごとの進行・描画・保存）、`zoom.ts`（大写しの状態遷移）、`Stage.tsx`、`Journal.tsx`、`Profile.tsx`、`BuyoutDialog.tsx`、`SpeedControl.tsx` |
 | PWA | `src/pwa/`、`vite.config.ts` | manifest と service worker の登録。新しい版は、読み込み途中で混ざらないよう待機させ、タブが非表示から表示に戻った瞬間に `SKIP_WAITING` で有効にして 1 回だけ再読み込みする（画面に UI は出さない。保存から続きが始まる） | `manifest.ts`、`register.ts` |
 
@@ -86,6 +86,7 @@ localStorage の 1 つのキー（`hidamari-so-save`）に、`schemaVersion`・`
 | 保存の版を上げる | `src/save/migrate.ts` の `MIGRATIONS` に移行関数を 1 件足し、`SCHEMA_VERSION` を上げる |
 | 積雪・雪かき（積雪は実際に雪が降った日数 `GameState.snowDays` で決まり、雪かき役は家にいる人のうち id が最小の人。雪かき中はその人を部屋に描かない） | `src/sim/world.ts`（`onDay`）、`src/render/season.ts`（`snowCover` / `pickShoveler`）、`src/render/room.ts`（`roomOccupants`） |
 | 全体図の絵（建物・空・季節） | `src/render/scene.ts`、`src/render/season.ts`、`src/render/sky.ts` |
+| 空の風景（飛行機雲・カラス・流れ星・虹）の出る日・時刻・天気条件、風景ごとの決定的な乱数 `dayRoll` | `src/render/sights.ts` |
 | 全体図の装飾の置き場所（区画） | `src/render/decor.ts` |
 | 大写しの絵 | `src/render/closeup.ts` |
 | 大写しの遷移の長さ | `src/ui/zoom.ts`（`ZOOM_IN_MS`、`FADE_MS`） |

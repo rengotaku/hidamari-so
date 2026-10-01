@@ -28,6 +28,7 @@ import {
 } from "./season";
 import { drawCollector } from "./collector";
 import { drawNightScenes } from "./night";
+import { drawSkySights, rainbowAt } from "./sights";
 import { currentSky, nightness } from "./sky";
 import { drawAging, drawTown, signBoard } from "./town";
 
@@ -90,6 +91,7 @@ function drawSkyAndTown(
       P(ctx, cx + 6, cy - 4, 20, 4, cc);
     }
   }
+  drawSkySights(ctx, s, now);
   // 電線（電柱が地中化されると無くなる）
   if (looks.pole === "pole") {
     ctx.strokeStyle = "#1e1c22";
@@ -288,7 +290,8 @@ export function drawScene(
       );
   }
   drawCollector(ctx, s, now);
-  if (s.weather === "rain") {
+  // 虹が出ている間は、天気が雨のままでも雨粒を描かない
+  if (s.weather === "rain" && rainbowAt(s) === null) {
     ctx.fillStyle = "rgba(170,200,235,0.55)";
     for (let k = 0; k < 90; k++) {
       const rx = ((k * 37 + now * 0.06) % 336) - 8;
