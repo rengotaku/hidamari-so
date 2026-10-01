@@ -210,23 +210,15 @@ body {
   scrollbar-width: thin;
   background-color: var(--g-paper);
   color: var(--g-paper-ink);
-  background-image:
-    linear-gradient(
-      to right,
-      transparent 57px,
-      var(--g-margin) 57px,
-      var(--g-margin) 59px,
-      transparent 59px
-    ),
-    repeating-linear-gradient(
-      to bottom,
-      transparent 0,
-      transparent 25px,
-      var(--g-rule) 25px,
-      var(--g-rule) 26px
-    );
+  background-image: linear-gradient(
+    to right,
+    transparent 57px,
+    var(--g-margin) 57px,
+    var(--g-margin) 59px,
+    transparent 59px
+  );
   background-attachment: local;
-  line-height: 26px;
+  line-height: 21px;
   font-size: 13px;
   padding: 0 10px 0 66px;
 }
@@ -234,9 +226,12 @@ body {
   outline: 2px solid var(--g-bulb);
   outline-offset: 2px;
 }
+/* 罫線は件ごとに 1 本。折り返した行の間は詰め、件と件の間を空けて、どこまでが 1 件か見分けやすくする */
 .ent {
   margin: 0;
   position: relative;
+  padding: 8px 0 7px;
+  border-bottom: 1px solid var(--g-rule);
 }
 .ent .ts {
   position: absolute;
