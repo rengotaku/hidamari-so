@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { render, cleanup, act } from "@testing-library/react";
 import { loadGame, SAVE_KEY } from "@/save";
+import { GameEngine } from "@/ui/engine";
 import { GameScreen } from "@/ui/GameScreen";
 
 let frames: FrameRequestCallback[] = [];
@@ -35,6 +36,10 @@ function setHidden(hidden: boolean) {
 
 describe("追加: 画面のループ", () => {
   it("実時間が進むと画面の時計が進む（1 秒 = ゲーム内 2 分）", () => {
+    // 新規は 15 倍で始まるので、1 倍で保存したゲームを開く
+    const e0 = GameEngine.open(localStorage, 1, clock);
+    e0.setSpeed(1);
+    e0.save(localStorage, clock);
     const { container } = render(
       <GameScreen seed={1} storage={localStorage} now={() => clock} />
     );

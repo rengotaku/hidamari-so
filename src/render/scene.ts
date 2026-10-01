@@ -28,6 +28,7 @@ import {
 } from "./season";
 import { drawCollector } from "./collector";
 import { drawNightScenes } from "./night";
+import { applyDrawPositions, type DrawPositions } from "./smooth";
 import { drawSkySights, rainbowAt } from "./sights";
 import { currentSky, nightness } from "./sky";
 import { drawAging, drawTown, signBoard } from "./town";
@@ -201,13 +202,15 @@ function drawSelection(
 /**
  * 建物断面の 1 フレームを描く。状態を受け取って描くだけで、状態は書き換えない。
  * now は演出用の時計（ミリ秒）で、ゲーム内時間とは別。
+ * drawPos があれば、住人はゲームの中の位置ではなく描く位置（実時間の上限速さで追う位置）に描く。
  */
 export function drawScene(
   ctx: CanvasRenderingContext2D,
   s: GameState,
   ambient: Ambient,
   now: number,
-  selectedId: number | null
+  selectedId: number | null,
+  drawPos?: DrawPositions
 ): void {
   const h = hourOf(s.t);
   const n = nightness(h);
@@ -219,7 +222,10 @@ export function drawScene(
   // 衣替え: 描くときだけ季節の服にした見た目を使う（状態は書き換えない）
   const sv: GameState = {
     ...s,
-    res: s.res.map((r) => ({ ...r, look: seasonLook(r.look, season) })),
+    res: (drawPos ? applyDrawPositions(s.res, drawPos) : s.res).map((r) => ({
+      ...r,
+      look: seasonLook(r.look, season),
+    })),
   };
   drawSkyAndTown(ctx, s, now, sky, n, looks);
   drawTown(ctx, looks, n);
@@ -334,5 +340,5 @@ export function drawScene(
     ctx.fillRect(0, 100, 70, 100);
   }
   drawNightScenes(ctx, nights, now);
-  drawSelection(ctx, s, selectedId, now);
+  drawSelection(ctx, sv, selectedId, now);
 }

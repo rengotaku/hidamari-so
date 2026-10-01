@@ -1,4 +1,12 @@
-import { ambientRng, createAmbient, updateAmbient, type Ambient } from "@/render";
+import {
+  ambientRng,
+  createAmbient,
+  createDrawPositions,
+  updateAmbient,
+  updateDrawPositions,
+  type Ambient,
+  type DrawPositions,
+} from "@/render";
 import {
   catchUp,
   loadOrNew,
@@ -32,6 +40,8 @@ export const MAX_BACKLOG_MINUTES = 1440;
 export class GameEngine {
   state: GameState;
   ambient: Ambient = createAmbient();
+  /** 住人を描く位置（見た目だけ。状態にも保存にも入れない）。followDraw で実時間ぶん追わせる */
+  drawPos: DrawPositions = createDrawPositions();
   private readonly rng: SeededRng;
   private readonly decorRng: Rng = ambientRng();
 
@@ -84,6 +94,11 @@ export class GameEngine {
       hourOf(this.state.t),
       this.decorRng
     );
+  }
+
+  /** 実時間 dtSec 秒ぶん、描く位置をゲームの中の位置へ近づける。停止中も呼ぶ */
+  followDraw(dtSec: number): void {
+    this.drawPos = updateDrawPositions(this.drawPos, this.state.res, dtSec);
   }
 
   /** 記念日の買収提案が出たら時間を止める（選ぶまで進まない） */

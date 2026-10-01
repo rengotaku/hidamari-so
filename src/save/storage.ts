@@ -76,6 +76,9 @@ export interface OpenedGame {
   speed: Speed;
 }
 
+/** 新しく始めたゲームの速さ（保存があれば、その速さで開く） */
+export const NEW_GAME_SPEED = 15;
+
 /** 保存があれば続きから、無ければ seed から新しいゲームを始める */
 export function loadOrNew(storage: KeyValueStorage, seed: number): OpenedGame {
   const loaded = loadGame(storage);
@@ -88,7 +91,7 @@ export function loadOrNew(storage: KeyValueStorage, seed: number): OpenedGame {
       speed: loaded.speed,
     };
   const rng = createRng(seed);
-  return { state: newGame(rng), rng, savedAt: null, speed: 1 };
+  return { state: newGame(rng), rng, savedAt: null, speed: NEW_GAME_SPEED };
 }
 
 /**
